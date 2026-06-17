@@ -11,7 +11,8 @@ export async function loadDataset(): Promise<CanonicalDataset> {
   ]);
   return {
     dailyMetrics: dm.rows, orders: ord.rows, customers: cust.rows,
-    adSpend: ads.rows, subscribers: subs.rows,
+    adSpend: ads.rows.map((r) => ({ ...r, impressions: Number(r.impressions), clicks: Number(r.clicks), conversions: Number(r.conversions) })),
+    subscribers: subs.rows,
   };
 }
 
