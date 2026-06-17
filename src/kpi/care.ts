@@ -1,6 +1,6 @@
 import type { CanonicalDataset, DateRange } from '@/lib/types';
 import type { Kpi } from './types';
-import { inRange, ratio, kpi } from './helpers';
+import { inRange, kpi } from './helpers';
 import { daysBetween } from '@/lib/dates';
 
 export function careKpis(data: CanonicalDataset, range: DateRange): Kpi[] {
