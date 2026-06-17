@@ -42,3 +42,12 @@ export function computeKpis(data: CanonicalDataset, range: DateRange): PhaseKpis
 }
 
 export type { Kpi, PhaseKpis } from './types';
+
+export const PHASE_META = {
+  see:   { title: 'SEE',   subtitle: 'Awareness',     leadMetric: 'sessions' },
+  think: { title: 'THINK', subtitle: 'Consideration', leadMetric: 'sessions' },
+  do:    { title: 'DO',    subtitle: 'Conversion',    leadMetric: 'checkouts_started' },
+  care:  { title: 'CARE',  subtitle: 'Loyalty',       leadMetric: 'sessions' },
+} as const;
+
+export type PhaseKey = keyof typeof PHASE_META;
