@@ -8,7 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "migrate": "tsx scripts/migrate.ts",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "sync:shopware": "tsx scripts/sync-shopware.ts"
   },
   "dependencies": {
     "next": "14.2.5",
