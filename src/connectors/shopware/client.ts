@@ -37,12 +37,12 @@ export class ShopwareClient {
   private async authedGet(path: string): Promise<Response> {
     if (!this.token) await this.getToken();
     let res = await this.fetchImpl(`${this.config.apiUrl}${path}`, {
-      headers: { Authorization: `Bearer ${this.token}` },
+      headers: { Authorization: `Bearer ${this.token}`, Accept: 'application/json' },
     });
     if (res.status === 401) {
       await this.getToken();
       res = await this.fetchImpl(`${this.config.apiUrl}${path}`, {
-        headers: { Authorization: `Bearer ${this.token}` },
+        headers: { Authorization: `Bearer ${this.token}`, Accept: 'application/json' },
       });
     }
     return res;

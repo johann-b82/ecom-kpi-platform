@@ -24,6 +24,13 @@ describe('ShopwareClient', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
     // erster Call ist der Token-Endpoint
     expect((fetchMock.mock.calls[0][0] as string)).toContain('/api/oauth/token');
+    // GET-Requests tragen Accept: application/json damit Shopware flaches JSON liefert
+    expect((fetchMock.mock.calls[1][1] as RequestInit).headers).toMatchObject({
+      Accept: 'application/json',
+    });
+    expect((fetchMock.mock.calls[2][1] as RequestInit).headers).toMatchObject({
+      Accept: 'application/json',
+    });
   });
 
   it('erneuert das Token bei 401 und wiederholt den Request', async () => {
@@ -36,6 +43,10 @@ describe('ShopwareClient', () => {
     const orders = await client.fetchAllOrders();
     expect(orders.map((o) => o.id)).toEqual(['o1']);
     expect(fetchMock).toHaveBeenCalledTimes(4);
+    // 401-Retry-GET trägt ebenfalls Accept: application/json
+    expect((fetchMock.mock.calls[3][1] as RequestInit).headers).toMatchObject({
+      Accept: 'application/json',
+    });
   });
 
   it('wirft bei fehlgeschlagenem Auth', async () => {
