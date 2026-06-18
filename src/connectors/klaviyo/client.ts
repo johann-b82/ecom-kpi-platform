@@ -39,7 +39,8 @@ export class KlaviyoClient {
   }
 
   async metricAggregate(metricId: string, days: number): Promise<KlaviyoAggregateAttributes> {
-    const today = new Date().toISOString().slice(0, 10);
+    // Berlin calendar date (matches the aggregate timezone), not UTC.
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date());
     const start = addDays(today, -(days - 1));
     const endExclusive = addDays(today, 1);
     const body = {
