@@ -11,7 +11,8 @@
     "seed": "tsx scripts/seed.ts",
     "sync:shopware": "tsx scripts/sync-shopware.ts",
     "sync:ga4": "tsx scripts/sync-ga4.ts",
-    "sync:klaviyo": "tsx scripts/sync-klaviyo.ts"
+    "sync:klaviyo": "tsx scripts/sync-klaviyo.ts",
+    "sync:meta": "tsx scripts/sync-meta.ts"
   },
   "dependencies": {
     "@tremor/react": "3.18.0",
