@@ -50,4 +50,27 @@ describe('normalizeReport', () => {
   it('ist robust gegen leeren Report', () => {
     expect(normalizeReport({}).dailyMetrics).toHaveLength(0);
   });
+  it('ist order-robust bei vertauschten metricHeaders', () => {
+    const shuffled: Ga4Report = {
+      dimensionHeaders: [{ name: 'date' }],
+      metricHeaders: [
+        { name: 'checkouts' }, { name: 'addToCarts' }, { name: 'engagedSessions' },
+        { name: 'newUsers' }, { name: 'totalUsers' }, { name: 'screenPageViews' }, { name: 'sessions' },
+      ],
+      rows: [
+        { dimensionValues: [{ value: '20260101' }], metricValues: [{ value: '40' }, { value: '120' }, { value: '650' }, { value: '600' }, { value: '800' }, { value: '3000' }, { value: '1000' }] },
+      ],
+    };
+    const ds = normalizeReport(shuffled);
+    expect(val(ds, '2026-01-01', 'sessions')).toBe(1000);
+    expect(val(ds, '2026-01-01', 'pageviews')).toBe(3000);
+    expect(val(ds, '2026-01-01', 'total_users')).toBe(800);
+    expect(val(ds, '2026-01-01', 'returning_users')).toBe(200);
+    expect(val(ds, '2026-01-01', 'bounced_sessions')).toBe(350);
+    expect(val(ds, '2026-01-01', 'checkouts_started')).toBe(40);
+  });
+  it('überspringt Zeilen ohne dimensionValues', () => {
+    const malformed = { rows: [{ metricValues: [{ value: '1' }] }] } as unknown as Ga4Report;
+    expect(normalizeReport(malformed).dailyMetrics).toHaveLength(0);
+  });
 });

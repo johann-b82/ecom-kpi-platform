@@ -10,7 +10,9 @@ export function normalizeReport(report: Ga4Report): CanonicalDataset {
   const dailyMetrics: DailyMetric[] = [];
 
   for (const row of report.rows ?? []) {
-    const date = ga4Date(row.dimensionValues[0].value);
+    const rawDate = row.dimensionValues?.[0]?.value;
+    if (!rawDate) continue;
+    const date = ga4Date(rawDate);
     const num = (name: string): number => {
       const i = headers.indexOf(name);
       return i < 0 ? 0 : Number(row.metricValues[i]?.value ?? 0);
