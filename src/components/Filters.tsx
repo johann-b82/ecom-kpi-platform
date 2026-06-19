@@ -1,14 +1,12 @@
 'use client';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { formatDeDate } from '@/lib/dates';
 
 const OPTIONS = [
   { days: 7, label: '7 Tage' },
   { days: 30, label: '30 Tage' },
   { days: 90, label: '90 Tage' },
 ];
-
-// ISO date (YYYY-MM-DD) → German format DD.MM.YYYY
-const de = (iso: string) => iso.split('-').reverse().join('.');
 
 export function Filters({ range }: { range?: { start: string; end: string } }) {
   const router = useRouter();
@@ -29,7 +27,7 @@ export function Filters({ range }: { range?: { start: string; end: string } }) {
       </div>
       {range && (
         <span className="text-xs text-neutral-500 dark:text-neutral-400">
-          {de(range.start)} – {de(range.end)}
+          {formatDeDate(range.start)} – {formatDeDate(range.end)}
         </span>
       )}
     </div>

@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatDeDate } from '@/lib/dates';
 
 export interface FieldView {
   connector: string; field: string; label: string; secret: boolean; optional: boolean;
@@ -49,7 +50,7 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
                 <input
                   className="flex-1 rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100"
                   type={f.secret && !show[k(connector, f.field)] ? 'password' : 'text'}
-                  placeholder={f.secret && f.isSet ? `•••••••• (gesetzt am ${f.updatedAt?.slice(0, 10)})` : ''}
+                  placeholder={f.secret && f.isSet ? `•••••••• (gesetzt am ${f.updatedAt ? formatDeDate(f.updatedAt) : ''})` : ''}
                   value={inputs[k(connector, f.field)] ?? ''}
                   onChange={(e) => setInputs({ ...inputs, [k(connector, f.field)]: e.target.value })}
                 />
