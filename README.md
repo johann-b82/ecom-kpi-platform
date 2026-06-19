@@ -1,5 +1,11 @@
 # Unified Data Platform
 
+[![CI](https://github.com/johann-b82/ecom-kpi-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/johann-b82/ecom-kpi-platform/actions/workflows/ci.yml)
+[![Live](https://img.shields.io/badge/live-budp.lumeapps.de-D9004C)](https://budp.lumeapps.de)
+[![Next.js 14](https://img.shields.io/badge/Next.js-14-000000?logo=next.js)](https://nextjs.org)
+[![Supabase](https://img.shields.io/badge/Supabase-self--hosted-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![Node 22+](https://img.shields.io/badge/Node-22%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+
 > **Own the core.** A KPI dashboard that unifies e‑commerce data sources along the **SEE · THINK · DO · CARE** customer‑journey framework.
 
 It pulls data from a shop (Shopware), web analytics (GA4), ad platforms (Meta / TikTok / Google Ads) and e‑mail/CRM (Klaviyo) into one canonical model, computes the typical KPIs per journey phase (with period‑over‑period deltas), and renders them in a themeable dashboard. Connector credentials are stored **AES‑256‑GCM‑encrypted**; the whole app sits behind **Supabase Auth** with **Row‑Level‑Security**.
