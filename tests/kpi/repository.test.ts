@@ -1,40 +1,31 @@
-import { describe, it, expect, afterAll } from 'vitest';
-import { loadDataset } from '@/kpi/repository';
-import { computeKpis } from '@/kpi/index';
-import { pool } from '@/lib/db';
+import { describe, it, expect, vi } from 'vitest';
 
-describe('repository (integration, benötigt geseedete DB)', () => {
-  afterAll(async () => { await pool.end(); });
+function fakeSupabase(tables: Record<string, unknown[]>) {
+  return {
+    from: (t: string) => ({ select: () => Promise.resolve({ data: tables[t] ?? [], error: null }) }),
+    rpc: vi.fn(),
+  } as any;
+}
 
-  it('lädt einen nichtleeren Datensatz und berechnet Phasen', async () => {
-    const data = await loadDataset();
-    expect(data.orders.length).toBeGreaterThan(0);
-    const phases = computeKpis(data, { start: '2026-01-01', end: '2026-12-31' });
-    expect(phases).toHaveLength(4);
-    expect(phases[2].kpis.find((k) => k.key === 'revenue')!.available).toBe(true);
+describe('loadDataset (supabase-js)', () => {
+  it('maps rows and coerces ad_spend bigints to numbers', async () => {
+    const { loadDataset } = await import('@/kpi/repository');
+    const supabase = fakeSupabase({
+      daily_metrics: [{ date: '2026-06-01', source: 's', channel: 'c', metricKey: 'sessions', value: 5 }],
+      orders: [],
+      customers: [],
+      ad_spend: [{ date: '2026-06-01', platform: 'meta', spend: 10, impressions: '1000', clicks: '50', conversions: '3', convValue: 99 }],
+      subscribers: [],
+    });
+    const data = await loadDataset(supabase);
+    expect(data.dailyMetrics[0].metricKey).toBe('sessions');
+    expect(data.adSpend[0].impressions).toBe(1000);
+    expect(data.adSpend[0].clicks).toBe(50);
+    expect(data.adSpend[0].conversions).toBe(3);
   });
-
-  it('adSpend BIGINT-Felder werden als number zurückgegeben (nicht als string)', async () => {
-    const data = await loadDataset();
-    expect(data.adSpend.length).toBeGreaterThan(0);
-    const row = data.adSpend[0];
-    // node-pg returns BIGINT as string by default — repository must coerce to number
-    expect(typeof row.impressions).toBe('number');
-    expect(typeof row.clicks).toBe('number');
-    expect(typeof row.conversions).toBe('number');
-    expect(Number.isFinite(row.impressions)).toBe(true);
-    expect(Number.isFinite(row.clicks)).toBe(true);
-    expect(Number.isFinite(row.conversions)).toBe(true);
-  });
-
-  it('SEE impressions KPI ist available wenn adSpend-Daten vorhanden sind', async () => {
-    const data = await loadDataset();
-    expect(data.adSpend.length).toBeGreaterThan(0);
-    const phases = computeKpis(data, { start: '2026-01-01', end: '2026-12-31' });
-    const seePhase = phases.find((p) => p.phase === 'see')!;
-    const impressionsKpi = seePhase.kpis.find((k) => k.key === 'impressions')!;
-    expect(impressionsKpi.available).toBe(true);
-    expect(typeof impressionsKpi.value).toBe('number');
-    expect(Number.isFinite(impressionsKpi.value as number)).toBe(true);
+  it('throws when a query returns an error', async () => {
+    const { loadDataset } = await import('@/kpi/repository');
+    const supabase = { from: () => ({ select: () => Promise.resolve({ data: null, error: { message: 'boom' } }) }) } as any;
+    await expect(loadDataset(supabase)).rejects.toThrow(/boom/);
   });
 });

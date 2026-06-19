@@ -15,7 +15,7 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
   const range = { start: addDays(end, -(days - 1)), end };
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const phases = computeKpis(await loadDataset(), range);
+  const phases = computeKpis(await loadDataset(supabase), range);
 
   return (
     <main className="mx-auto max-w-7xl p-6">

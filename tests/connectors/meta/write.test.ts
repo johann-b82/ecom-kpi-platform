@@ -2,6 +2,7 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { writeMetaAds } from '@/connectors/meta/write';
 import { loadDataset } from '@/kpi/repository';
 import { pool } from '@/lib/db';
+import { pgSupabase } from '../../helpers/pg-supabase';
 import type { CanonicalDataset } from '@/lib/types';
 
 const sample: CanonicalDataset = {
@@ -20,13 +21,13 @@ describe('writeMetaAds (integration, benötigt laufende DB)', () => {
   afterAll(async () => { await pool.end(); });
 
   it('ersetzt nur Meta-Quellen, lässt andere Plattformen/Quellen unberührt', async () => {
-    const before = await loadDataset();
+    const before = await loadDataset(pgSupabase());
     const otherAds = before.adSpend.filter((a) => a.platform !== 'meta_ads').length;
     const otherDm = before.dailyMetrics.filter((m) => m.source !== 'meta_ads').length;
     const ordersBefore = before.orders.length;
 
     await writeMetaAds(sample);
-    const after = await loadDataset();
+    const after = await loadDataset(pgSupabase());
 
     const metaAds = after.adSpend.filter((a) => a.platform === 'meta_ads');
     const metaVv = after.dailyMetrics.filter((m) => m.source === 'meta_ads');
@@ -40,7 +41,7 @@ describe('writeMetaAds (integration, benötigt laufende DB)', () => {
   it('bricht bei 0 ad_spend-Zeilen ab, ohne zu löschen', async () => {
     await expect(writeMetaAds({ ...sample, adSpend: [] }))
       .rejects.toThrow(/0 ad_spend rows/i);
-    const after = await loadDataset();
+    const after = await loadDataset(pgSupabase());
     expect(after.adSpend.filter((a) => a.platform === 'meta_ads').length).toBeGreaterThan(0);
   });
 });

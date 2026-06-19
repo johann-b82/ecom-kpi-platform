@@ -1,29 +1,36 @@
-import { pool } from '@/lib/db';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CanonicalDataset, DateRange } from '@/lib/types';
 
-export async function loadDataset(): Promise<CanonicalDataset> {
+function unwrap<T>(res: { data: T[] | null; error: { message: string } | null }): T[] {
+  if (res.error) throw new Error(res.error.message);
+  return res.data ?? [];
+}
+
+export async function loadDataset(supabase: SupabaseClient): Promise<CanonicalDataset> {
   const [dm, ord, cust, ads, subs] = await Promise.all([
-    pool.query('SELECT date::text, source, channel, metric_key AS "metricKey", value FROM daily_metrics'),
-    pool.query('SELECT order_id AS "orderId", customer_id AS "customerId", date::text, revenue, is_first_order AS "isFirstOrder" FROM orders'),
-    pool.query('SELECT customer_id AS "customerId", first_order_date::text AS "firstOrderDate", last_order_date::text AS "lastOrderDate", orders_count AS "ordersCount", total_revenue AS "totalRevenue" FROM customers'),
-    pool.query('SELECT date::text, platform, spend, impressions, clicks, conversions, conv_value AS "convValue" FROM ad_spend'),
-    pool.query('SELECT date::text, source, signups, unsubscribes, nps_score AS "npsScore" FROM subscribers'),
+    supabase.from('daily_metrics').select('date, source, channel, metricKey:metric_key, value'),
+    supabase.from('orders').select('orderId:order_id, customerId:customer_id, date, revenue, isFirstOrder:is_first_order'),
+    supabase.from('customers').select('customerId:customer_id, firstOrderDate:first_order_date, lastOrderDate:last_order_date, ordersCount:orders_count, totalRevenue:total_revenue'),
+    supabase.from('ad_spend').select('date, platform, spend, impressions, clicks, conversions, convValue:conv_value'),
+    supabase.from('subscribers').select('date, source, signups, unsubscribes, npsScore:nps_score'),
   ]);
   return {
-    dailyMetrics: dm.rows, orders: ord.rows, customers: cust.rows,
-    adSpend: ads.rows.map((r) => ({ ...r, impressions: Number(r.impressions), clicks: Number(r.clicks), conversions: Number(r.conversions) })),
-    subscribers: subs.rows,
+    dailyMetrics: unwrap(dm) as CanonicalDataset['dailyMetrics'],
+    orders: unwrap(ord) as CanonicalDataset['orders'],
+    customers: unwrap(cust) as CanonicalDataset['customers'],
+    adSpend: (unwrap(ads) as any[]).map((r) => ({
+      ...r, impressions: Number(r.impressions), clicks: Number(r.clicks), conversions: Number(r.conversions),
+    })) as CanonicalDataset['adSpend'],
+    subscribers: unwrap(subs) as CanonicalDataset['subscribers'],
   };
 }
 
 export async function loadDailySeries(
-  metricKey: string, range: DateRange,
+  supabase: SupabaseClient, metricKey: string, range: DateRange,
 ): Promise<{ date: string; value: number }[]> {
-  const res = await pool.query(
-    `SELECT date::text, sum(value) AS value FROM daily_metrics
-     WHERE metric_key = $1 AND date BETWEEN $2 AND $3
-     GROUP BY date ORDER BY date`,
-    [metricKey, range.start, range.end],
-  );
-  return res.rows.map((r) => ({ date: r.date, value: Number(r.value) }));
+  const { data, error } = await supabase.rpc('daily_series', {
+    p_metric_key: metricKey, p_start: range.start, p_end: range.end,
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r: { date: string; value: number }) => ({ date: r.date, value: Number(r.value) }));
 }
