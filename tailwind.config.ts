@@ -8,7 +8,7 @@ export default {
   ],
   theme: {
     extend: {
-      colors: { brand: { DEFAULT: '#D9004C', dark: '#B0003D' } },
+      colors: { brand: { DEFAULT: 'var(--brand)', dark: 'var(--brand-dark)' } },
       fontFamily: {
         sans: ['var(--font-roboto)', 'system-ui', 'sans-serif'],
       },

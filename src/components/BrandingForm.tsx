@@ -11,6 +11,7 @@ export function BrandingForm({ initial }: { initial: Branding }) {
   const [title, setTitle] = useState(initial.title);
   const [tagline, setTagline] = useState(initial.tagline);
   const [logo, setLogo] = useState<string | null>(initial.logo);
+  const [color, setColor] = useState(initial.color);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -32,7 +33,7 @@ export function BrandingForm({ initial }: { initial: Branding }) {
     await fetch('/api/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, tagline, logo }),
+      body: JSON.stringify({ title, tagline, logo, color }),
     });
     setBusy(false);
     setMsg('Branding gespeichert.');
@@ -66,6 +67,14 @@ export function BrandingForm({ initial }: { initial: Branding }) {
         <div className="flex items-center gap-3">
           <label className="w-56 text-sm text-neutral-700 dark:text-neutral-300">Subline</label>
           <input className={inputClass} value={tagline} onChange={(e) => setTagline(e.target.value)} />
+        </div>
+        {/* Akzentfarbe */}
+        <div className="flex items-center gap-3">
+          <label className="w-56 text-sm text-neutral-700 dark:text-neutral-300">Akzentfarbe</label>
+          <div className="flex flex-1 items-center gap-3">
+            <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-8 w-12 cursor-pointer rounded border border-neutral-300 bg-transparent dark:border-neutral-700" />
+            <span className="text-sm text-neutral-600 dark:text-neutral-400">{color}</span>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button type="button" onClick={save} disabled={busy} className="rounded bg-brand px-3 py-1 text-sm text-white disabled:opacity-50">
