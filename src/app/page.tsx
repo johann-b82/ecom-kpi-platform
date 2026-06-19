@@ -19,7 +19,10 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
           <h1 className="text-2xl font-bold text-emerald-400">KPI-Dashboard · SEE–THINK–DO–CARE</h1>
           <p className="text-sm text-neutral-400">Steuerung entlang der Customer Journey · {range.start} – {range.end}</p>
         </div>
-        <Filters />
+        <div className="flex items-center gap-4">
+          <Filters />
+          <a href="/setup" className="text-sm text-neutral-400 hover:text-emerald-400">⚙ Setup</a>
+        </div>
       </header>
       <div className="flex gap-4">
         {phases.map((p) => <PhaseColumn key={p.phase} phase={p} />)}
