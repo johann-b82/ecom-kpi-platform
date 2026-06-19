@@ -25,8 +25,8 @@ services:
       interval: 5s
       retries: 3
     ports:
-      # Mapped to 3001 on the host to avoid clashing with the Next.js app on 3000
-      - 3001:3000
+      # Mapped to 54323 on the host to avoid clashing with the Next.js app on 3000
+      - 54323:3000
     depends_on:
       db:
         condition: service_healthy

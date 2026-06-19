@@ -21,7 +21,7 @@ Services removed from upstream: realtime, storage, imgproxy, vector, analytics (
 - Node.js (for secret generation)
 - Port 5432 free (Postgres) — note: kpi-sb-pg runs on 5433 and must not be stopped
 - Port 8000 free (Kong)
-- Port 3001 free (Studio — mapped to 3001 on the host to avoid clashing with the Next.js app on 3000)
+- Port 54323 free (Studio — mapped to 54323 on the host to avoid clashing with the Next.js app on 3000)
 
 ## First-time setup
 
@@ -76,7 +76,7 @@ docker compose up -d
 | 5432 | Postgres (db) | user `postgres`, db `postgres` |
 | 8000 | Kong (API gateway) | primary entry point for app |
 | 8443 | Kong HTTPS | |
-| 3001 | Studio dashboard | mapped from container 3000 to avoid clash with Next.js app |
+| 54323 | Studio dashboard | http://localhost:54323 — mapped from container 3000 to avoid clash with Next.js app |
 
 The Next.js application connects via Kong at `http://localhost:8000`.
 
