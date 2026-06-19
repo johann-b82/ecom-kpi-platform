@@ -21,15 +21,15 @@ export default async function PhasePage({ params }: { params: { phase: string } 
 
   return (
     <main className="mx-auto max-w-6xl p-6">
-      <Link href="/" className="text-sm text-emerald-400">← Zur Übersicht</Link>
-      <h1 className="mt-2 text-2xl font-bold text-emerald-400">{meta.title} · {meta.subtitle}</h1>
+      <Link href="/" className="text-sm text-emerald-600 dark:text-emerald-400">← Zur Übersicht</Link>
+      <h1 className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{meta.title} · {meta.subtitle}</h1>
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
         {phase.kpis.map((k) => <KpiCard key={k.key} kpi={k} />)}
       </div>
 
-      <Card className="mt-6 bg-neutral-900">
-        <p className="text-sm text-neutral-400">Verlauf: {meta.leadMetric} (30 Tage)</p>
+      <Card className="mt-6 bg-white dark:bg-neutral-900">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">Verlauf: {meta.leadMetric} (30 Tage)</p>
         <AreaChart
           className="mt-2 h-72"
           data={series}

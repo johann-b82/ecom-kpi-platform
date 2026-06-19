@@ -36,30 +36,30 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
 
   return (
     <div className="space-y-8">
-      {msg && <p className="text-sm text-emerald-400">{msg}</p>}
+      {msg && <p className="text-sm text-emerald-600 dark:text-emerald-400">{msg}</p>}
       {connectors.map((connector) => (
-        <section key={connector} className="rounded-lg border border-emerald-900/40 bg-neutral-900 p-4">
-          <h2 className="mb-3 text-lg font-semibold text-emerald-400">{connector}</h2>
+        <section key={connector} className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-emerald-900/40 dark:bg-neutral-900">
+          <h2 className="mb-3 text-lg font-semibold text-emerald-600 dark:text-emerald-400">{connector}</h2>
           <div className="space-y-3">
             {fields.filter((f) => f.connector === connector).map((f) => (
               <div key={f.field} className="flex items-center gap-3">
-                <label className="w-56 text-sm text-neutral-300">
+                <label className="w-56 text-sm text-neutral-700 dark:text-neutral-300">
                   {f.label}{f.optional && <span className="text-neutral-500"> (optional)</span>}
                 </label>
                 <input
-                  className="flex-1 rounded bg-neutral-800 px-2 py-1 text-sm text-neutral-100"
+                  className="flex-1 rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100"
                   type={f.secret && !show[k(connector, f.field)] ? 'password' : 'text'}
                   placeholder={f.secret && f.isSet ? `•••••••• (gesetzt am ${f.updatedAt?.slice(0, 10)})` : ''}
                   value={inputs[k(connector, f.field)] ?? ''}
                   onChange={(e) => setInputs({ ...inputs, [k(connector, f.field)]: e.target.value })}
                 />
                 {f.secret && (
-                  <button type="button" className="text-xs text-neutral-400" onClick={() => setShow({ ...show, [k(connector, f.field)]: !show[k(connector, f.field)] })}>
+                  <button type="button" className="text-xs text-neutral-600 dark:text-neutral-400" onClick={() => setShow({ ...show, [k(connector, f.field)]: !show[k(connector, f.field)] })}>
                     {show[k(connector, f.field)] ? 'verbergen' : 'anzeigen'}
                   </button>
                 )}
-                <span className={`text-xs ${f.isSet ? 'text-emerald-500' : 'text-neutral-500'}`}>{f.isSet ? 'gesetzt ✓' : 'nicht gesetzt'}</span>
-                {f.isSet && <button type="button" className="text-xs text-red-400" onClick={() => remove(connector, f.field)}>Löschen</button>}
+                <span className={`text-xs ${f.isSet ? 'text-emerald-600 dark:text-emerald-500' : 'text-neutral-500'}`}>{f.isSet ? 'gesetzt ✓' : 'nicht gesetzt'}</span>
+                {f.isSet && <button type="button" className="text-xs text-red-600 dark:text-red-400" onClick={() => remove(connector, f.field)}>Löschen</button>}
               </div>
             ))}
           </div>
