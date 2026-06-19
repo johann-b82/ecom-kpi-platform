@@ -13,19 +13,20 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: kpi
-          POSTGRES_PASSWORD: kpi
-          POSTGRES_DB: kpi
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U kpi"
+          --health-cmd "pg_isready -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgres://kpi:kpi@localhost:5432/kpi
-      AUTH_SECRET: ci-dummy-secret-for-build
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:8000
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-dummy-anon-key
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
