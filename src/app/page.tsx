@@ -5,6 +5,7 @@ import { PhaseColumn } from '@/components/PhaseColumn';
 import { Filters } from '@/components/Filters';
 import { auth } from '@/auth';
 import { SignOutButton } from '@/components/SignOutButton';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,12 +20,13 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
     <main className="mx-auto max-w-7xl p-6">
       <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-emerald-400">KPI-Dashboard · SEE–THINK–DO–CARE</h1>
-          <p className="text-sm text-neutral-400">Steuerung entlang der Customer Journey · {range.start} – {range.end}</p>
+          <h1 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">KPI-Dashboard · SEE–THINK–DO–CARE</h1>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Steuerung entlang der Customer Journey · {range.start} – {range.end}</p>
         </div>
         <div className="flex items-center gap-4">
           <Filters />
-          <a href="/setup" className="text-sm text-neutral-400 hover:text-emerald-400">⚙ Setup</a>
+          <a href="/setup" className="text-sm text-neutral-600 hover:text-emerald-600 dark:text-neutral-400 dark:hover:text-emerald-400">⚙ Setup</a>
+          <ThemeToggle />
           <SignOutButton email={session?.user?.email} />
         </div>
       </header>
