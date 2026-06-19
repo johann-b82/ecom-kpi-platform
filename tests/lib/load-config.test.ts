@@ -1,19 +1,28 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { setCredential, deleteCredential, loadConnectorConfig } from '@/lib/credentials';
+import { pool } from '@/lib/db';
 
-vi.mock('@/lib/credentials', async (orig) => {
-  const actual = await orig() as Record<string, unknown>;
-  return { ...actual, getCredentials: vi.fn() };
+beforeAll(() => { process.env.CREDENTIALS_KEY = Buffer.alloc(32, 5).toString('base64'); });
+afterAll(async () => {
+  await pool.query(`DELETE FROM connector_credentials WHERE connector = 'shopware'`);
+  await pool.end();
 });
 
-import { loadConnectorConfig, getCredentials } from '@/lib/credentials';
-
-describe('loadConnectorConfig', () => {
-  it('gibt vollständige Config zurück', async () => {
-    (getCredentials as any).mockResolvedValue({ SHOPWARE_API_URL: 'u', SHOPWARE_CLIENT_ID: 'i', SHOPWARE_CLIENT_SECRET: 's' });
-    expect(await loadConnectorConfig('shopware')).toMatchObject({ SHOPWARE_CLIENT_SECRET: 's' });
+describe('loadConnectorConfig (integration, benötigt DB)', () => {
+  it('gibt vollständige Config zurück, wenn alle Pflichtfelder gesetzt sind', async () => {
+    await setCredential('shopware', 'SHOPWARE_API_URL', 'https://shop.example');
+    await setCredential('shopware', 'SHOPWARE_CLIENT_ID', 'cid');
+    await setCredential('shopware', 'SHOPWARE_CLIENT_SECRET', 'sec');
+    const cfg = await loadConnectorConfig('shopware');
+    expect(cfg).toMatchObject({
+      SHOPWARE_API_URL: 'https://shop.example',
+      SHOPWARE_CLIENT_ID: 'cid',
+      SHOPWARE_CLIENT_SECRET: 'sec',
+    });
   });
+
   it('wirft mit /setup-Hinweis bei fehlendem Pflichtfeld', async () => {
-    (getCredentials as any).mockResolvedValue({ SHOPWARE_API_URL: 'u' });
+    await deleteCredential('shopware', 'SHOPWARE_CLIENT_SECRET');
     await expect(loadConnectorConfig('shopware')).rejects.toThrow(/\/setup/);
   });
 });
