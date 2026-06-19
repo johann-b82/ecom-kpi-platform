@@ -43,3 +43,11 @@ CREATE TABLE IF NOT EXISTS subscribers (
   nps_score    DOUBLE PRECISION,
   PRIMARY KEY (date, source)
 );
+
+CREATE TABLE IF NOT EXISTS connector_credentials (
+  connector   TEXT NOT NULL,
+  field       TEXT NOT NULL,
+  ciphertext  TEXT NOT NULL,
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (connector, field)
+);
