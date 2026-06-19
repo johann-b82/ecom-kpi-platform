@@ -36,10 +36,10 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
 
   return (
     <div className="space-y-8">
-      {msg && <p className="text-sm text-emerald-600 dark:text-emerald-400">{msg}</p>}
+      {msg && <p className="text-sm text-neutral-900 dark:text-neutral-100">{msg}</p>}
       {connectors.map((connector) => (
-        <section key={connector} className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-emerald-900/40 dark:bg-neutral-900">
-          <h2 className="mb-3 text-lg font-semibold text-emerald-600 dark:text-emerald-400">{connector}</h2>
+        <section key={connector} className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+          <h2 className="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{connector}</h2>
           <div className="space-y-3">
             {fields.filter((f) => f.connector === connector).map((f) => (
               <div key={f.field} className="flex items-center gap-3">
@@ -63,7 +63,7 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
               </div>
             ))}
           </div>
-          <button type="button" onClick={() => save(connector)} className="mt-3 rounded bg-emerald-600 px-3 py-1 text-sm text-white">Speichern</button>
+          <button type="button" onClick={() => save(connector)} className="mt-3 rounded bg-neutral-900 dark:bg-white dark:text-neutral-900 px-3 py-1 text-sm text-white">Speichern</button>
         </section>
       ))}
     </div>

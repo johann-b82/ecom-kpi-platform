@@ -19,8 +19,8 @@ export default async function SetupPage() {
   return (
     <main className="mx-auto max-w-3xl p-6">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">⚙ Connector-Setup</h1>
-        <Link href="/" className="text-sm text-emerald-600 dark:text-emerald-400">← Zum Dashboard</Link>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">⚙ Connector-Setup</h1>
+        <Link href="/" className="text-sm text-neutral-900 dark:text-neutral-100">← Zum Dashboard</Link>
       </header>
       <p className="mb-6 text-sm text-neutral-600 dark:text-neutral-400">
         Zugangsdaten werden AES-256-verschlüsselt in der DB gespeichert. Secrets werden in der Oberfläche maskiert und nie zurückgegeben — leer lassen heißt „unverändert".

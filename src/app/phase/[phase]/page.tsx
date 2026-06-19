@@ -23,8 +23,8 @@ export default async function PhasePage({ params }: { params: { phase: string } 
 
   return (
     <main className="mx-auto max-w-6xl p-6">
-      <Link href="/" className="text-sm text-emerald-600 dark:text-emerald-400">← Zur Übersicht</Link>
-      <h1 className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{meta.title} · {meta.subtitle}</h1>
+      <Link href="/" className="text-sm text-neutral-900 dark:text-neutral-100">← Zur Übersicht</Link>
+      <h1 className="mt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">{meta.title} · {meta.subtitle}</h1>
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
         {phase.kpis.map((k) => <KpiCard key={k.key} kpi={k} />)}
@@ -37,7 +37,7 @@ export default async function PhasePage({ params }: { params: { phase: string } 
           data={series}
           index="date"
           categories={['value']}
-          colors={['emerald']}
+          colors={['gray']}
           showLegend={false}
         />
       </Card>

@@ -9,7 +9,7 @@ export function KpiCard({ kpi, hero = false }: { kpi: Kpi; hero?: boolean }) {
   const up = (kpi.deltaPct ?? 0) >= 0;
   const help = KPI_HELP[kpi.key];
   return (
-    <Card className="overflow-visible bg-white ring-1 ring-neutral-200 dark:bg-neutral-900 dark:ring-emerald-900/40">
+    <Card className="overflow-visible bg-white ring-1 ring-neutral-200 dark:bg-neutral-900 dark:ring-neutral-800">
       <p className="flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400">
         {kpi.label}
         {help && (
@@ -17,7 +17,7 @@ export function KpiCard({ kpi, hero = false }: { kpi: Kpi; hero?: boolean }) {
             <button
               type="button"
               aria-label={`${kpi.label}: Berechnung und Datenquelle`}
-              className="cursor-help leading-none text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+              className="cursor-help leading-none text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
             >
               ⓘ
             </button>
@@ -25,16 +25,16 @@ export function KpiCard({ kpi, hero = false }: { kpi: Kpi; hero?: boolean }) {
               role="tooltip"
               className="pointer-events-none absolute left-1/2 top-6 z-20 hidden w-64 -translate-x-1/2 rounded-md border border-neutral-700 bg-neutral-900 p-2 text-xs font-normal leading-snug text-neutral-100 shadow-lg group-hover:block group-focus-within:block"
             >
-              <span className="block font-semibold text-emerald-400">Berechnung</span>
+              <span className="block font-semibold text-neutral-100">Berechnung</span>
               <span className="mb-1 block text-neutral-200">{help.formula}</span>
-              <span className="block font-semibold text-emerald-400">Quelle</span>
+              <span className="block font-semibold text-neutral-100">Quelle</span>
               <span className="block text-neutral-200">{help.source}</span>
             </span>
           </span>
         )}
       </p>
       {kpi.available ? (
-        <p className={hero ? 'mt-1 text-3xl font-semibold text-emerald-600 dark:text-emerald-400' : 'mt-1 text-xl font-semibold text-neutral-900 dark:text-neutral-100'}>
+        <p className={hero ? 'mt-1 text-3xl font-semibold text-neutral-900 dark:text-neutral-100' : 'mt-1 text-xl font-semibold text-neutral-900 dark:text-neutral-100'}>
           {formatValue(kpi)}
         </p>
       ) : (
