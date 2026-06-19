@@ -24,7 +24,7 @@ describe('RLS on KPI tables', () => {
       c.release();
     }
   });
-  it('anon is denied on connector_credentials', async () => {
+  it('authenticated (and thus the public PostgREST surface) is denied on connector_credentials', async () => {
     const c = await pool.connect();
     try {
       await c.query('SET ROLE authenticated');

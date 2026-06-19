@@ -21,7 +21,10 @@ export function LoginForm() {
       setError('Login fehlgeschlagen. E-Mail oder Passwort prüfen.');
       return;
     }
-    router.replace(params.get('redirectTo') ?? '/');
+    // Only follow internal, single-slash paths — guards against open-redirect
+    // via a crafted /login?redirectTo=//evil.com or https://… link.
+    const to = params.get('redirectTo');
+    router.replace(to && to.startsWith('/') && !to.startsWith('//') ? to : '/');
     router.refresh();
   }
 
