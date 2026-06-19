@@ -12,7 +12,8 @@
     "sync:shopware": "tsx scripts/sync-shopware.ts",
     "sync:ga4": "tsx scripts/sync-ga4.ts",
     "sync:klaviyo": "tsx scripts/sync-klaviyo.ts",
-    "sync:meta": "tsx scripts/sync-meta.ts"
+    "sync:meta": "tsx scripts/sync-meta.ts",
+    "sync:tiktok": "tsx scripts/sync-tiktok.ts"
   },
   "dependencies": {
     "@tremor/react": "3.18.0",
