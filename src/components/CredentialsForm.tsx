@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatDeDate } from '@/lib/dates';
+import { CONNECTOR_GROUPS, CONNECTOR_LABELS, type Connector } from '@/lib/connector-fields';
 
 export interface FieldView {
   connector: string; field: string; label: string; secret: boolean; optional: boolean;
@@ -10,7 +11,6 @@ export interface FieldView {
 
 export function CredentialsForm({ fields }: { fields: FieldView[] }) {
   const router = useRouter();
-  const connectors = [...new Set(fields.map((f) => f.connector))];
   const [inputs, setInputs] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     for (const f of fields) if (!f.secret && f.value) init[`${f.connector}:${f.field}`] = f.value;
@@ -21,13 +21,13 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
 
   const k = (c: string, f: string) => `${c}:${f}`;
 
-  async function save(connector: string) {
+  async function save(connector: Connector) {
     const payload: Record<string, string> = {};
     for (const f of fields.filter((x) => x.connector === connector)) {
       payload[f.field] = inputs[k(connector, f.field)] ?? '';
     }
     await fetch('/api/credentials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ connector, fields: payload }) });
-    setMsg(`${connector} gespeichert.`);
+    setMsg(`${CONNECTOR_LABELS[connector]} gespeichert.`);
     router.refresh();
   }
   async function remove(connector: string, field: string) {
@@ -36,13 +36,17 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {msg && <p className="text-sm text-neutral-900 dark:text-neutral-100">{msg}</p>}
-      {connectors.map((connector) => (
-        <section key={connector} className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-          <h2 className="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{connector}</h2>
-          <div className="space-y-3">
-            {fields.filter((f) => f.connector === connector).map((f) => (
+      {CONNECTOR_GROUPS.map((group) => (
+        <section key={group.title}>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">{group.title}</h2>
+          <div className="space-y-4">
+            {group.connectors.map((connector) => (
+              <div key={connector} className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                <h3 className="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{CONNECTOR_LABELS[connector]}</h3>
+                <div className="space-y-3">
+                  {fields.filter((f) => f.connector === connector).map((f) => (
               <div key={f.field} className="flex items-center gap-3">
                 <label className="w-56 text-sm text-neutral-700 dark:text-neutral-300">
                   {f.label}{f.optional && <span className="text-neutral-500"> (optional)</span>}
@@ -63,8 +67,11 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
                 {f.isSet && <button type="button" className="text-xs text-red-600 dark:text-red-400" onClick={() => remove(connector, f.field)}>Löschen</button>}
               </div>
             ))}
+                </div>
+                <button type="button" onClick={() => save(connector)} className="mt-3 rounded bg-brand px-3 py-1 text-sm text-white">Speichern</button>
+              </div>
+            ))}
           </div>
-          <button type="button" onClick={() => save(connector)} className="mt-3 rounded bg-brand px-3 py-1 text-sm text-white">Speichern</button>
         </section>
       ))}
     </div>

@@ -44,3 +44,21 @@ export const CONNECTOR_FIELDS: Record<Connector, FieldDef[]> = {
 };
 
 export const CONNECTORS = Object.keys(CONNECTOR_FIELDS) as Connector[];
+
+// Human-readable connector names shown in the UI.
+export const CONNECTOR_LABELS: Record<Connector, string> = {
+  shopware: 'Shopware',
+  ga4: 'Google Analytics 4',
+  klaviyo: 'Klaviyo',
+  meta: 'Meta Ads',
+  tiktok: 'TikTok Ads',
+  google: 'Google Ads',
+};
+
+// Connectors grouped into named sections by data-source category.
+export const CONNECTOR_GROUPS: { title: string; connectors: Connector[] }[] = [
+  { title: 'Shop', connectors: ['shopware'] },
+  { title: 'Web-Analytics', connectors: ['ga4'] },
+  { title: 'Werbung', connectors: ['meta', 'tiktok', 'google'] },
+  { title: 'E-Mail & CRM', connectors: ['klaviyo'] },
+];
