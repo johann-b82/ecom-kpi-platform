@@ -17,7 +17,7 @@ export function KpiCard({ kpi, hero = false }: { kpi: Kpi; hero?: boolean }) {
             <button
               type="button"
               aria-label={`${kpi.label}: Berechnung und Datenquelle`}
-              className="cursor-help leading-none text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+              className="cursor-help leading-none text-neutral-400 hover:text-brand"
             >
               ⓘ
             </button>

@@ -17,7 +17,7 @@ export function Filters() {
         <button
           key={o.days}
           onClick={() => router.push(`/?days=${o.days}`)}
-          className={`rounded px-3 py-1 text-sm ${active === o.days ? 'bg-neutral-900 dark:bg-white dark:text-neutral-900 text-white' : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'}`}
+          className={`rounded px-3 py-1 text-sm ${active === o.days ? 'bg-brand text-white' : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'}`}
         >
           {o.label}
         </button>

@@ -30,7 +30,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
-      <div className="text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100">
+      <div className="font-display text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100">
         BRYX<sup className="text-[0.6rem] font-bold">®</sup>
       </div>
       <h1 className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Anmelden</h1>
@@ -46,7 +46,7 @@ export function LoginForm() {
       </label>
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <button type="submit" disabled={busy}
-        className="w-full rounded bg-neutral-900 dark:bg-white dark:text-neutral-900 px-3 py-2 font-medium text-white hover:bg-neutral-700 dark:hover:bg-neutral-200 disabled:opacity-50">
+        className="w-full rounded bg-brand px-3 py-2 font-medium text-white hover:bg-brand-dark disabled:opacity-50">
         {busy ? '…' : 'Anmelden'}
       </button>
     </form>
