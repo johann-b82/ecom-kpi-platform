@@ -1,0 +1,37 @@
+import { describe, it, expect, afterAll } from 'vitest';
+import { pool } from '@/lib/db';
+
+afterAll(async () => { await pool.end(); });
+
+describe('RLS on KPI tables', () => {
+  it('authenticated can SELECT daily_metrics', async () => {
+    const c = await pool.connect();
+    try {
+      await c.query('SET ROLE authenticated');
+      await expect(c.query('SELECT count(*) FROM daily_metrics')).resolves.toBeTruthy();
+    } finally {
+      await c.query('RESET ROLE');
+      c.release();
+    }
+  });
+  it('anon is denied on daily_metrics', async () => {
+    const c = await pool.connect();
+    try {
+      await c.query('SET ROLE anon');
+      await expect(c.query('SELECT count(*) FROM daily_metrics')).rejects.toThrow(/permission denied/i);
+    } finally {
+      await c.query('RESET ROLE');
+      c.release();
+    }
+  });
+  it('anon is denied on connector_credentials', async () => {
+    const c = await pool.connect();
+    try {
+      await c.query('SET ROLE authenticated');
+      await expect(c.query('SELECT count(*) FROM connector_credentials')).rejects.toThrow(/permission denied/i);
+    } finally {
+      await c.query('RESET ROLE');
+      c.release();
+    }
+  });
+});
