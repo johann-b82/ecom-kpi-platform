@@ -7,6 +7,9 @@ const OPTIONS = [
   { days: 90, label: '90 Tage' },
 ];
 
+// ISO date (YYYY-MM-DD) → German format DD.MM.YYYY
+const de = (iso: string) => iso.split('-').reverse().join('.');
+
 export function Filters({ range }: { range?: { start: string; end: string } }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -26,7 +29,7 @@ export function Filters({ range }: { range?: { start: string; end: string } }) {
       </div>
       {range && (
         <span className="text-xs text-neutral-500 dark:text-neutral-400">
-          {range.start} – {range.end}
+          {de(range.start)} – {de(range.end)}
         </span>
       )}
     </div>
