@@ -1,18 +1,41 @@
-import { auth } from '@/auth';
-import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
-export default auth((req) => {
-  if (req.auth) return NextResponse.next();
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({ request });
 
-  const { pathname, href, origin } = req.nextUrl;
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        },
+      },
+    },
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    url.searchParams.set('redirectTo', request.nextUrl.pathname);
+    return NextResponse.redirect(url);
   }
-  const signInUrl = new URL('/api/auth/signin', origin);
-  signInUrl.searchParams.set('callbackUrl', href);
-  return NextResponse.redirect(signInUrl);
-});
+
+  return response;
+}
 
 export const config = {
-  matcher: ['/((?!api/auth/|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!login(?:/|$)|_next/static|_next/image|favicon.ico).*)'],
 };

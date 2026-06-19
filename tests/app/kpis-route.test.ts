@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: () => ({}),
+}));
+
 vi.mock('@/kpi/repository', () => ({
   loadDataset: async () => ({
     dailyMetrics: [{ date: '2026-06-01', source: 'ga4', channel: 'default', metricKey: 'sessions', value: 100 }],

@@ -3,7 +3,7 @@ import { computeKpis } from '@/kpi/index';
 import { addDays } from '@/lib/dates';
 import { PhaseColumn } from '@/components/PhaseColumn';
 import { Filters } from '@/components/Filters';
-import { auth } from '@/auth';
+import { createClient } from '@/lib/supabase/server';
 import { SignOutButton } from '@/components/SignOutButton';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -13,8 +13,9 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
   const days = [7, 30, 90].includes(Number(searchParams.days)) ? Number(searchParams.days) : 30;
   const end = new Date().toISOString().slice(0, 10);
   const range = { start: addDays(end, -(days - 1)), end };
-  const session = await auth();
-  const phases = computeKpis(await loadDataset(), range);
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const phases = computeKpis(await loadDataset(supabase), range);
 
   return (
     <main className="mx-auto max-w-7xl p-6">
@@ -27,7 +28,7 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
           <Filters />
           <a href="/setup" className="text-sm text-neutral-600 hover:text-emerald-600 dark:text-neutral-400 dark:hover:text-emerald-400">⚙ Setup</a>
           <ThemeToggle />
-          <SignOutButton email={session?.user?.email} />
+          <SignOutButton email={user?.email} />
         </div>
       </header>
       <div className="flex gap-4">

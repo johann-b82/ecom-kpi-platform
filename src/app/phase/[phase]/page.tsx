@@ -5,6 +5,7 @@ import { loadDataset, loadDailySeries } from '@/kpi/repository';
 import { computeKpis, PHASE_META, type PhaseKey } from '@/kpi/index';
 import { addDays } from '@/lib/dates';
 import { KpiCard } from '@/components/KpiCard';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,8 +16,9 @@ export default async function PhasePage({ params }: { params: { phase: string } 
 
   const end = new Date().toISOString().slice(0, 10);
   const range = { start: addDays(end, -29), end };
+  const supabase = createClient();
 
-  const [data, series] = await Promise.all([loadDataset(), loadDailySeries(meta.leadMetric, range)]);
+  const [data, series] = await Promise.all([loadDataset(supabase), loadDailySeries(supabase, meta.leadMetric, range)]);
   const phase = computeKpis(data, range).find((p) => p.phase === key)!;
 
   return (

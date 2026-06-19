@@ -2,6 +2,7 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { writeOrdersAndCustomers } from '@/connectors/shopware/write';
 import { loadDataset } from '@/kpi/repository';
 import { pool } from '@/lib/db';
+import { pgSupabase } from '../../helpers/pg-supabase';
 import type { CanonicalDataset } from '@/lib/types';
 
 const sample: CanonicalDataset = {
@@ -19,10 +20,10 @@ describe('writeOrdersAndCustomers (integration, benötigt laufende DB)', () => {
   afterAll(async () => { await pool.end(); });
 
   it('ersetzt orders+customers transaktional, lässt ad_spend unberührt', async () => {
-    const before = await loadDataset();
+    const before = await loadDataset(pgSupabase());
     const adSpendBefore = before.adSpend.length;
     await writeOrdersAndCustomers(sample);
-    const after = await loadDataset();
+    const after = await loadDataset(pgSupabase());
     expect(after.orders.map((o) => o.orderId).sort()).toEqual(['sw1', 'sw2']);
     expect(after.customers).toHaveLength(1);
     expect(after.customers[0].totalRevenue).toBeCloseTo(200);
@@ -32,7 +33,7 @@ describe('writeOrdersAndCustomers (integration, benötigt laufende DB)', () => {
   it('bricht bei 0 Orders ab, ohne zu truncaten', async () => {
     await expect(writeOrdersAndCustomers({ ...sample, orders: [] }))
       .rejects.toThrow(/0 orders/i);
-    const after = await loadDataset();
+    const after = await loadDataset(pgSupabase());
     expect(after.orders.length).toBeGreaterThan(0); // vorheriger Stand erhalten
   });
 });
