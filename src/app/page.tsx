@@ -21,9 +21,8 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
     <main className="mx-auto max-w-7xl p-6">
       <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="font-display text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100">
-            BRYX<sup className="text-[0.6rem] font-bold">®</sup>
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/bryx-logo.svg" alt="BRYX" className="h-9 w-auto" />
           <span className="h-8 w-px bg-neutral-300 dark:bg-neutral-700" />
           <div>
             <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">KPI-Dashboard · SEE–THINK–DO–CARE</h1>

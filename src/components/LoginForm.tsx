@@ -30,9 +30,8 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4 rounded-lg border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900">
-      <div className="font-display text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100">
-        BRYX<sup className="text-[0.6rem] font-bold">®</sup>
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/bryx-logo.svg" alt="BRYX" className="h-10 w-auto" />
       <h1 className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Anmelden</h1>
       <label className="block text-sm text-neutral-700 dark:text-neutral-300">
         E-Mail

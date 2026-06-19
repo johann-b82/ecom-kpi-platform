@@ -11,7 +11,6 @@ export default {
       colors: { brand: { DEFAULT: '#D9004C', dark: '#B0003D' } },
       fontFamily: {
         sans: ['var(--font-roboto)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-poppins)', 'var(--font-roboto)', 'sans-serif'],
       },
     },
   },
