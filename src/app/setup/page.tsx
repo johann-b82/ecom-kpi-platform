@@ -10,7 +10,8 @@ export default async function SetupPage() {
   const fields: FieldView[] = [];
   for (const connector of CONNECTORS) {
     for (const f of CONNECTOR_FIELDS[connector]) {
-      const st = status.find((s) => s.connector === connector && s.field === f.field)!;
+      const st = status.find((s) => s.connector === connector && s.field === f.field)
+        ?? { isSet: false, updatedAt: null as string | null };
       const value = !f.secret && st.isSet ? (await getCredential(connector, f.field)) ?? undefined : undefined;
       fields.push({ connector, field: f.field, label: f.label, secret: f.secret, optional: f.optional, isSet: st.isSet, updatedAt: st.updatedAt, value });
     }
