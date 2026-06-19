@@ -1,0 +1,40 @@
+{
+  "name": "ecom-kpi-platform",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "migrate": "tsx scripts/migrate.ts",
+    "seed": "tsx scripts/seed.ts",
+    "sync:shopware": "tsx scripts/sync-shopware.ts",
+    "sync:ga4": "tsx scripts/sync-ga4.ts",
+    "sync:klaviyo": "tsx scripts/sync-klaviyo.ts",
+    "sync:meta": "tsx scripts/sync-meta.ts",
+    "sync:tiktok": "tsx scripts/sync-tiktok.ts",
+    "sync:google": "tsx scripts/sync-google.ts"
+  },
+  "dependencies": {
+    "@tremor/react": "3.18.0",
+    "google-auth-library": "^9.15.1",
+    "next": "14.2.5",
+    "pg": "8.12.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/react": "16.0.0",
+    "@types/node": "20.14.0",
+    "@types/pg": "8.11.6",
+    "@types/react": "18.3.3",
+    "autoprefixer": "10.4.19",
+    "jsdom": "24.1.1",
+    "postcss": "8.4.40",
+    "tailwindcss": "3.4.7",
+    "tsx": "4.16.2",
+    "typescript": "5.5.4",
+    "vitest": "2.0.5"
+  }
+}

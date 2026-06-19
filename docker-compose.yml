@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: kpi
+      POSTGRES_PASSWORD: kpi
+      POSTGRES_DB: kpi
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kpi"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgres://kpi:kpi@db:5432/kpi
+    ports: ["3000:3000"]
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
