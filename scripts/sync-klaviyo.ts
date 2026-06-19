@@ -2,6 +2,7 @@ import { KlaviyoClient } from '../src/connectors/klaviyo/client';
 import { normalizeAggregates } from '../src/connectors/klaviyo/connector';
 import { writeKlaviyoSubscribers } from '../src/connectors/klaviyo/write';
 import { pool } from '../src/lib/db';
+import { loadConnectorConfig } from '../src/lib/credentials';
 
 function parseDays(argv: string[]): number {
   const i = argv.indexOf('--days');
@@ -10,15 +11,12 @@ function parseDays(argv: string[]): number {
 }
 
 async function main() {
-  const apiKey = process.env.KLAVIYO_API_KEY;
-  if (!apiKey) {
-    throw new Error('Missing KLAVIYO_API_KEY in environment.');
-  }
-  const signupMetric = process.env.KLAVIYO_SIGNUP_METRIC ?? 'Subscribed to List';
-  const unsubMetric = process.env.KLAVIYO_UNSUB_METRIC ?? 'Unsubscribed';
+  const cfg = await loadConnectorConfig('klaviyo');
+  const signupMetric = cfg.KLAVIYO_SIGNUP_METRIC ?? 'Subscribed to List';
+  const unsubMetric = cfg.KLAVIYO_UNSUB_METRIC ?? 'Unsubscribed';
   const days = parseDays(process.argv);
 
-  const client = new KlaviyoClient(apiKey);
+  const client = new KlaviyoClient(cfg.KLAVIYO_API_KEY);
   console.log('Resolving Klaviyo metric IDs…');
   const signupId = await client.resolveMetricId(signupMetric);
   const unsubId = await client.resolveMetricId(unsubMetric);

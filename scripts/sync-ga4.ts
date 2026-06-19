@@ -2,6 +2,7 @@ import { Ga4Client } from '../src/connectors/ga4/client';
 import { normalizeReport } from '../src/connectors/ga4/connector';
 import { writeGa4Metrics } from '../src/connectors/ga4/write';
 import { pool } from '../src/lib/db';
+import { loadConnectorConfig } from '../src/lib/credentials';
 
 function parseDays(argv: string[]): number {
   const i = argv.indexOf('--days');
@@ -10,13 +11,10 @@ function parseDays(argv: string[]): number {
 }
 
 async function main() {
-  const propertyId = process.env.GA4_PROPERTY_ID;
-  if (!propertyId || !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    throw new Error('Missing GA4_PROPERTY_ID / GOOGLE_APPLICATION_CREDENTIALS in environment.');
-  }
+  const cfg = await loadConnectorConfig('ga4');
+  const client = Ga4Client.fromCredentials(cfg.GA4_PROPERTY_ID, JSON.parse(cfg.GA4_SERVICE_ACCOUNT_JSON));
   const days = parseDays(process.argv);
 
-  const client = Ga4Client.fromEnv(propertyId);
   console.log(`Fetching GA4 report (last ${days} days)…`);
   const report = await client.runReport(days);
   console.log(`Fetched ${report.rows?.length ?? 0} day rows.`);

@@ -2,16 +2,11 @@ import { ShopwareClient } from '../src/connectors/shopware/client';
 import { normalizeOrders } from '../src/connectors/shopware/connector';
 import { writeOrdersAndCustomers } from '../src/connectors/shopware/write';
 import { pool } from '../src/lib/db';
+import { loadConnectorConfig } from '../src/lib/credentials';
 
 async function main() {
-  const apiUrl = process.env.SHOPWARE_API_URL;
-  const clientId = process.env.SHOPWARE_CLIENT_ID;
-  const clientSecret = process.env.SHOPWARE_CLIENT_SECRET;
-  if (!apiUrl || !clientId || !clientSecret) {
-    throw new Error('Missing SHOPWARE_API_URL / SHOPWARE_CLIENT_ID / SHOPWARE_CLIENT_SECRET in environment.');
-  }
-
-  const client = new ShopwareClient({ apiUrl, clientId, clientSecret });
+  const cfg = await loadConnectorConfig('shopware');
+  const client = new ShopwareClient({ apiUrl: cfg.SHOPWARE_API_URL, clientId: cfg.SHOPWARE_CLIENT_ID, clientSecret: cfg.SHOPWARE_CLIENT_SECRET });
   console.log('Fetching orders from Shopware…');
   const raw = await client.fetchAllOrders();
   console.log(`Fetched ${raw.length} raw orders.`);

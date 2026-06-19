@@ -2,6 +2,7 @@ import { MetaClient } from '../src/connectors/meta/client';
 import { normalizeInsights } from '../src/connectors/meta/connector';
 import { writeMetaAds } from '../src/connectors/meta/write';
 import { pool } from '../src/lib/db';
+import { loadConnectorConfig } from '../src/lib/credentials';
 
 function parseDays(argv: string[]): number {
   const i = argv.indexOf('--days');
@@ -10,15 +11,11 @@ function parseDays(argv: string[]): number {
 }
 
 async function main() {
-  const accessToken = process.env.META_ACCESS_TOKEN;
-  const adAccountId = process.env.META_AD_ACCOUNT_ID;
-  if (!accessToken || !adAccountId) {
-    throw new Error('Missing META_ACCESS_TOKEN / META_AD_ACCOUNT_ID in environment.');
-  }
-  const purchaseActionType = process.env.META_PURCHASE_ACTION_TYPE ?? 'purchase';
+  const cfg = await loadConnectorConfig('meta');
+  const purchaseActionType = cfg.META_PURCHASE_ACTION_TYPE ?? 'purchase';
   const days = parseDays(process.argv);
 
-  const client = new MetaClient(accessToken, adAccountId);
+  const client = new MetaClient(cfg.META_ACCESS_TOKEN, cfg.META_AD_ACCOUNT_ID);
   console.log(`Fetching Meta insights (last ${days} days)…`);
   const rows = await client.fetchInsights(days);
   console.log(`Fetched ${rows.length} day rows.`);

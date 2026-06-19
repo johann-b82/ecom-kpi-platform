@@ -25,6 +25,17 @@ export class Ga4Client {
     return new Ga4Client(propertyId, getToken);
   }
 
+  static fromCredentials(propertyId: string, credentials: object): Ga4Client {
+    const auth = new GoogleAuth({ credentials, scopes: ['https://www.googleapis.com/auth/analytics.readonly'] });
+    const getToken: TokenProvider = async () => {
+      const client = await auth.getClient();
+      const token = await client.getAccessToken();
+      if (!token.token) throw new Error('GA4 auth: no access token returned');
+      return token.token;
+    };
+    return new Ga4Client(propertyId, getToken);
+  }
+
   async runReport(days: number): Promise<Ga4Report> {
     const token = await this.getToken();
     const body = {

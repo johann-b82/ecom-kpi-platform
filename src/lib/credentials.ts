@@ -46,3 +46,14 @@ export async function listStatus(): Promise<CredentialStatus[]> {
   }
   return out;
 }
+
+export async function loadConnectorConfig(connector: Connector): Promise<Record<string, string>> {
+  const cfg = await getCredentials(connector);
+  const missing = CONNECTOR_FIELDS[connector]
+    .filter((f) => !f.optional && !cfg[f.field])
+    .map((f) => f.field);
+  if (missing.length > 0) {
+    throw new Error(`${connector}-Credentials fehlen (${missing.join(', ')}) — bitte auf /setup hinterlegen.`);
+  }
+  return cfg;
+}
