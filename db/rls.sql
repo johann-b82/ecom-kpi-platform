@@ -25,8 +25,10 @@ ALTER TABLE subscribers ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS authenticated_read ON subscribers;
 CREATE POLICY authenticated_read ON subscribers FOR SELECT TO authenticated USING (true);
 
--- Credentials: RLS on, NO anon/authenticated policy → only privileged (postgres/service_role) access.
+-- Credentials + app settings: RLS on, NO anon/authenticated policy → only
+-- privileged (postgres/service_role) access. Read/written server-side via pg.
 ALTER TABLE connector_credentials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 
 -- Drill-down aggregation (PostgREST can't GROUP BY): SECURITY INVOKER so RLS applies.
 CREATE OR REPLACE FUNCTION daily_series(p_metric_key text, p_start date, p_end date)
