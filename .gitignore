@@ -5,3 +5,7 @@ node_modules/
 *.log
 .worktrees/
 data/
+
+# Supabase self-hosted stack secrets and data
+infra/supabase/.env
+infra/supabase/volumes/db/data/
