@@ -23,7 +23,7 @@ export default async function PhasePage({ params }: { params: { phase: string } 
 
   return (
     <main className="mx-auto max-w-6xl p-6">
-      <Link href="/" className="text-sm text-neutral-900 dark:text-neutral-100">← Zur Übersicht</Link>
+      <Link href="/" className="text-sm text-brand hover:text-brand-dark">← Zur Übersicht</Link>
       <h1 className="mt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">{meta.title} · {meta.subtitle}</h1>
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">

@@ -63,7 +63,7 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
               </div>
             ))}
           </div>
-          <button type="button" onClick={() => save(connector)} className="mt-3 rounded bg-neutral-900 dark:bg-white dark:text-neutral-900 px-3 py-1 text-sm text-white">Speichern</button>
+          <button type="button" onClick={() => save(connector)} className="mt-3 rounded bg-brand px-3 py-1 text-sm text-white">Speichern</button>
         </section>
       ))}
     </div>
