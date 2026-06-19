@@ -27,7 +27,7 @@ export default async function SetupPage() {
   return (
     <main className="mx-auto max-w-3xl p-6">
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">⚙ Einstellungen</h1>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Einstellungen</h1>
         <Link href="/" className="text-sm text-brand hover:text-brand-dark">← Zum Dashboard</Link>
       </header>
       <div className="space-y-10">
