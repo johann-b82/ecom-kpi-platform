@@ -63,7 +63,7 @@ export function UserMenu({ email }: { email?: string | null }) {
             </div>
           )}
           <a href="/setup" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
-            <GearIcon /> Setup
+            <GearIcon /> Einstellungen
           </a>
           <button type="button" role="menuitem" className={itemClass} onClick={() => setTheme(isDark ? 'light' : 'dark')}>
             <ThemeIcon dark={isDark} /> Theme wechseln
