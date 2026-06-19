@@ -56,7 +56,7 @@ Sync CLI (tsx) ─────────────────────�
 
 - Dashboard with **SEE/THINK/DO/CARE** columns, per‑KPI tooltips (calculation + data source), and a drill‑down per phase.
 - Date‑range filter (7 / 30 / 90 days) with German date formatting.
-- **Einstellungen** page: configure connector credentials (masked/encrypted) **and** branding — **logo, headline, subline and accent color** are editable and apply to the dashboard *and* the login screen.
+- **Einstellungen** page: manage **users** (create / delete / change password), configure connector credentials (masked/encrypted), and edit **branding** — **logo, headline, subline and accent color** apply to the dashboard *and* the login screen.
 - Light/dark theme toggle in a round avatar user menu.
 - Six connectors, each: `fetch → normalize → canonical dataset → transactional DB replace`.
 
@@ -133,9 +133,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 Each connector reads its credentials from the encrypted vault, fetches, normalizes to the canonical model (`daily_metrics`, `orders`, `customers`, `ad_spend`, `subscribers`) and replaces only its own source's rows in a transaction.
 
-## Auth & branding
+## Auth, users & branding
 
-- **Auth:** Supabase email/password. Public signup is disabled — create users with `npm run create-user`. A new user gets full read access (single shared access level; no roles).
+- **Auth:** Supabase email/password. Public signup is disabled. A signed‑in user gets full read access (single shared access level; no roles).
+- **User management:** **Einstellungen → Benutzer** lists all users and lets any signed‑in user **create** them (email + password), **delete** them, and **change passwords** — via a gated `/api/users` route using the Supabase admin API (service‑role key, **server‑only**). Self‑deletion is blocked to avoid lock‑out. `npm run create-user` seeds the very first user from `LOCAL_USER_EMAIL`/`LOCAL_USER_PASSWORD`.
 - **Branding:** logo (image upload, stored as a data URL), headline, subline and accent color are editable in **Einstellungen → Branding** and stored in the `app_settings` table. They are read server‑side and apply to both the dashboard and the (unauthenticated) login screen.
 
 ## Production deployment
