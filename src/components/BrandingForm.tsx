@@ -69,8 +69,7 @@ export function BrandingForm({ initial }: { initial: Branding }) {
           <span className="text-sm text-neutral-600 dark:text-neutral-400">{color}</span>
         </div>
         {/* Save */}
-        <div />
-        <div className="flex items-center gap-3">
+        <div className="col-span-2 flex items-center gap-3">
           <button type="button" onClick={save} disabled={busy} className="rounded bg-brand px-3 py-1 text-sm text-white disabled:opacity-50">
             Speichern
           </button>
