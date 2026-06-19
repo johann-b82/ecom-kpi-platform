@@ -4,8 +4,7 @@ import { addDays } from '@/lib/dates';
 import { PhaseColumn } from '@/components/PhaseColumn';
 import { Filters } from '@/components/Filters';
 import { createClient } from '@/lib/supabase/server';
-import { SignOutButton } from '@/components/SignOutButton';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { UserMenu } from '@/components/UserMenu';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,9 +30,7 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
         </div>
         <div className="flex items-center gap-4">
           <Filters />
-          <a href="/setup" className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">⚙ Setup</a>
-          <ThemeToggle />
-          <SignOutButton email={user?.email} />
+          <UserMenu email={user?.email} />
         </div>
       </header>
       <div className="flex gap-4">
