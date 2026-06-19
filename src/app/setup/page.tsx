@@ -4,11 +4,16 @@ import { CONNECTOR_FIELDS, CONNECTORS } from '@/lib/connector-fields';
 import { CredentialsForm, type FieldView } from '@/components/CredentialsForm';
 import { BrandingForm } from '@/components/BrandingForm';
 import { getBranding } from '@/lib/settings';
+import { UsersForm } from '@/components/UsersForm';
+import { listUsers } from '@/lib/users';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SetupPage() {
   const branding = await getBranding();
+  const users = await listUsers();
+  const { data: { user: currentUser } } = await createClient().auth.getUser();
   const status = await listStatus();
   const fields: FieldView[] = [];
   for (const connector of CONNECTORS) {
@@ -27,6 +32,7 @@ export default async function SetupPage() {
       </header>
       <div className="space-y-10">
         <BrandingForm initial={branding} />
+        <UsersForm users={users} currentUserId={currentUser?.id} />
         <div>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Verbindungen</h2>
           <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
