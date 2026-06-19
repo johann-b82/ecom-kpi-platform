@@ -25,7 +25,7 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
           <span className="h-8 w-px bg-neutral-300 dark:bg-neutral-700" />
           <div>
             <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">Unified Data Platform</h1>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">Steuerung entlang der Customer Journey</p>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">Own the core</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
