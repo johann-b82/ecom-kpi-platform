@@ -20,13 +20,19 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
   return (
     <main className="mx-auto max-w-7xl p-6">
       <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">KPI-Dashboard · SEE–THINK–DO–CARE</h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">Steuerung entlang der Customer Journey · {range.start} – {range.end}</p>
+        <div className="flex items-center gap-3">
+          <span className="text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-neutral-100">
+            BRYX<sup className="text-[0.6rem] font-bold">®</sup>
+          </span>
+          <span className="h-8 w-px bg-neutral-300 dark:bg-neutral-700" />
+          <div>
+            <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">KPI-Dashboard · SEE–THINK–DO–CARE</h1>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400">Steuerung entlang der Customer Journey · {range.start} – {range.end}</p>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <Filters />
-          <a href="/setup" className="text-sm text-neutral-600 hover:text-emerald-600 dark:text-neutral-400 dark:hover:text-emerald-400">⚙ Setup</a>
+          <a href="/setup" className="text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">⚙ Setup</a>
           <ThemeToggle />
           <SignOutButton email={user?.email} />
         </div>
