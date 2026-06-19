@@ -3,6 +3,8 @@ import { computeKpis } from '@/kpi/index';
 import { addDays } from '@/lib/dates';
 import { PhaseColumn } from '@/components/PhaseColumn';
 import { Filters } from '@/components/Filters';
+import { auth } from '@/auth';
+import { SignOutButton } from '@/components/SignOutButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +12,7 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
   const days = [7, 30, 90].includes(Number(searchParams.days)) ? Number(searchParams.days) : 30;
   const end = new Date().toISOString().slice(0, 10);
   const range = { start: addDays(end, -(days - 1)), end };
+  const session = await auth();
   const phases = computeKpis(await loadDataset(), range);
 
   return (
@@ -22,6 +25,7 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
         <div className="flex items-center gap-4">
           <Filters />
           <a href="/setup" className="text-sm text-neutral-400 hover:text-emerald-400">⚙ Setup</a>
+          <SignOutButton email={session?.user?.email} />
         </div>
       </header>
       <div className="flex gap-4">
