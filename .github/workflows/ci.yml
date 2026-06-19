@@ -25,6 +25,7 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgres://kpi:kpi@localhost:5432/kpi
+      AUTH_SECRET: ci-dummy-secret-for-build
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
