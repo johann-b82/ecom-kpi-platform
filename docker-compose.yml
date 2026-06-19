@@ -6,6 +6,10 @@ services:
       POSTGRES_PASSWORD: kpi
       POSTGRES_DB: kpi
     ports: ["5432:5432"]
+    # Persist Postgres data in a local directory so it survives container
+    # recreation and can be backed up by copying ./data/postgres.
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U kpi"]
       interval: 3s
