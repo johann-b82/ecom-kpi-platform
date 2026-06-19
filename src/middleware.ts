@@ -37,5 +37,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!login(?:/|$)|_next/static|_next/image|favicon.ico).*)'],
+  // Exclude the login route, Next internals, and static asset files (public/)
+  // — otherwise unauthenticated requests for e.g. /bryx-logo.svg get redirected
+  // to /login and the asset (the logo on the login screen) fails to load.
+  matcher: ['/((?!login(?:/|$)|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpe?g|gif|webp|ico|woff2?)).*)'],
 };
