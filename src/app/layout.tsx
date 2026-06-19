@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 
 const roboto = Roboto({ subsets: ['latin'], weight: ['400', '500', '700'], variable: '--font-roboto', display: 'swap' });
 
-export const metadata = { title: 'KPI-Dashboard · SEE–THINK–DO–CARE' };
+export const metadata = { title: 'Unified Data Plattform' };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
