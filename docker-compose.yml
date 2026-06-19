@@ -1,28 +1,20 @@
+# The Supabase stack (db, auth, rest, studio, …) runs separately via
+# infra/supabase (docker compose up -d). For local dev, prefer running the
+# Next.js app on the host (npm run dev) and connecting to Supabase services
+# at localhost:8000 (Kong/API) and localhost:5432 (Postgres directly).
 services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: kpi
-      POSTGRES_PASSWORD: kpi
-      POSTGRES_DB: kpi
-    ports: ["5432:5432"]
-    # Persist Postgres data in a local directory so it survives container
-    # recreation and can be backed up by copying ./data/postgres.
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kpi"]
-      interval: 3s
-      timeout: 3s
-      retries: 10
   app:
     build: .
     environment:
-      DATABASE_URL: postgres://kpi:kpi@db:5432/kpi
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_SSL: ${DATABASE_SSL:-}
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      CREDENTIALS_KEY: ${CREDENTIALS_KEY}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports: ["3000:3000"]
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - .:/app
       - /app/node_modules
