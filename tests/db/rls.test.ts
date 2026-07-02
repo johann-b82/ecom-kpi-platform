@@ -34,4 +34,14 @@ describe('RLS on KPI tables', () => {
       c.release();
     }
   });
+  it('authenticated is denied on oauth_connections', async () => {
+    const c = await pool.connect();
+    try {
+      await c.query('SET ROLE authenticated');
+      await expect(c.query('SELECT count(*) FROM oauth_connections')).rejects.toThrow(/permission denied/i);
+    } finally {
+      await c.query('RESET ROLE');
+      c.release();
+    }
+  });
 });

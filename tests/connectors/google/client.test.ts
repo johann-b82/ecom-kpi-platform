@@ -59,3 +59,17 @@ describe('GoogleAdsClient.search', () => {
     await expect(client.search(7)).rejects.toThrow(/searchStream failed: 403/);
   });
 });
+
+describe('GoogleAdsClient with injected token provider (OAuth path)', () => {
+  it('uses the token provider instead of the refresh grant', async () => {
+    const tokenProvider = vi.fn().mockResolvedValue('OAUTH_AT');
+    const stream = [{ results: [{ segments: { date: '2026-01-01' }, metrics: { costMicros: '1' } }] }];
+    const fetchMock = vi.fn().mockResolvedValueOnce(res(stream));
+    const client = new GoogleAdsClient(config, fetchMock as unknown as typeof fetch, tokenProvider);
+    await client.search(30);
+    expect(tokenProvider).toHaveBeenCalledOnce();
+    // Only the searchStream call — no token endpoint round-trip.
+    expect(fetchMock.mock.calls[0][0]).toContain('googleAds:searchStream');
+    expect((fetchMock.mock.calls[0][1] as RequestInit).headers).toMatchObject({ Authorization: 'Bearer OAUTH_AT' });
+  });
+});
