@@ -23,7 +23,7 @@ export default async function SetupPage() {
       const st = status.find((s) => s.connector === connector && s.field === f.field)
         ?? { isSet: false, updatedAt: null as string | null };
       const value = !f.secret && st.isSet ? (await getCredential(connector, f.field)) ?? undefined : undefined;
-      fields.push({ connector, field: f.field, label: f.label, secret: f.secret, optional: f.optional, isSet: st.isSet, updatedAt: st.updatedAt, value });
+      fields.push({ connector, field: f.field, label: f.label, secret: f.secret, optional: f.optional, oauth: f.oauth, isSet: st.isSet, updatedAt: st.updatedAt, value });
     }
   }
   return (

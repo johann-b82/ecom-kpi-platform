@@ -11,7 +11,7 @@ export async function GET() {
     for (const f of CONNECTOR_FIELDS[connector]) {
       const st = status.find((s) => s.connector === connector && s.field === f.field) ?? { isSet: false, updatedAt: undefined };
       const value = !f.secret && st.isSet ? (await getCredential(connector, f.field)) ?? undefined : undefined;
-      fields.push({ connector, field: f.field, label: f.label, secret: f.secret, optional: f.optional, isSet: st.isSet, updatedAt: st.updatedAt, value });
+      fields.push({ connector, field: f.field, label: f.label, secret: f.secret, optional: f.optional, oauth: f.oauth, isSet: st.isSet, updatedAt: st.updatedAt, value });
     }
   }
   return NextResponse.json({ fields });

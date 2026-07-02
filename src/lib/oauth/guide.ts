@@ -44,9 +44,10 @@ const COPY: Record<ProviderKey, ProviderCopy> = {
 };
 
 function callbackUrls(key: ProviderKey): string {
+  // One URL per line (rendered with whitespace-pre-line) so the long strings
+  // read as a list and wrap cleanly inside the narrow guide panel.
   return (
-    `http://localhost:3000/api/oauth/${key}/callback` +
-    ' und ' +
+    `http://localhost:3000/api/oauth/${key}/callback\n` +
     `https://budp.lumeapps.de/api/oauth/${key}/callback`
   );
 }
@@ -81,8 +82,8 @@ export function guideSteps(status: OAuthProviderStatus): GuideStep[] {
     {
       title: 'Weiterleitungs-Adressen eintragen',
       body:
-        `Trage beim Anbieter beide Rücksprung-Adressen ein, sonst verweigert er die Verbindung: ` +
-        `${callbackUrls(status.key)}.`,
+        `Trage beim Anbieter beide Rücksprung-Adressen ein, sonst verweigert er die Verbindung:\n` +
+        `${callbackUrls(status.key)}`,
     },
     {
       title: 'Zugangsdaten hier eintragen',

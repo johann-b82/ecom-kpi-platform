@@ -96,7 +96,7 @@ export function SetupGuide({ oauth }: { oauth: OAuthProviderStatus[] }) {
                 <span className="text-neutral-400">{isOpen ? '−' : '+'}</span>
               </button>
               {isOpen && (
-                <p className="pb-3 pl-9 pr-2 leading-relaxed text-neutral-600 dark:text-neutral-400">
+                <p className="whitespace-pre-line break-words pb-3 pl-9 pr-2 leading-relaxed text-neutral-600 dark:text-neutral-400 [overflow-wrap:anywhere]">
                   {step.body}
                 </p>
               )}
