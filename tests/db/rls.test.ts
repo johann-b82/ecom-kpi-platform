@@ -44,4 +44,17 @@ describe('RLS on KPI tables', () => {
       c.release();
     }
   });
+
+  for (const t of ['groups', 'group_members', 'group_app_access']) {
+    it(`authenticated is denied on ${t}`, async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('SET ROLE authenticated');
+        await expect(c.query(`SELECT count(*) FROM ${t}`)).rejects.toThrow(/permission denied/i);
+      } finally {
+        await c.query('RESET ROLE');
+        c.release();
+      }
+    });
+  }
 });
