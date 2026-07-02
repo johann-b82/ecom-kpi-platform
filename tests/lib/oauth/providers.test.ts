@@ -30,7 +30,8 @@ describe('google provider', () => {
     expect(typeof token.expiresAt).toBe('number');
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://oauth2.googleapis.com/token');
-    const body = JSON.parse((init as RequestInit).body as string);
+    expect((init as RequestInit).headers).toMatchObject({ 'Content-Type': 'application/x-www-form-urlencoded' });
+    const body = Object.fromEntries(new URLSearchParams((init as RequestInit).body as string));
     expect(body).toMatchObject({ grant_type: 'authorization_code', code: 'CODE', client_id: 'CID', client_secret: 'SEC', redirect_uri: REDIRECT });
   });
 
@@ -40,7 +41,7 @@ describe('google provider', () => {
       { accessToken: 'old', refreshToken: 'RT' }, creds, fetchMock as unknown as typeof fetch,
     );
     expect(token).toMatchObject({ accessToken: 'AT2', refreshToken: 'RT' });
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    const body = Object.fromEntries(new URLSearchParams((fetchMock.mock.calls[0][1] as RequestInit).body as string));
     expect(body).toMatchObject({ grant_type: 'refresh_token', refresh_token: 'RT', client_id: 'CID', client_secret: 'SEC' });
   });
 

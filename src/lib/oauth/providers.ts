@@ -1,4 +1,4 @@
-import type { AppCredentials, OAuthProvider, ProviderKey, TokenSet } from './types';
+import type { AppCredentials, OAuthProvider, ProviderKey } from './types';
 
 // Shared helper: exchange a POST body at a token endpoint and return parsed JSON.
 async function postToken(
@@ -6,11 +6,13 @@ async function postToken(
   url: string,
   body: Record<string, string>,
   fetchImpl: typeof fetch,
+  encoding: 'form' | 'json' = 'json',
 ): Promise<Record<string, unknown>> {
+  const isForm = encoding === 'form';
   const res = await fetchImpl(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: { 'Content-Type': isForm ? 'application/x-www-form-urlencoded' : 'application/json' },
+    body: isForm ? new URLSearchParams(body).toString() : JSON.stringify(body),
   });
   if (!res.ok) {
     throw new Error(`${provider} token endpoint ${res.status}: ${await res.text()}`);
@@ -39,7 +41,6 @@ const google: OAuthProvider = {
       response_type: 'code',
       access_type: 'offline',
       prompt: 'consent',
-      include_granted_scopes: 'true',
       scope: this.scopes.join(' '),
       state,
     });
@@ -52,7 +53,7 @@ const google: OAuthProvider = {
       client_id: creds.clientId,
       client_secret: creds.clientSecret,
       redirect_uri: redirectUri,
-    }, fetchImpl);
+    }, fetchImpl, 'form');
     return {
       accessToken: String(json.access_token),
       refreshToken: json.refresh_token ? String(json.refresh_token) : undefined,
@@ -66,7 +67,7 @@ const google: OAuthProvider = {
       refresh_token: current.refreshToken ?? '',
       client_id: creds.clientId,
       client_secret: creds.clientSecret,
-    }, fetchImpl);
+    }, fetchImpl, 'form');
     return {
       accessToken: String(json.access_token),
       refreshToken: current.refreshToken, // Google does not re-issue it
