@@ -77,7 +77,52 @@ const google: OAuthProvider = {
   },
 };
 
-export const PROVIDERS: Partial<Record<ProviderKey, OAuthProvider>> = { google };
+const META_VERSION = 'v21.0';
+
+const meta: OAuthProvider = {
+  key: 'meta',
+  label: 'Meta',
+  connectors: ['meta'],
+  scopes: ['ads_read'],
+  appCredentialSource: { connector: 'meta', idField: 'META_OAUTH_APP_ID', secretField: 'META_OAUTH_APP_SECRET' },
+  authorizeUrl(redirectUri, state, creds) {
+    const p = new URLSearchParams({
+      client_id: creds.clientId,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: this.scopes.join(','),
+      state,
+    });
+    return `https://www.facebook.com/${META_VERSION}/dialog/oauth?${p.toString()}`;
+  },
+  async exchangeCode(code, redirectUri, creds, fetchImpl = fetch) {
+    // 1) code → short-lived token (GET with query params)
+    const shortUrl = new URL(`https://graph.facebook.com/${META_VERSION}/oauth/access_token`);
+    shortUrl.search = new URLSearchParams({
+      client_id: creds.clientId, client_secret: creds.clientSecret, redirect_uri: redirectUri, code,
+    }).toString();
+    const shortRes = await fetchImpl(shortUrl.toString());
+    if (!shortRes.ok) throw new Error(`meta token endpoint ${shortRes.status}: ${await shortRes.text()}`);
+    const shortJson = (await shortRes.json()) as Record<string, unknown>;
+
+    // 2) short-lived → long-lived (~60 days)
+    const longUrl = new URL(`https://graph.facebook.com/${META_VERSION}/oauth/access_token`);
+    longUrl.search = new URLSearchParams({
+      grant_type: 'fb_exchange_token', client_id: creds.clientId, client_secret: creds.clientSecret,
+      fb_exchange_token: String(shortJson.access_token),
+    }).toString();
+    const longRes = await fetchImpl(longUrl.toString());
+    if (!longRes.ok) throw new Error(`meta token exchange ${longRes.status}: ${await longRes.text()}`);
+    const longJson = (await longRes.json()) as Record<string, unknown>;
+    return {
+      accessToken: String(longJson.access_token),
+      expiresAt: expiryFrom(longJson, Date.now()),
+    };
+  },
+  // no refresh — user must reconnect on expiry
+};
+
+export const PROVIDERS: Partial<Record<ProviderKey, OAuthProvider>> = { google, meta };
 
 export const PROVIDER_KEYS = Object.keys(PROVIDERS) as ProviderKey[];
 

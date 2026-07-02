@@ -56,3 +56,23 @@ describe('google provider', () => {
     expect(getProvider('google')?.key).toBe('google');
   });
 });
+
+describe('meta provider', () => {
+  const REDIRECT = 'https://budp.lumeapps.de/api/oauth/meta/callback';
+  it('authorize URL targets the FB dialog with ads_read', () => {
+    const url = new URL(PROVIDERS.meta!.authorizeUrl(REDIRECT, 'S', creds));
+    expect(url.origin + url.pathname).toBe('https://www.facebook.com/v21.0/dialog/oauth');
+    expect(url.searchParams.get('scope')).toBe('ads_read');
+    expect(url.searchParams.get('state')).toBe('S');
+  });
+  it('exchangeCode exchanges code then long-lived token, no refresh token', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(res({ access_token: 'SHORT', expires_in: 3600 }))
+      .mockResolvedValueOnce(res({ access_token: 'LONG', expires_in: 5184000 }));
+    const token = await PROVIDERS.meta!.exchangeCode('C', REDIRECT, creds, fetchMock as unknown as typeof fetch);
+    expect(token.accessToken).toBe('LONG');
+    expect(token.refreshToken).toBeUndefined();
+    expect(token.expiresAt).toBeGreaterThan(Date.now());
+  });
+  it('has no refresh method', () => { expect(PROVIDERS.meta!.refresh).toBeUndefined(); });
+});

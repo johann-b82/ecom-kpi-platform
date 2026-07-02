@@ -23,7 +23,9 @@ export const CONNECTOR_FIELDS: Record<Connector, FieldDef[]> = {
     { field: 'KLAVIYO_UNSUB_METRIC', label: 'Unsub-Metrik', secret: false, optional: true },
   ],
   meta: [
-    { field: 'META_ACCESS_TOKEN', label: 'Access Token', secret: true, optional: false },
+    { field: 'META_OAUTH_APP_ID', label: 'OAuth App ID', secret: false, optional: true },
+    { field: 'META_OAUTH_APP_SECRET', label: 'OAuth App Secret', secret: true, optional: true },
+    { field: 'META_ACCESS_TOKEN', label: 'Access Token (Fallback)', secret: true, optional: true },
     { field: 'META_AD_ACCOUNT_ID', label: 'Ad Account ID', secret: false, optional: false },
     { field: 'META_PURCHASE_ACTION_TYPE', label: 'Purchase Action Type', secret: false, optional: true },
   ],
