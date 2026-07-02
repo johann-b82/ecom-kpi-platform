@@ -11,8 +11,16 @@ const q = () => vi.mocked(pool.query);
 beforeEach(() => { q().mockReset(); });
 
 describe('getUserAccess', () => {
-  it('grants full admin when the user is in no group (grandfather)', async () => {
-    q().mockResolvedValue({ rows: [] } as never);
+  it('no membership + groups exist → no access (grandfather only when system empty)', async () => {
+    q().mockResolvedValueOnce({ rows: [] } as never)          // membership query
+     .mockResolvedValueOnce({ rows: [{ n: 2 }] } as never);   // group count
+    const a = await getUserAccess('u1');
+    expect(a).toEqual({ apps: {}, isAdmin: false });
+  });
+
+  it('no membership + zero groups → full admin (fresh install)', async () => {
+    q().mockResolvedValueOnce({ rows: [] } as never)
+     .mockResolvedValueOnce({ rows: [{ n: 0 }] } as never);
     const a = await getUserAccess('u1');
     expect(a.isAdmin).toBe(true);
     expect(a.apps).toEqual({ dashboard: 'edit', brickpm: 'edit' });

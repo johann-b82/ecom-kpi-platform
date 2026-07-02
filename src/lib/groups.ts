@@ -26,7 +26,12 @@ export async function getUserAccess(userId: string): Promise<UserAccess> {
       WHERE m.user_id = $1`,
     [userId],
   );
-  if (res.rows.length === 0) return fullAdmin(); // grandfather: no memberships → full admin
+  if (res.rows.length === 0) {
+    // No memberships. Grandfather full admin ONLY when the system has no groups at all
+    // (fresh install); otherwise the user simply has no access.
+    const c = await pool.query<{ n: number }>('SELECT count(*)::int AS n FROM groups');
+    return c.rows[0].n === 0 ? fullAdmin() : { apps: {}, isAdmin: false };
+  }
 
   const apps: Partial<Record<AppKey, Right>> = {};
   let isAdmin = false;

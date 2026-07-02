@@ -94,3 +94,36 @@ INSERT INTO group_app_access (group_id, app, permission)
   SELECT g.id, a.app, 'edit' FROM groups g, (VALUES ('dashboard'),('brickpm')) AS a(app)
   WHERE g.name = 'Alle Nutzer'
   ON CONFLICT (group_id, app) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS bpm_products (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, cat TEXT, series TEXT, status TEXT,
+  year INT, parts INT, uvp DOUBLE PRECISION, price DOUBLE PRECISION, cost DOUBLE PRECISION,
+  t_mgn DOUBLE PRECISION, m_mgn DOUBLE PRECISION, stock INT, min_stock INT,
+  valid_from DATE, valid_to DATE, channel TEXT, succ TEXT, descr TEXT
+);
+CREATE TABLE IF NOT EXISTS bpm_promotions (
+  id TEXT PRIMARY KEY, name TEXT, product_id TEXT, type TEXT, start_date DATE, end_date DATE,
+  target_units INT, sold INT, target_rev DOUBLE PRECISION, exp_mgn DOUBLE PRECISION,
+  status TEXT, note TEXT
+);
+CREATE TABLE IF NOT EXISTS bpm_goodies (
+  id TEXT PRIMARY KEY, name TEXT, type TEXT, cost DOUBLE PRECISION, price DOUBLE PRECISION,
+  products TEXT[], min_cart DOUBLE PRECISION, valid_from DATE, valid_to DATE, status TEXT,
+  mgn_effect DOUBLE PRECISION, comment TEXT
+);
+CREATE TABLE IF NOT EXISTS bpm_competitors (
+  id TEXT PRIMARY KEY, product_id TEXT, competitor TEXT, comp_product TEXT,
+  own_price DOUBLE PRECISION, comp_price DOUBLE PRECISION, avail BOOLEAN, date DATE, rec TEXT
+);
+CREATE TABLE IF NOT EXISTS bpm_notifications (
+  id TEXT PRIMARY KEY, type TEXT, priority TEXT, ref_id TEXT, msg TEXT, action TEXT,
+  status TEXT, due DATE, role TEXT, target TEXT
+);
+CREATE TABLE IF NOT EXISTS bpm_integrations (
+  id TEXT PRIMARY KEY, type TEXT, system TEXT, purpose TEXT, objects TEXT[], dir TEXT,
+  status TEXT, ep TEXT, last_sync TEXT
+);
+CREATE TABLE IF NOT EXISTS bpm_audit_log (
+  id BIGSERIAL PRIMARY KEY, ts TIMESTAMPTZ NOT NULL DEFAULT now(),
+  actor TEXT, action TEXT NOT NULL, detail TEXT
+);
