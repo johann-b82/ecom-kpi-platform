@@ -9,3 +9,6 @@ data/
 # Supabase self-hosted stack secrets and data
 infra/supabase/.env
 infra/supabase/volumes/db/data/
+
+# TypeScript incremental build info (generated)
+tsconfig.tsbuildinfo
