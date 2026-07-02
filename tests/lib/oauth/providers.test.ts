@@ -73,6 +73,16 @@ describe('meta provider', () => {
     expect(token.accessToken).toBe('LONG');
     expect(token.refreshToken).toBeUndefined();
     expect(token.expiresAt).toBeGreaterThan(Date.now());
+
+    // Step 1: code → short-lived token at the FB token endpoint.
+    const step1 = new URL(fetchMock.mock.calls[0][0] as string);
+    expect(step1.origin + step1.pathname).toBe('https://graph.facebook.com/v21.0/oauth/access_token');
+    expect(step1.searchParams.get('code')).toBe('C');
+    expect(step1.searchParams.get('redirect_uri')).toBe(REDIRECT);
+    // Step 2: short-lived → long-lived, threading step 1's token into fb_exchange_token.
+    const step2 = new URL(fetchMock.mock.calls[1][0] as string);
+    expect(step2.searchParams.get('grant_type')).toBe('fb_exchange_token');
+    expect(step2.searchParams.get('fb_exchange_token')).toBe('SHORT');
   });
   it('has no refresh method', () => { expect(PROVIDERS.meta!.refresh).toBeUndefined(); });
 });
