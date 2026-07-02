@@ -57,3 +57,13 @@ CREATE TABLE IF NOT EXISTS app_settings (
   value      TEXT NOT NULL,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS oauth_connections (
+  provider          TEXT PRIMARY KEY,
+  refresh_token_enc TEXT,
+  access_token_enc  TEXT,
+  expires_at        TIMESTAMPTZ,
+  scope             TEXT,
+  account_label     TEXT,
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
