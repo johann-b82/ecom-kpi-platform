@@ -3,6 +3,7 @@ import { normalizeInsights } from '../src/connectors/meta/connector';
 import { writeMetaAds } from '../src/connectors/meta/write';
 import { pool } from '../src/lib/db';
 import { loadConnectorConfig } from '../src/lib/credentials';
+import { isConnected, getOAuthAccessToken } from '../src/lib/oauth/token';
 
 function parseDays(argv: string[]): number {
   const i = argv.indexOf('--days');
@@ -15,7 +16,10 @@ async function main() {
   const purchaseActionType = cfg.META_PURCHASE_ACTION_TYPE ?? 'purchase';
   const days = parseDays(process.argv);
 
-  const client = new MetaClient(cfg.META_ACCESS_TOKEN, cfg.META_AD_ACCOUNT_ID);
+  const accessToken = (await isConnected('meta'))
+    ? await getOAuthAccessToken('meta')
+    : cfg.META_ACCESS_TOKEN;
+  const client = new MetaClient(accessToken, cfg.META_AD_ACCOUNT_ID);
   console.log(`Fetching Meta insights (last ${days} days)…`);
   const rows = await client.fetchInsights(days);
   console.log(`Fetched ${rows.length} day rows.`);

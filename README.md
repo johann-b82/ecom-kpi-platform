@@ -133,6 +133,14 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 Each connector reads its credentials from the encrypted vault, fetches, normalizes to the canonical model (`daily_metrics`, `orders`, `customers`, `ad_spend`, `subscribers`) and replaces only its own source's rows in a transaction.
 
+### Connecting via OAuth
+
+For **Google** (GA4 **and** Google Ads — one authorization covers both), **Meta** and **TikTok**, credentials can be provided either by pasting tokens (the manual fields, kept as a **fallback**) or via a **"Mit … verbinden"** OAuth flow in **Einstellungen → Verbindungen**. The flow redirects to the provider's consent screen, exchanges the returned code server‑side, and stores the tokens **AES‑256‑GCM‑encrypted** in the `oauth_connections` table. At sync time each connector prefers a live OAuth token (refreshing it automatically where the provider supports refresh) and falls back to the manual token only when not connected.
+
+- Enter each provider's **OAuth client id/secret** (App ID/Secret) in *Einstellungen → Verbindungen* first — the "verbinden" button activates once they are set. Google reuses its existing Ads OAuth client id/secret.
+- Each provider's developer console must whitelist **both** callback URLs: `http://localhost:3000/api/oauth/<provider>/callback` and `https://budp.lumeapps.de/api/oauth/<provider>/callback` (`<provider>` = `google` / `meta` / `tiktok`).
+- **Meta** issues a ~60‑day long‑lived token with **no refresh** — when it expires the UI shows the expiry and you simply re‑connect. Google and TikTok tokens refresh automatically.
+
 ## Auth, users & branding
 
 - **Auth:** Supabase email/password. Public signup is disabled. A signed‑in user gets full read access (single shared access level; no roles).
@@ -168,7 +176,7 @@ So the day‑to‑day workflow is: merge to `main` → run `deploy.sh` on the se
 
 - **No secrets in the repo.** `.env` files are git‑ignored; only `.env.example` placeholders are committed. CI uses dummy values.
 - **Auth gate:** middleware validates the session with `getUser()` (server‑verified, not just the cookie). No unauthenticated path reaches a protected page or business API.
-- **RLS:** the five KPI tables allow `authenticated` read only; `anon` is denied. `connector_credentials` and `app_settings` have RLS enabled with **no** public policy — reachable only via the privileged server‑side connection.
+- **RLS:** the five KPI tables allow `authenticated` read only; `anon` is denied. `connector_credentials`, `app_settings` and `oauth_connections` have RLS enabled with **no** public policy — reachable only via the privileged server‑side connection.
 - **Vault:** connector secrets are AES‑256‑GCM encrypted; secret fields are never returned over the API and are masked in the UI.
 
 ## Testing & CI

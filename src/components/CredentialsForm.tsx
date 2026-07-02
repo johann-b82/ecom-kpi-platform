@@ -1,16 +1,21 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { formatDeDate } from '@/lib/dates';
 import { CONNECTOR_GROUPS, CONNECTOR_LABELS, type Connector } from '@/lib/connector-fields';
+import type { OAuthProviderStatus } from '@/lib/oauth/status';
 
 export interface FieldView {
   connector: string; field: string; label: string; secret: boolean; optional: boolean;
   isSet: boolean; updatedAt: string | null; value?: string;
 }
 
-export function CredentialsForm({ fields }: { fields: FieldView[] }) {
+export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; oauth?: OAuthProviderStatus[] }) {
   const router = useRouter();
+  const sp = useSearchParams();
+  const oauthMsg = sp.get('connected') ? `${sp.get('oauth')}: verbunden.`
+    : sp.get('disconnected') ? `${sp.get('oauth')}: getrennt.`
+    : sp.get('error') ? `${sp.get('oauth')}: Fehler — ${sp.get('error')}` : null;
   const [inputs, setInputs] = useState<Record<string, string>>(() => {
     const init: Record<string, string> = {};
     for (const f of fields) if (!f.secret && f.value) init[`${f.connector}:${f.field}`] = f.value;
@@ -37,6 +42,7 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
 
   return (
     <div className="space-y-10">
+      {oauthMsg && <p className="text-sm text-neutral-900 dark:text-neutral-100">{oauthMsg}</p>}
       {msg && <p className="text-sm text-neutral-900 dark:text-neutral-100">{msg}</p>}
       {CONNECTOR_GROUPS.map((group) => (
         <section key={group.title}>
@@ -45,6 +51,33 @@ export function CredentialsForm({ fields }: { fields: FieldView[] }) {
             {group.connectors.map((connector) => (
               <div key={connector} className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                 <h3 className="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{CONNECTOR_LABELS[connector]}</h3>
+                {(() => {
+                  const oc = oauth.find((o) => o.connectors.includes(connector as Connector));
+                  if (!oc) return null;
+                  return (
+                    <div className="mb-3 rounded-md border border-neutral-200 bg-neutral-50 p-3 text-sm dark:border-neutral-800 dark:bg-neutral-950">
+                      {oc.connected ? (
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-neutral-700 dark:text-neutral-300">
+                            ✓ Verbunden{oc.accountLabel ? ` (${oc.accountLabel})` : ''}
+                            {oc.expiresAt ? ` · läuft ab am ${formatDeDate(new Date(oc.expiresAt).toISOString())}` : ''}
+                          </span>
+                          <form method="post" action={`/api/oauth/${oc.key}/disconnect`}>
+                            <button className="text-brand hover:text-brand-dark" type="submit">Verbindung trennen</button>
+                          </form>
+                        </div>
+                      ) : oc.hasAppCreds ? (
+                        <a className="text-brand hover:text-brand-dark" href={`/api/oauth/${oc.key}/start`}>
+                          Mit {oc.label} verbinden →
+                        </a>
+                      ) : (
+                        <span className="text-neutral-500">
+                          OAuth Client ID/Secret unten hinterlegen, um „Mit {oc.label} verbinden" zu aktivieren.
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
                 <div className="space-y-3">
                   {fields.filter((f) => f.connector === connector).map((f) => (
               <div key={f.field} className="flex items-center gap-3">

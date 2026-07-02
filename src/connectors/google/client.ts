@@ -16,9 +16,11 @@ export class GoogleAdsClient {
   constructor(
     private readonly config: GoogleAdsConfig,
     private readonly fetchImpl: typeof fetch = fetch,
+    private readonly tokenProvider?: () => Promise<string>,
   ) {}
 
   async getAccessToken(): Promise<string> {
+    if (this.tokenProvider) return this.tokenProvider();
     const res = await this.fetchImpl('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
