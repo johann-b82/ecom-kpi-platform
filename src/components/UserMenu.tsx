@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 const itemClass =
   'flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800';
 
-export function UserMenu({ email }: { email?: string | null }) {
+export function UserMenu({ email, canBrickPM }: { email?: string | null; canBrickPM?: boolean }) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
