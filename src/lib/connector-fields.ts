@@ -15,7 +15,7 @@ export const CONNECTOR_FIELDS: Record<Connector, FieldDef[]> = {
   ],
   ga4: [
     { field: 'GA4_PROPERTY_ID', label: 'Property ID', secret: false, optional: false },
-    { field: 'GA4_SERVICE_ACCOUNT_JSON', label: 'Service Account JSON', secret: true, optional: false },
+    { field: 'GA4_SERVICE_ACCOUNT_JSON', label: 'Service Account JSON (Fallback)', secret: true, optional: true },
   ],
   klaviyo: [
     { field: 'KLAVIYO_API_KEY', label: 'Private API Key', secret: true, optional: false },
@@ -37,7 +37,7 @@ export const CONNECTOR_FIELDS: Record<Connector, FieldDef[]> = {
     { field: 'GOOGLE_ADS_DEVELOPER_TOKEN', label: 'Developer Token', secret: true, optional: false },
     { field: 'GOOGLE_ADS_CLIENT_ID', label: 'OAuth Client ID', secret: false, optional: false },
     { field: 'GOOGLE_ADS_CLIENT_SECRET', label: 'OAuth Client Secret', secret: true, optional: false },
-    { field: 'GOOGLE_ADS_REFRESH_TOKEN', label: 'Refresh Token', secret: true, optional: false },
+    { field: 'GOOGLE_ADS_REFRESH_TOKEN', label: 'Refresh Token (Fallback)', secret: true, optional: true },
     { field: 'GOOGLE_ADS_CUSTOMER_ID', label: 'Customer ID', secret: false, optional: false },
     { field: 'GOOGLE_ADS_LOGIN_CUSTOMER_ID', label: 'Login Customer ID', secret: false, optional: true },
   ],
