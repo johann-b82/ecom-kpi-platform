@@ -38,7 +38,7 @@ describe('RLS on KPI tables', () => {
     const c = await pool.connect();
     try {
       await c.query('SET ROLE authenticated');
-      await expect(c.query('SELECT count(*) FROM oauth_connections')).rejects.toThrow(/permission denied|does not exist/i);
+      await expect(c.query('SELECT count(*) FROM oauth_connections')).rejects.toThrow(/permission denied/i);
     } finally {
       await c.query('RESET ROLE');
       c.release();
