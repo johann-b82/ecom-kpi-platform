@@ -122,7 +122,54 @@ const meta: OAuthProvider = {
   // no refresh — user must reconnect on expiry
 };
 
-export const PROVIDERS: Partial<Record<ProviderKey, OAuthProvider>> = { google, meta };
+const TIKTOK_BASE = 'https://business-api.tiktok.com';
+
+function tiktokEnvelope(json: Record<string, unknown>, provider = 'tiktok'): Record<string, unknown> {
+  if (Number(json.code) !== 0) throw new Error(`${provider} token error code ${json.code}: ${json.message ?? ''}`);
+  return (json.data ?? {}) as Record<string, unknown>;
+}
+function tiktokExpiry(data: Record<string, unknown>, nowMs: number): number | undefined {
+  const secs = Number(data.access_token_expire_in);
+  return Number.isFinite(secs) ? nowMs + secs * 1000 : undefined;
+}
+
+const tiktok: OAuthProvider = {
+  key: 'tiktok',
+  label: 'TikTok',
+  connectors: ['tiktok'],
+  scopes: [],
+  appCredentialSource: { connector: 'tiktok', idField: 'TIKTOK_OAUTH_APP_ID', secretField: 'TIKTOK_OAUTH_APP_SECRET' },
+  authorizeUrl(redirectUri, state, creds) {
+    const p = new URLSearchParams({ app_id: creds.clientId, redirect_uri: redirectUri, state });
+    return `${TIKTOK_BASE}/portal/auth?${p.toString()}`;
+  },
+  async exchangeCode(code, _redirectUri, creds, fetchImpl = fetch) {
+    const data = tiktokEnvelope(await postToken(
+      'tiktok', `${TIKTOK_BASE}/open_api/v1.3/oauth2/access_token/`,
+      { app_id: creds.clientId, secret: creds.clientSecret, auth_code: code, grant_type: 'authorization_code' },
+      fetchImpl,
+    ));
+    return {
+      accessToken: String(data.access_token),
+      refreshToken: data.refresh_token ? String(data.refresh_token) : undefined,
+      expiresAt: tiktokExpiry(data, Date.now()),
+    };
+  },
+  async refresh(current, creds, fetchImpl = fetch) {
+    const data = tiktokEnvelope(await postToken(
+      'tiktok', `${TIKTOK_BASE}/open_api/v1.3/oauth2/refresh_token/`,
+      { app_id: creds.clientId, secret: creds.clientSecret, refresh_token: current.refreshToken ?? '', grant_type: 'refresh_token' },
+      fetchImpl,
+    ));
+    return {
+      accessToken: String(data.access_token),
+      refreshToken: data.refresh_token ? String(data.refresh_token) : current.refreshToken,
+      expiresAt: tiktokExpiry(data, Date.now()),
+    };
+  },
+};
+
+export const PROVIDERS: Partial<Record<ProviderKey, OAuthProvider>> = { google, meta, tiktok };
 
 export const PROVIDER_KEYS = Object.keys(PROVIDERS) as ProviderKey[];
 

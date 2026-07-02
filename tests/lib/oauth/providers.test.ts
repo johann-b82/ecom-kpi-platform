@@ -86,3 +86,24 @@ describe('meta provider', () => {
   });
   it('has no refresh method', () => { expect(PROVIDERS.meta!.refresh).toBeUndefined(); });
 });
+
+describe('tiktok provider', () => {
+  const REDIRECT = 'https://budp.lumeapps.de/api/oauth/tiktok/callback';
+  it('authorize URL carries app_id, redirect and state', () => {
+    const url = new URL(PROVIDERS.tiktok!.authorizeUrl(REDIRECT, 'S', creds));
+    expect(url.searchParams.get('app_id')).toBe('CID');
+    expect(url.searchParams.get('redirect_uri')).toBe(REDIRECT);
+    expect(url.searchParams.get('state')).toBe('S');
+  });
+  it('exchangeCode reads token from data envelope', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res({ code: 0, data: { access_token: 'AT', refresh_token: 'RT', access_token_expire_in: 86400 } }));
+    const token = await PROVIDERS.tiktok!.exchangeCode('C', REDIRECT, creds, fetchMock as unknown as typeof fetch);
+    expect(token).toMatchObject({ accessToken: 'AT', refreshToken: 'RT' });
+    expect(token.expiresAt).toBeGreaterThan(Date.now());
+  });
+  it('refresh uses refresh_token grant', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res({ code: 0, data: { access_token: 'AT2', refresh_token: 'RT2', access_token_expire_in: 86400 } }));
+    const token = await PROVIDERS.tiktok!.refresh!({ accessToken: 'old', refreshToken: 'RT' }, creds, fetchMock as unknown as typeof fetch);
+    expect(token).toMatchObject({ accessToken: 'AT2', refreshToken: 'RT2' });
+  });
+});

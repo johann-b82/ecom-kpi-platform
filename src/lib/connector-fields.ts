@@ -30,7 +30,9 @@ export const CONNECTOR_FIELDS: Record<Connector, FieldDef[]> = {
     { field: 'META_PURCHASE_ACTION_TYPE', label: 'Purchase Action Type', secret: false, optional: true },
   ],
   tiktok: [
-    { field: 'TIKTOK_ACCESS_TOKEN', label: 'Access Token', secret: true, optional: false },
+    { field: 'TIKTOK_OAUTH_APP_ID', label: 'OAuth App ID', secret: false, optional: true },
+    { field: 'TIKTOK_OAUTH_APP_SECRET', label: 'OAuth App Secret', secret: true, optional: true },
+    { field: 'TIKTOK_ACCESS_TOKEN', label: 'Access Token (Fallback)', secret: true, optional: true },
     { field: 'TIKTOK_ADVERTISER_ID', label: 'Advertiser ID', secret: false, optional: false },
     { field: 'TIKTOK_VALUE_METRIC', label: 'Value-Metrik', secret: false, optional: true },
     { field: 'TIKTOK_VIDEO_METRIC', label: 'Video-Metrik', secret: false, optional: true },
