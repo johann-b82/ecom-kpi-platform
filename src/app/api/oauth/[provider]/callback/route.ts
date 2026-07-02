@@ -32,11 +32,12 @@ export async function GET(request: Request, { params }: { params: { provider: st
   try {
     token = await provider.exchangeCode(code, redirectUriFor(request, provider.key), creds);
   } catch (e) {
-    return setupRedirect(request, `oauth=${provider.key}&error=${encodeURIComponent((e as Error).message)}`);
+    console.error('oauth exchange failed', provider.key, (e as Error).message);
+    return setupRedirect(request, `oauth=${provider.key}&error=exchange_failed`);
   }
   await saveConnection(provider.key, token);
 
   const res = setupRedirect(request, `oauth=${provider.key}&connected=1`);
-  res.cookies.set(STATE_COOKIE, '', { path: '/api/oauth', maxAge: 0 });
+  res.cookies.set(STATE_COOKIE, '', { httpOnly: true, sameSite: 'lax', path: '/api/oauth', maxAge: 0 });
   return res;
 }

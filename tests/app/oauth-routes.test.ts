@@ -76,4 +76,22 @@ describe('GET /api/oauth/[provider]/callback', () => {
     expect(saveConnection).toHaveBeenCalledWith('google', expect.objectContaining({ accessToken: 'AT', refreshToken: 'RT' }));
     vi.unstubAllGlobals();
   });
+
+  it('redirects to /setup with a sanitized error when the token exchange fails', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false, status: 400, json: async () => ({}), text: async () => 'invalid_grant: client_secret=SUPER_SECRET_VALUE',
+    } as Response);
+    vi.stubGlobal('fetch', fetchMock);
+    const res = await callback(
+      req('https://budp.lumeapps.de/api/oauth/google/callback?code=CODE&state=GOOD', 'oauth_state=GOOD'),
+      { params: { provider: 'google' } },
+    );
+    expect(res.status).toBe(307);
+    const location = res.headers.get('location')!;
+    expect(location).toMatch(/\/setup\?oauth=google&error=exchange_failed/);
+    expect(location).not.toContain('SUPER_SECRET_VALUE');
+    expect(location).not.toContain('invalid_grant');
+    expect(saveConnection).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
 });

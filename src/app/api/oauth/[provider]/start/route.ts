@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import { getProvider } from '@/lib/oauth/providers';
 import { loadAppCredentials } from '@/lib/oauth/token';
-import { redirectUriFor, STATE_COOKIE } from '@/lib/oauth/redirect';
+import { redirectUriFor, resolveOrigin, STATE_COOKIE } from '@/lib/oauth/redirect';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +21,7 @@ export async function GET(request: Request, { params }: { params: { provider: st
   res.cookies.set(STATE_COOKIE, state, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: !request.headers.get('host')?.startsWith('localhost'),
+    secure: resolveOrigin(request).proto === 'https',
     path: `/api/oauth`,
     maxAge: 600,
   });
