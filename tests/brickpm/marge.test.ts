@@ -67,4 +67,30 @@ describe('computeMarge', () => {
     expect(r.effPrice).toBeCloseTo(80, 5);
     expect(r.neededUnits).toBe(3);
   });
+
+  // Full decision table — the three mid-tier branches (marge between mMgn and tMgn).
+  it('recommends "Bundle statt Rabatt empfohlen" when marge >= mMgn+0.05', () => {
+    const r = computeMarge({ product: prod({ cost: 55, tMgn: 0.6, mMgn: 0.35 }), discPct: 0, discEur: 0, goodieCost: 0, targetRev: 100, mode: 'pct' });
+    expect(r.marge).toBeCloseTo(0.45, 5); // >= 0.40, < tMgn 0.6
+    expect(r.recommendation).toBe('Bundle statt Rabatt empfohlen');
+  });
+
+  it('recommends "Moderater Rabatt möglich" when mMgn+0.02 <= marge < mMgn+0.05', () => {
+    const r = computeMarge({ product: prod({ cost: 62, tMgn: 0.6, mMgn: 0.35 }), discPct: 0, discEur: 0, goodieCost: 0, targetRev: 100, mode: 'pct' });
+    expect(r.marge).toBeCloseTo(0.38, 5); // in [0.37, 0.40)
+    expect(r.recommendation).toBe('Moderater Rabatt möglich');
+  });
+
+  it('recommends "Abverkaufsaktion empfehlen" when mMgn <= marge < mMgn+0.02', () => {
+    const r = computeMarge({ product: prod({ cost: 64, tMgn: 0.6, mMgn: 0.35 }), discPct: 0, discEur: 0, goodieCost: 0, targetRev: 100, mode: 'pct' });
+    expect(r.marge).toBeCloseTo(0.36, 5); // in [0.35, 0.37)
+    expect(r.recommendation).toBe('Abverkaufsaktion empfehlen');
+  });
+
+  it('the goodie branch beats a mid-tier (Bundle) recommendation when goodieCost < disc', () => {
+    // effPrice=90, db=90-44.5-5=40.5 → marge=0.45 (would be "Bundle"), but goodieCost 5 < disc 10 → goodie wins.
+    const r = computeMarge({ product: prod({ cost: 44.5, tMgn: 0.6, mMgn: 0.35 }), discPct: 10, discEur: 0, goodieCost: 5, targetRev: 100, mode: 'pct' });
+    expect(r.marge).toBeCloseTo(0.45, 5);
+    expect(r.recommendation).toBe('Goodie statt Rabatt empfohlen');
+  });
 });
