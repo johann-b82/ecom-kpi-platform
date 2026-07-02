@@ -6,6 +6,7 @@ import { Filters } from '@/components/Filters';
 import { createClient } from '@/lib/supabase/server';
 import { UserMenu } from '@/components/UserMenu';
 import { BrandHeader } from '@/components/BrandHeader';
+import { getUserAccess } from '@/lib/groups';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,7 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
   const range = { start: addDays(end, -(days - 1)), end };
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const access = user ? await getUserAccess(user.id) : { apps: {}, isAdmin: false };
   const phases = computeKpis(await loadDataset(supabase), range);
 
   return (
@@ -23,7 +25,7 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
         <BrandHeader />
         <div className="flex items-center gap-4">
           <Filters range={range} />
-          <UserMenu email={user?.email} />
+          <UserMenu email={user?.email} canBrickPM={!!access.apps.brickpm} />
         </div>
       </header>
       <div className="flex gap-4">
