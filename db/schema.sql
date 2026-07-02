@@ -67,3 +67,30 @@ CREATE TABLE IF NOT EXISTS oauth_connections (
   account_label     TEXT,
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS groups (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       TEXT NOT NULL UNIQUE,
+  is_admin   BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS group_members (
+  group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  user_id  UUID NOT NULL,
+  PRIMARY KEY (group_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS group_app_access (
+  group_id   UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  app        TEXT NOT NULL,
+  permission TEXT NOT NULL CHECK (permission IN ('view','edit')),
+  PRIMARY KEY (group_id, app)
+);
+
+INSERT INTO groups (name, is_admin) VALUES ('Alle Nutzer', true)
+  ON CONFLICT (name) DO NOTHING;
+INSERT INTO group_app_access (group_id, app, permission)
+  SELECT g.id, a.app, 'edit' FROM groups g, (VALUES ('dashboard'),('brickpm')) AS a(app)
+  WHERE g.name = 'Alle Nutzer'
+  ON CONFLICT (group_id, app) DO NOTHING;
