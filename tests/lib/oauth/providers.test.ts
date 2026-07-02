@@ -9,7 +9,7 @@ const REDIRECT = 'https://budp.lumeapps.de/api/oauth/google/callback';
 
 describe('google provider', () => {
   it('builds an authorize URL with offline access, consent prompt and both scopes', () => {
-    const g = PROVIDERS.google;
+    const g = PROVIDERS.google!;
     const url = new URL(g.authorizeUrl(REDIRECT, 'STATE123', creds));
     expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
     expect(url.searchParams.get('client_id')).toBe('CID');
@@ -25,7 +25,7 @@ describe('google provider', () => {
 
   it('exchangeCode posts an authorization_code grant and normalizes the token', async () => {
     const fetchMock = vi.fn().mockResolvedValue(res({ access_token: 'AT', refresh_token: 'RT', expires_in: 3600, scope: 'x' }));
-    const token = await PROVIDERS.google.exchangeCode('CODE', REDIRECT, creds, fetchMock as unknown as typeof fetch);
+    const token = await PROVIDERS.google!.exchangeCode('CODE', REDIRECT, creds, fetchMock as unknown as typeof fetch);
     expect(token).toMatchObject({ accessToken: 'AT', refreshToken: 'RT', scope: 'x' });
     expect(typeof token.expiresAt).toBe('number');
     const [url, init] = fetchMock.mock.calls[0];
@@ -37,7 +37,7 @@ describe('google provider', () => {
 
   it('refresh posts a refresh_token grant and preserves the refresh token', async () => {
     const fetchMock = vi.fn().mockResolvedValue(res({ access_token: 'AT2', expires_in: 3600 }));
-    const token = await PROVIDERS.google.refresh!(
+    const token = await PROVIDERS.google!.refresh!(
       { accessToken: 'old', refreshToken: 'RT' }, creds, fetchMock as unknown as typeof fetch,
     );
     expect(token).toMatchObject({ accessToken: 'AT2', refreshToken: 'RT' });
@@ -47,7 +47,7 @@ describe('google provider', () => {
 
   it('exchangeCode throws on HTTP error', async () => {
     const fetchMock = vi.fn().mockResolvedValue(res({ error: 'invalid_grant' }, 400));
-    await expect(PROVIDERS.google.exchangeCode('C', REDIRECT, creds, fetchMock as unknown as typeof fetch))
+    await expect(PROVIDERS.google!.exchangeCode('C', REDIRECT, creds, fetchMock as unknown as typeof fetch))
       .rejects.toThrow(/google.*token.*400/i);
   });
 
