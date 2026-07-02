@@ -10,16 +10,21 @@ export function SetupShell({ oauth, children }: { oauth: OAuthProviderStatus[]; 
     <main className={`mx-auto p-6 ${show ? 'max-w-6xl' : 'max-w-3xl'}`}>
       <header className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Einstellungen</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setShow((v) => !v)}
             aria-expanded={show}
-            className="text-sm text-brand hover:text-brand-dark"
+            className="rounded-md border border-brand px-3 py-1.5 text-sm font-medium text-brand transition-colors hover:bg-brand hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             {show ? 'Setupbeschreibung ausblenden' : 'Setupbeschreibung einblenden'}
           </button>
-          <Link href="/" className="text-sm text-brand hover:text-brand-dark">← Zum Dashboard</Link>
+          <Link
+            href="/"
+            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-400 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+          >
+            ← Zum Dashboard
+          </Link>
         </div>
       </header>
       {show ? (
