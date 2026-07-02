@@ -15,7 +15,8 @@
     "sync:meta": "tsx scripts/sync-meta.ts",
     "sync:tiktok": "tsx scripts/sync-tiktok.ts",
     "sync:google": "tsx scripts/sync-google.ts",
-    "create-user": "tsx scripts/create-user.ts"
+    "create-user": "tsx scripts/create-user.ts",
+    "seed-groups": "tsx scripts/seed-groups.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

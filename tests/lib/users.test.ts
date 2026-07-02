@@ -34,7 +34,7 @@ describe('users admin', () => {
   });
 
   it('createUser passes email_confirm: true', async () => {
-    createUserMock.mockResolvedValue({ error: null });
+    createUserMock.mockResolvedValue({ data: { user: null }, error: null });
     const { createUser } = await import('@/lib/users');
     await createUser('n@x.de', 'secret');
     expect(createUserMock).toHaveBeenCalledWith({ email: 'n@x.de', password: 'secret', email_confirm: true });

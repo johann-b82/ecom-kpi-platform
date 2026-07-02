@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { addUserToDefaultGroup } from './groups';
 
 // Server-only Supabase admin client (service-role key). Never import into client code.
 function admin() {
@@ -24,8 +25,9 @@ export async function listUsers(): Promise<AppUser[]> {
 }
 
 export async function createUser(email: string, password: string): Promise<void> {
-  const { error } = await admin().auth.admin.createUser({ email, password, email_confirm: true });
+  const { data, error } = await admin().auth.admin.createUser({ email, password, email_confirm: true });
   if (error) throw new Error(error.message);
+  if (data.user) await addUserToDefaultGroup(data.user.id);
 }
 
 export async function deleteUser(id: string): Promise<void> {
