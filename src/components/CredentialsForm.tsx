@@ -7,7 +7,7 @@ import type { OAuthProviderStatus } from '@/lib/oauth/status';
 
 export interface FieldView {
   connector: string; field: string; label: string; secret: boolean; optional: boolean;
-  isSet: boolean; updatedAt: string | null; value?: string;
+  isSet: boolean; updatedAt: string | null; value?: string; oauth?: boolean;
 }
 
 export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; oauth?: OAuthProviderStatus[] }) {
@@ -38,6 +38,37 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
   async function remove(connector: string, field: string) {
     await fetch('/api/credentials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ connector, fields: { [field]: null } }) });
     router.refresh();
+  }
+
+  function renderField(f: FieldView) {
+    const key = k(f.connector, f.field);
+    return (
+      <div key={f.field} className="flex items-center gap-3">
+        <label className="w-56 text-sm text-neutral-700 dark:text-neutral-300">
+          {f.label}{f.optional && <span className="text-neutral-500"> (optional)</span>}
+        </label>
+        <input
+          className="flex-1 rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100"
+          type={f.secret && !show[key] ? 'password' : 'text'}
+          placeholder={f.secret && f.isSet ? `•••••••• (gesetzt am ${f.updatedAt ? formatDeDate(f.updatedAt) : ''})` : ''}
+          value={inputs[key] ?? ''}
+          onChange={(e) => setInputs({ ...inputs, [key]: e.target.value })}
+        />
+        {f.secret && (
+          <button
+            type="button"
+            aria-label={show[key] ? 'verbergen' : 'anzeigen'}
+            title={show[key] ? 'verbergen' : 'anzeigen'}
+            className="text-neutral-500 hover:text-brand"
+            onClick={() => setShow({ ...show, [key]: !show[key] })}
+          >
+            {show[key] ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        )}
+        <span className={`text-xs ${f.isSet ? 'text-emerald-600 dark:text-emerald-500' : 'text-neutral-500'}`}>{f.isSet ? 'gesetzt ✓' : 'nicht gesetzt'}</span>
+        {f.isSet && <button type="button" className="text-xs text-red-600 dark:text-red-400" onClick={() => remove(f.connector, f.field)}>Löschen</button>}
+      </div>
+    );
   }
 
   return (
@@ -72,41 +103,42 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
                         </a>
                       ) : (
                         <span className="text-neutral-500">
-                          OAuth Client ID/Secret unten hinterlegen, um „Mit {oc.label} verbinden" zu aktivieren.
+                          {(() => {
+                            const credConnector = oc.connectors.find((c) => fields.some((f) => f.connector === c && f.oauth));
+                            return credConnector && credConnector !== connector
+                              ? `Die OAuth-Zugangsdaten für ${oc.label} trägst du bei ${CONNECTOR_LABELS[credConnector as Connector]} ein (dieselbe ${oc.label}-Verbindung).`
+                              : `Trage unten die markierten OAuth-Zugangsdaten ein, um „Mit ${oc.label} verbinden" zu aktivieren.`;
+                          })()}
                         </span>
                       )}
                     </div>
                   );
                 })()}
-                <div className="space-y-3">
-                  {fields.filter((f) => f.connector === connector).map((f) => (
-              <div key={f.field} className="flex items-center gap-3">
-                <label className="w-56 text-sm text-neutral-700 dark:text-neutral-300">
-                  {f.label}{f.optional && <span className="text-neutral-500"> (optional)</span>}
-                </label>
-                <input
-                  className="flex-1 rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100"
-                  type={f.secret && !show[k(connector, f.field)] ? 'password' : 'text'}
-                  placeholder={f.secret && f.isSet ? `•••••••• (gesetzt am ${f.updatedAt ? formatDeDate(f.updatedAt) : ''})` : ''}
-                  value={inputs[k(connector, f.field)] ?? ''}
-                  onChange={(e) => setInputs({ ...inputs, [k(connector, f.field)]: e.target.value })}
-                />
-                {f.secret && (
-                  <button
-                    type="button"
-                    aria-label={show[k(connector, f.field)] ? 'verbergen' : 'anzeigen'}
-                    title={show[k(connector, f.field)] ? 'verbergen' : 'anzeigen'}
-                    className="text-neutral-500 hover:text-brand"
-                    onClick={() => setShow({ ...show, [k(connector, f.field)]: !show[k(connector, f.field)] })}
-                  >
-                    {show[k(connector, f.field)] ? <EyeOffIcon /> : <EyeIcon />}
-                  </button>
-                )}
-                <span className={`text-xs ${f.isSet ? 'text-emerald-600 dark:text-emerald-500' : 'text-neutral-500'}`}>{f.isSet ? 'gesetzt ✓' : 'nicht gesetzt'}</span>
-                {f.isSet && <button type="button" className="text-xs text-red-600 dark:text-red-400" onClick={() => remove(connector, f.field)}>Löschen</button>}
-              </div>
-            ))}
-                </div>
+                {(() => {
+                  const connectorFields = fields.filter((f) => f.connector === connector);
+                  const oauthFields = connectorFields.filter((f) => f.oauth);
+                  const otherFields = connectorFields.filter((f) => !f.oauth);
+                  return (
+                    <>
+                      {oauthFields.length > 0 && (
+                        <div className="mb-4 rounded-md border border-brand bg-neutral-50 p-3 dark:bg-neutral-950">
+                          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand">
+                            OAuth-Zugangsdaten — für „Mit {CONNECTOR_LABELS[connector]} verbinden"
+                          </p>
+                          <div className="space-y-3">{oauthFields.map(renderField)}</div>
+                        </div>
+                      )}
+                      {otherFields.length > 0 && (
+                        <div className="space-y-3">
+                          {oauthFields.length > 0 && (
+                            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Weitere Felder</p>
+                          )}
+                          {otherFields.map(renderField)}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
                 <button type="button" onClick={() => save(connector)} className="mt-3 rounded bg-brand px-3 py-1 text-sm text-white">Speichern</button>
               </div>
             ))}
