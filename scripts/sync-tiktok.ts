@@ -3,6 +3,7 @@ import { normalizeReport } from '../src/connectors/tiktok/connector';
 import { writeTikTokAds } from '../src/connectors/tiktok/write';
 import { pool } from '../src/lib/db';
 import { loadConnectorConfig } from '../src/lib/credentials';
+import { isConnected, getOAuthAccessToken } from '../src/lib/oauth/token';
 
 function parseDays(argv: string[]): number {
   const i = argv.indexOf('--days');
@@ -16,7 +17,10 @@ async function main() {
   const videoMetric = cfg.TIKTOK_VIDEO_METRIC ?? 'video_play_actions';
   const days = parseDays(process.argv);
 
-  const client = new TikTokClient(cfg.TIKTOK_ACCESS_TOKEN, cfg.TIKTOK_ADVERTISER_ID, valueMetric, videoMetric);
+  const accessToken = (await isConnected('tiktok'))
+    ? await getOAuthAccessToken('tiktok')
+    : cfg.TIKTOK_ACCESS_TOKEN;
+  const client = new TikTokClient(accessToken, cfg.TIKTOK_ADVERTISER_ID, valueMetric, videoMetric);
   console.log(`Fetching TikTok report (last ${days} days)…`);
   const rows = await client.fetchReport(days);
   console.log(`Fetched ${rows.length} day rows.`);
