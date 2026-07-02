@@ -16,10 +16,10 @@ interface Row {
   provider: string;
   refresh_token_enc: string | null;
   access_token_enc: string | null;
-  expires_at: string | null;
+  expires_at: Date | null; // node-pg parses timestamptz to a Date
   scope: string | null;
   account_label: string | null;
-  updated_at: string;
+  updated_at: Date;
 }
 
 function toConnection(row: Row): OAuthConnection {
@@ -27,10 +27,10 @@ function toConnection(row: Row): OAuthConnection {
     provider: row.provider as ProviderKey,
     refreshToken: row.refresh_token_enc ? decrypt(row.refresh_token_enc) : null,
     accessToken: row.access_token_enc ? decrypt(row.access_token_enc) : null,
-    expiresAt: row.expires_at ? Date.parse(row.expires_at) : null,
+    expiresAt: row.expires_at ? row.expires_at.getTime() : null,
     scope: row.scope,
     accountLabel: row.account_label,
-    updatedAt: row.updated_at,
+    updatedAt: row.updated_at.toISOString(),
   };
 }
 
