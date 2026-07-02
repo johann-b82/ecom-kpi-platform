@@ -85,11 +85,21 @@ export async function renameGroup(id: string, name: string): Promise<void> {
   await pool.query('UPDATE groups SET name = $2 WHERE id = $1', [id, name]);
 }
 
+async function assertRemainingAdminGroup(excludeId: string): Promise<void> {
+  const res = await pool.query<{ n: number }>(
+    'SELECT count(*)::int AS n FROM groups WHERE is_admin AND id <> $1', [excludeId],
+  );
+  if (res.rows[0].n === 0) throw new Error('Es muss mindestens eine Admin-Gruppe geben.');
+}
+
 export async function deleteGroup(id: string): Promise<void> {
+  const res = await pool.query<{ is_admin: boolean }>('SELECT is_admin FROM groups WHERE id = $1', [id]);
+  if (res.rows[0]?.is_admin) await assertRemainingAdminGroup(id);
   await pool.query('DELETE FROM groups WHERE id = $1', [id]);
 }
 
 export async function setAdmin(id: string, isAdmin: boolean): Promise<void> {
+  if (!isAdmin) await assertRemainingAdminGroup(id);
   await pool.query('UPDATE groups SET is_admin = $2 WHERE id = $1', [id, isAdmin]);
 }
 

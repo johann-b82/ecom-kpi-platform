@@ -48,3 +48,41 @@ describe('group store (integration, benötigt DB)', () => {
     gid = '';
   });
 });
+
+describe('last-admin-group guard (integration, benötigt DB)', () => {
+  let adminGid = '';
+
+  afterAll(async () => {
+    if (adminGid) await pool.query('DELETE FROM groups WHERE id = $1', [adminGid]);
+  });
+
+  it('setAdmin(id, false) succeeds when another admin group remains (e.g. the seeded "Alle Nutzer")', async () => {
+    adminGid = await createGroup('Testgruppe Admin A');
+    await setAdmin(adminGid, true);
+    await expect(setAdmin(adminGid, false)).resolves.toBeUndefined();
+    const g = (await listGroups()).find((x) => x.id === adminGid)!;
+    expect(g.isAdmin).toBe(false);
+  });
+
+  it('setAdmin(id, false) rejects when it would remove the last admin group', async () => {
+    const adminGroups = (await listGroups()).filter((g) => g.isAdmin);
+    expect(adminGroups.length).toBeGreaterThanOrEqual(1);
+    if (adminGroups.length !== 1) return; // only exercise the reject path when it is unambiguous
+    const lastAdmin = adminGroups[0];
+    await expect(setAdmin(lastAdmin.id, false)).rejects.toThrow(/mindestens eine Admin-Gruppe/);
+    const after = (await listGroups()).find((x) => x.id === lastAdmin.id)!;
+    expect(after.isAdmin).toBe(true); // unchanged
+  });
+
+  it('deleteGroup rejects deleting the last admin group, but succeeds for a non-admin group', async () => {
+    const nonAdminGid = await createGroup('Testgruppe Non-Admin');
+    await expect(deleteGroup(nonAdminGid)).resolves.toBeUndefined();
+    expect((await listGroups()).find((x) => x.id === nonAdminGid)).toBeUndefined();
+
+    const adminGroups = (await listGroups()).filter((g) => g.isAdmin);
+    if (adminGroups.length !== 1) return; // only exercise the reject path when it is unambiguous
+    const lastAdmin = adminGroups[0];
+    await expect(deleteGroup(lastAdmin.id)).rejects.toThrow(/mindestens eine Admin-Gruppe/);
+    expect((await listGroups()).find((x) => x.id === lastAdmin.id)).toBeDefined();
+  });
+});

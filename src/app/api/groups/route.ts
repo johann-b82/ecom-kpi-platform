@@ -32,14 +32,18 @@ export async function POST(request: Request) {
     action: string; id?: string; name?: string; isAdmin?: boolean;
     app?: AppKey; right?: Right | null; userIds?: string[];
   };
-  switch (body.action) {
-    case 'create': await createGroup(body.name ?? ''); break;
-    case 'rename': await renameGroup(body.id!, body.name ?? ''); break;
-    case 'delete': await deleteGroup(body.id!); break;
-    case 'setAdmin': await setAdmin(body.id!, !!body.isAdmin); break;
-    case 'setAppAccess': await setAppAccess(body.id!, body.app!, body.right ?? null); break;
-    case 'setMembers': await setMembers(body.id!, body.userIds ?? []); break;
-    default: return NextResponse.json({ error: 'Unbekannte Aktion.' }, { status: 400 });
+  try {
+    switch (body.action) {
+      case 'create': await createGroup(body.name ?? ''); break;
+      case 'rename': await renameGroup(body.id!, body.name ?? ''); break;
+      case 'delete': await deleteGroup(body.id!); break;
+      case 'setAdmin': await setAdmin(body.id!, !!body.isAdmin); break;
+      case 'setAppAccess': await setAppAccess(body.id!, body.app!, body.right ?? null); break;
+      case 'setMembers': await setMembers(body.id!, body.userIds ?? []); break;
+      default: return NextResponse.json({ error: 'Unbekannte Aktion.' }, { status: 400 });
+    }
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
   return NextResponse.json({ ok: true });
 }
