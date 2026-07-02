@@ -37,6 +37,17 @@ describe('getUserAccess', () => {
     expect(a.isAdmin).toBe(false);
     expect(a.apps).toEqual({ brickpm: 'view' });
   });
+
+  it('does NOT grandfather an admin group that has no app access (rows present, app null)', async () => {
+    // The tricky case: membership rows exist (length > 0) but the group grants no app.
+    // Must yield isAdmin=true with NO app access — never the full-admin grandfather.
+    q().mockResolvedValue({ rows: [
+      { is_admin: true, app: null, permission: null },
+    ] } as never);
+    const a = await getUserAccess('u1');
+    expect(a.isAdmin).toBe(true);
+    expect(a.apps).toEqual({});
+  });
 });
 
 describe('requireAppAccess', () => {
@@ -54,6 +65,12 @@ describe('requireAppAccess', () => {
     mockUser('u1');
     q().mockResolvedValue({ rows: [{ is_admin: false, app: 'brickpm', permission: 'view' }] } as never);
     await expect(requireAppAccess('brickpm', 'edit')).rejects.toThrow(/Kein Zugriff/i);
+  });
+
+  it('throws when the user has no access to the requested app at all', async () => {
+    mockUser('u1');
+    q().mockResolvedValue({ rows: [{ is_admin: false, app: 'brickpm', permission: 'edit' }] } as never);
+    await expect(requireAppAccess('dashboard')).rejects.toThrow(/Kein Zugriff/i);
   });
 
   it('throws when unauthenticated', async () => {
