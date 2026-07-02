@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS bpm_notifications (
   id TEXT PRIMARY KEY, type TEXT, priority TEXT, ref_id TEXT, msg TEXT, action TEXT,
   status TEXT, due DATE, role TEXT, target TEXT
 );
+ALTER TABLE bpm_notifications ADD COLUMN IF NOT EXISTS note TEXT;
 CREATE TABLE IF NOT EXISTS bpm_integrations (
   id TEXT PRIMARY KEY, type TEXT, system TEXT, purpose TEXT, objects TEXT[], dir TEXT,
   status TEXT, ep TEXT, last_sync TEXT

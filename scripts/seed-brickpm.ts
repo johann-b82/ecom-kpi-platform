@@ -46,11 +46,11 @@ export async function seedBrickpm(): Promise<void> {
   }
   for (const n of NOTIFICATIONS) {
     await pool.query(
-      `INSERT INTO bpm_notifications (id,type,priority,ref_id,msg,action,status,due,role,target)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      `INSERT INTO bpm_notifications (id,type,priority,ref_id,msg,action,status,due,role,target,note)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        ON CONFLICT (id) DO UPDATE SET type=excluded.type,priority=excluded.priority,ref_id=excluded.ref_id,msg=excluded.msg,
-         action=excluded.action,status=excluded.status,due=excluded.due,role=excluded.role,target=excluded.target`,
-      [n.id,n.type,n.priority,n.refId,n.msg,n.action,n.status,n.due,n.role,n.target],
+         action=excluded.action,status=excluded.status,due=excluded.due,role=excluded.role,target=excluded.target,note=excluded.note`,
+      [n.id,n.type,n.priority,n.refId,n.msg,n.action,n.status,n.due,n.role,n.target,n.note],
     );
   }
   for (const i of INTEGRATIONS) {
