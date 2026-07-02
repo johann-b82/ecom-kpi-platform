@@ -57,4 +57,17 @@ describe('RLS on KPI tables', () => {
       }
     });
   }
+
+  for (const t of ['bpm_products','bpm_promotions','bpm_goodies','bpm_competitors','bpm_notifications','bpm_integrations','bpm_audit_log']) {
+    it(`authenticated is denied on ${t}`, async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('SET ROLE authenticated');
+        await expect(c.query(`SELECT count(*) FROM ${t}`)).rejects.toThrow(/permission denied/i);
+      } finally {
+        await c.query('RESET ROLE');
+        c.release();
+      }
+    });
+  }
 });
