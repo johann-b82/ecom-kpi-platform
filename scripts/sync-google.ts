@@ -3,6 +3,7 @@ import { normalizeRows } from '../src/connectors/google/connector';
 import { writeGoogleAds } from '../src/connectors/google/write';
 import { pool } from '../src/lib/db';
 import { loadConnectorConfig } from '../src/lib/credentials';
+import { isConnected, getOAuthAccessToken } from '../src/lib/oauth/token';
 
 function parseDays(argv: string[]): number {
   const i = argv.indexOf('--days');
@@ -12,15 +13,20 @@ function parseDays(argv: string[]): number {
 
 async function main() {
   const cfg = await loadConnectorConfig('google');
-  const client = new GoogleAdsClient({
-    developerToken: cfg.GOOGLE_ADS_DEVELOPER_TOKEN,
-    clientId: cfg.GOOGLE_ADS_CLIENT_ID,
-    clientSecret: cfg.GOOGLE_ADS_CLIENT_SECRET,
-    refreshToken: cfg.GOOGLE_ADS_REFRESH_TOKEN,
-    customerId: cfg.GOOGLE_ADS_CUSTOMER_ID,
-    loginCustomerId: cfg.GOOGLE_ADS_LOGIN_CUSTOMER_ID,
-  });
   const days = parseDays(process.argv);
+  const oauth = await isConnected('google');
+  const client = new GoogleAdsClient(
+    {
+      developerToken: cfg.GOOGLE_ADS_DEVELOPER_TOKEN,
+      clientId: cfg.GOOGLE_ADS_CLIENT_ID,
+      clientSecret: cfg.GOOGLE_ADS_CLIENT_SECRET,
+      refreshToken: cfg.GOOGLE_ADS_REFRESH_TOKEN ?? '',
+      customerId: cfg.GOOGLE_ADS_CUSTOMER_ID,
+      loginCustomerId: cfg.GOOGLE_ADS_LOGIN_CUSTOMER_ID,
+    },
+    fetch,
+    oauth ? () => getOAuthAccessToken('google') : undefined,
+  );
 
   console.log(`Fetching Google Ads report (last ${days} days)…`);
   const rows = await client.search(days);

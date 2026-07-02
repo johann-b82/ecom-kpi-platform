@@ -3,6 +3,7 @@ import { normalizeReport } from '../src/connectors/ga4/connector';
 import { writeGa4Metrics } from '../src/connectors/ga4/write';
 import { pool } from '../src/lib/db';
 import { loadConnectorConfig } from '../src/lib/credentials';
+import { isConnected, getOAuthAccessToken } from '../src/lib/oauth/token';
 
 function parseDays(argv: string[]): number {
   const i = argv.indexOf('--days');
@@ -12,8 +13,11 @@ function parseDays(argv: string[]): number {
 
 async function main() {
   const cfg = await loadConnectorConfig('ga4');
-  const client = Ga4Client.fromCredentials(cfg.GA4_PROPERTY_ID, JSON.parse(cfg.GA4_SERVICE_ACCOUNT_JSON));
   const days = parseDays(process.argv);
+
+  const client = (await isConnected('google'))
+    ? new Ga4Client(cfg.GA4_PROPERTY_ID, () => getOAuthAccessToken('google'))
+    : Ga4Client.fromCredentials(cfg.GA4_PROPERTY_ID, JSON.parse(cfg.GA4_SERVICE_ACCOUNT_JSON));
 
   console.log(`Fetching GA4 report (last ${days} days)…`);
   const report = await client.runReport(days);
