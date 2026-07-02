@@ -95,15 +95,36 @@ describe('tiktok provider', () => {
     expect(url.searchParams.get('redirect_uri')).toBe(REDIRECT);
     expect(url.searchParams.get('state')).toBe('S');
   });
-  it('exchangeCode reads token from data envelope', async () => {
+  it('exchangeCode reads token from data envelope and posts a JSON auth_code grant', async () => {
     const fetchMock = vi.fn().mockResolvedValue(res({ code: 0, data: { access_token: 'AT', refresh_token: 'RT', access_token_expire_in: 86400 } }));
     const token = await PROVIDERS.tiktok!.exchangeCode('C', REDIRECT, creds, fetchMock as unknown as typeof fetch);
     expect(token).toMatchObject({ accessToken: 'AT', refreshToken: 'RT' });
     expect(token.expiresAt).toBeGreaterThan(Date.now());
+    // Verify the outgoing request: correct endpoint, JSON (not form) body with the expected fields.
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/');
+    expect((init as RequestInit).headers).toMatchObject({ 'Content-Type': 'application/json' });
+    expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({
+      app_id: 'CID', secret: 'SEC', auth_code: 'C', grant_type: 'authorization_code',
+    });
   });
-  it('refresh uses refresh_token grant', async () => {
+  it('exchangeCode throws on a non-zero envelope code without leaking secrets', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res({ code: 40001, message: 'bad auth_code' }));
+    const promise = PROVIDERS.tiktok!.exchangeCode('C', REDIRECT, creds, fetchMock as unknown as typeof fetch);
+    await expect(promise).rejects.toThrow(/tiktok.*40001/i);
+    await expect(promise).rejects.not.toThrow(/SEC/);
+  });
+  it('refresh uses refresh_token grant and returns a rotated refresh token', async () => {
     const fetchMock = vi.fn().mockResolvedValue(res({ code: 0, data: { access_token: 'AT2', refresh_token: 'RT2', access_token_expire_in: 86400 } }));
     const token = await PROVIDERS.tiktok!.refresh!({ accessToken: 'old', refreshToken: 'RT' }, creds, fetchMock as unknown as typeof fetch);
     expect(token).toMatchObject({ accessToken: 'AT2', refreshToken: 'RT2' });
+    expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toMatchObject({
+      grant_type: 'refresh_token', refresh_token: 'RT',
+    });
+  });
+  it('refresh preserves the stored refresh token when the response omits one', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res({ code: 0, data: { access_token: 'AT2', access_token_expire_in: 86400 } }));
+    const token = await PROVIDERS.tiktok!.refresh!({ accessToken: 'old', refreshToken: 'RT' }, creds, fetchMock as unknown as typeof fetch);
+    expect(token).toMatchObject({ accessToken: 'AT2', refreshToken: 'RT' });
   });
 });
