@@ -8,6 +8,8 @@ import { listUsers } from '@/lib/users';
 import { createClient } from '@/lib/supabase/server';
 import { listOAuthStatus } from '@/lib/oauth/status';
 import { SetupShell } from '@/components/SetupShell';
+import { getUserAccess, listGroups } from '@/lib/groups';
+import { GroupsForm } from '@/components/GroupsForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +17,8 @@ export default async function SetupPage() {
   const branding = await getBranding();
   const users = await listUsers();
   const { data: { user: currentUser } } = await createClient().auth.getUser();
+  const access = currentUser ? await getUserAccess(currentUser.id) : { apps: {}, isAdmin: false };
+  const groups = access.isAdmin ? await listGroups() : [];
   const status = await listStatus();
   const oauth = await listOAuthStatus();
   const fields: FieldView[] = [];
@@ -31,6 +35,7 @@ export default async function SetupPage() {
       <div className="space-y-10">
         <BrandingForm initial={branding} />
         <UsersForm users={users} currentUserId={currentUser?.id} />
+        {access.isAdmin && <GroupsForm groups={groups} users={users} />}
         <div>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Verbindungen</h2>
           <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
