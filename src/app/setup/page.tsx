@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { listStatus, getCredential } from '@/lib/credentials';
 import { CONNECTOR_FIELDS, CONNECTORS } from '@/lib/connector-fields';
 import { CredentialsForm, type FieldView } from '@/components/CredentialsForm';
@@ -8,6 +7,7 @@ import { UsersForm } from '@/components/UsersForm';
 import { listUsers } from '@/lib/users';
 import { createClient } from '@/lib/supabase/server';
 import { listOAuthStatus } from '@/lib/oauth/status';
+import { SetupShell } from '@/components/SetupShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,11 +27,7 @@ export default async function SetupPage() {
     }
   }
   return (
-    <main className="mx-auto max-w-3xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Einstellungen</h1>
-        <Link href="/" className="text-sm text-brand hover:text-brand-dark">← Zum Dashboard</Link>
-      </header>
+    <SetupShell oauth={oauth}>
       <div className="space-y-10">
         <BrandingForm initial={branding} />
         <UsersForm users={users} currentUserId={currentUser?.id} />
@@ -43,6 +39,6 @@ export default async function SetupPage() {
           <CredentialsForm fields={fields} oauth={oauth} />
         </div>
       </div>
-    </main>
+    </SetupShell>
   );
 }
