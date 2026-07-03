@@ -1,4 +1,4 @@
-export type Connector = 'shopware' | 'ga4' | 'klaviyo' | 'meta' | 'tiktok' | 'google';
+export type Connector = 'shopware' | 'ga4' | 'klaviyo' | 'mailchimp' | 'meta' | 'tiktok' | 'google';
 
 export interface FieldDef {
   field: string;
@@ -24,6 +24,10 @@ export const CONNECTOR_FIELDS: Record<Connector, FieldDef[]> = {
     { field: 'KLAVIYO_API_KEY', label: 'Private API Key', secret: true, optional: false },
     { field: 'KLAVIYO_SIGNUP_METRIC', label: 'Signup-Metrik', secret: false, optional: true },
     { field: 'KLAVIYO_UNSUB_METRIC', label: 'Unsub-Metrik', secret: false, optional: true },
+  ],
+  mailchimp: [
+    { field: 'MAILCHIMP_API_KEY', label: 'API Key', secret: true, optional: false },
+    { field: 'MAILCHIMP_LIST_ID', label: 'Audience / List ID', secret: false, optional: false },
   ],
   meta: [
     { field: 'META_OAUTH_APP_ID', label: 'OAuth App ID', secret: false, optional: true, oauth: true },
@@ -57,6 +61,7 @@ export const CONNECTOR_LABELS: Record<Connector, string> = {
   shopware: 'Shopware',
   ga4: 'Google Analytics 4',
   klaviyo: 'Klaviyo',
+  mailchimp: 'Mailchimp',
   meta: 'Meta Ads',
   tiktok: 'TikTok Ads',
   google: 'Google Ads',
@@ -67,5 +72,5 @@ export const CONNECTOR_GROUPS: { title: string; connectors: Connector[] }[] = [
   { title: 'Shop', connectors: ['shopware'] },
   { title: 'Web-Analytics', connectors: ['ga4'] },
   { title: 'Werbung', connectors: ['meta', 'tiktok', 'google'] },
-  { title: 'E-Mail & CRM', connectors: ['klaviyo'] },
+  { title: 'E-Mail & CRM', connectors: ['klaviyo', 'mailchimp'] },
 ];

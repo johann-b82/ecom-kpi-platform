@@ -53,7 +53,7 @@ export const KPI_HELP: Record<string, KpiHelp> = {
   },
   newsletter_signups: {
     formula: 'Summe der Newsletter-Anmeldungen im Zeitraum.',
-    source: 'E-Mail/CRM (Klaviyo) → subscribers.',
+    source: 'E-Mail/CRM (Klaviyo/Mailchimp) → subscribers.',
   },
 
   // DO — Conversion
