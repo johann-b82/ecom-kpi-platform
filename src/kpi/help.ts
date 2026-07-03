@@ -78,8 +78,8 @@ export const KPI_HELP: Record<string, KpiHelp> = {
     source: 'Ad-Spend (Ads) + Shopware (Neukunden).',
   },
   cart_abandonment: {
-    formula: '1 − (Bestellungen ÷ begonnene Checkouts).',
-    source: 'GA4 (checkouts_started) + Shopware (Bestellungen).',
+    formula: '1 − (GA4-Käufe ÷ begonnene Checkouts).',
+    source: 'GA4 (ecommercePurchases + checkouts_started).',
   },
 
   // CARE — Loyalty

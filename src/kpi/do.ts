@@ -4,7 +4,6 @@ import { inRange, metricSum, metricPresent, ratio, kpi } from './helpers';
 
 export function doKpis(data: CanonicalDataset, range: DateRange): Kpi[] {
   const orders = data.orders.filter((o) => inRange(o.date, range));
-  const orderCount = orders.length;
   const newCustomers = orders.filter((o) => o.isFirstOrder).length;
 
   const sessions = metricSum(data.dailyMetrics, 'sessions', range);
@@ -27,6 +26,6 @@ export function doKpis(data: CanonicalDataset, range: DateRange): Kpi[] {
     kpi('roas', 'ROAS', 'do', hasAds ? ratio(convValue, spend) : null, 'ratio'),
     kpi('cac', 'CAC', 'do', hasAds ? ratio(spend, newCustomers) : null, 'currency'),
     kpi('cart_abandonment', 'Warenkorbabbruchrate', 'do',
-      checkouts > 0 ? 1 - orderCount / checkouts : null, 'percent'),
+      checkouts > 0 ? Math.max(0, 1 - ga4Purchases / checkouts) : null, 'percent'),
   ];
 }
