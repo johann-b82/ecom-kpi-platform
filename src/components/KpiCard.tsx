@@ -1,4 +1,4 @@
-import { Card } from '@tremor/react';
+import { ChartCard } from '@/components/charts/ChartCard';
 import type { Kpi } from '@/kpi/types';
 import { formatValue, formatDelta } from '@/lib/format';
 import { KPI_HELP } from '@/kpi/help';
@@ -9,7 +9,7 @@ export function KpiCard({ kpi, hero = false }: { kpi: Kpi; hero?: boolean }) {
   const up = (kpi.deltaPct ?? 0) >= 0;
   const help = KPI_HELP[kpi.key];
   return (
-    <Card className="overflow-visible bg-white ring-1 ring-neutral-200 dark:bg-neutral-900 dark:ring-neutral-800">
+    <ChartCard>
       <p className="flex items-center gap-1 text-sm text-neutral-600 dark:text-neutral-400">
         {kpi.label}
         {help && (
@@ -43,6 +43,6 @@ export function KpiCard({ kpi, hero = false }: { kpi: Kpi; hero?: boolean }) {
       {delta && (
         <p className={`mt-1 text-xs ${up ? 'text-emerald-600 dark:text-emerald-500' : 'text-red-600 dark:text-red-400'}`}>{delta}</p>
       )}
-    </Card>
+    </ChartCard>
   );
 }
