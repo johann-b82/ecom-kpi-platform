@@ -10,6 +10,7 @@
     "migrate": "tsx scripts/migrate.ts",
     "seed": "tsx scripts/seed.ts",
     "sync:shopware": "tsx scripts/sync-shopware.ts",
+    "sync:woocommerce": "tsx scripts/sync-woocommerce.ts",
     "sync:ga4": "tsx scripts/sync-ga4.ts",
     "sync:klaviyo": "tsx scripts/sync-klaviyo.ts",
     "sync:mailchimp": "tsx scripts/sync-mailchimp.ts",
