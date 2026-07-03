@@ -58,8 +58,8 @@ export const KPI_HELP: Record<string, KpiHelp> = {
 
   // DO — Conversion
   conversion_rate: {
-    formula: 'Bestellungen ÷ Sessions.',
-    source: 'Shopware (Bestellungen) + GA4 (Sessions).',
+    formula: 'GA4-Käufe (ecommercePurchases) ÷ Sessions.',
+    source: 'GA4 (ecommercePurchases + Sessions).',
   },
   aov: {
     formula: 'Umsatz ÷ Anzahl Bestellungen (Average Order Value).',
