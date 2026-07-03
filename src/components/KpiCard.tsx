@@ -3,6 +3,7 @@ import type { Kpi } from '@/kpi/types';
 import { formatValue, formatDelta } from '@/lib/format';
 import { KPI_HELP } from '@/kpi/help';
 import { NaBadge } from './NaBadge';
+import { TrendArrow } from './TrendArrow';
 
 export function KpiCard({ kpi, hero = false }: { kpi: Kpi; hero?: boolean }) {
   const delta = formatDelta(kpi.deltaPct);
@@ -41,7 +42,12 @@ export function KpiCard({ kpi, hero = false }: { kpi: Kpi; hero?: boolean }) {
         <div className="mt-2"><NaBadge /></div>
       )}
       {delta && (
-        <p className={`mt-1 text-xs ${up ? 'text-emerald-600 dark:text-emerald-500' : 'text-red-600 dark:text-red-400'}`}>{delta}</p>
+        <div className="mt-1 flex items-center gap-1 text-xs text-neutral-500">
+          <span className={`inline-flex items-center gap-0.5 ${up ? 'text-emerald-600 dark:text-emerald-500' : 'text-red-600 dark:text-red-400'}`}>
+            <TrendArrow up={up} />{delta}
+          </span>
+          <span>ggü. Vorperiode</span>
+        </div>
       )}
     </ChartCard>
   );
