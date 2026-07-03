@@ -8,6 +8,10 @@ export interface WooConfig {
 
 const PER_PAGE = 100;
 const REQUEST_TIMEOUT_MS = 30_000;
+// Only the fields normalizeOrders consumes — cuts the per-page payload ~99%
+// (full orders are ~27 KB each; a store with thousands of orders otherwise
+// downloads hundreds of MB per full sync).
+const ORDER_FIELDS = 'id,status,date_created,total,customer_id,billing';
 
 export class WooCommerceClient {
   private readonly base: string;
@@ -30,7 +34,7 @@ export class WooCommerceClient {
     const all: WooOrder[] = [];
     let page = 1;
     for (;;) {
-      const url = `${this.base}/orders?per_page=${PER_PAGE}&page=${page}&orderby=id&order=asc&status=any`;
+      const url = `${this.base}/orders?per_page=${PER_PAGE}&page=${page}&orderby=id&order=asc&status=any&_fields=${ORDER_FIELDS}`;
       const res = await this.get(url);
       if (!res.ok) {
         throw new Error(`WooCommerce fetch failed: ${res.status} ${await res.text()}`);
