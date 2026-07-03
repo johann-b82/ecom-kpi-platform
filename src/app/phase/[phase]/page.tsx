@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AreaChart, Card } from '@tremor/react';
 import { loadDataset, loadDailySeries } from '@/kpi/repository';
 import { computeKpis, PHASE_META, type PhaseKey } from '@/kpi/index';
 import { addDays } from '@/lib/dates';
 import { KpiCard } from '@/components/KpiCard';
+import { PhaseTrendChart } from '@/components/PhaseTrendChart';
 import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -30,17 +30,7 @@ export default async function PhasePage({ params }: { params: { phase: string } 
         {phase.kpis.map((k) => <KpiCard key={k.key} kpi={k} />)}
       </div>
 
-      <Card className="mt-6 bg-white dark:bg-neutral-900">
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">Verlauf: {meta.leadMetric} (30 Tage)</p>
-        <AreaChart
-          className="mt-2 h-72"
-          data={series}
-          index="date"
-          categories={['value']}
-          colors={['gray']}
-          showLegend={false}
-        />
-      </Card>
+      <PhaseTrendChart series={series} metric={meta.leadMetric} />
     </main>
   );
 }
