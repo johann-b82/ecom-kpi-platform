@@ -30,6 +30,26 @@ describe('WooCommerceClient', () => {
     expect(headers.Authorization).toBe(`Basic ${Buffer.from('ck:cs').toString('base64')}`);
   });
 
+  it('ergänzt https:// wenn die Store-URL kein Schema hat', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res([]));
+    const client = new WooCommerceClient(
+      { storeUrl: 'bryxtoys.com', consumerKey: 'ck', consumerSecret: 'cs' },
+      fetchMock as unknown as typeof fetch,
+    );
+    await client.fetchAllOrders();
+    expect(fetchMock.mock.calls[0][0]).toMatch(/^https:\/\/bryxtoys\.com\/wp-json\/wc\/v3\/orders\?/);
+  });
+
+  it('behält ein vorhandenes http://-Schema bei', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res([]));
+    const client = new WooCommerceClient(
+      { storeUrl: 'http://shop.local/', consumerKey: 'ck', consumerSecret: 'cs' },
+      fetchMock as unknown as typeof fetch,
+    );
+    await client.fetchAllOrders();
+    expect(fetchMock.mock.calls[0][0]).toMatch(/^http:\/\/shop\.local\/wp-json\/wc\/v3\/orders\?/);
+  });
+
   it('paginiert, bis eine Seite < per_page zurückkommt', async () => {
     const full = Array.from({ length: 100 }, (_, i) => order(i + 1));
     const fetchMock = vi
