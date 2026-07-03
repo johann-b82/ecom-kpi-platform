@@ -30,6 +30,13 @@ describe('WooCommerceClient', () => {
     expect(headers.Authorization).toBe(`Basic ${Buffer.from('ck:cs').toString('base64')}`);
   });
 
+  it('fordert nur die benötigten Felder an (_fields) — reduziert die Payload', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res([]));
+    const client = new WooCommerceClient(cfg, fetchMock as unknown as typeof fetch);
+    await client.fetchAllOrders();
+    expect(fetchMock.mock.calls[0][0]).toContain('_fields=id,status,date_created,total,customer_id,billing');
+  });
+
   it('ergänzt https:// wenn die Store-URL kein Schema hat', async () => {
     const fetchMock = vi.fn().mockResolvedValue(res([]));
     const client = new WooCommerceClient(

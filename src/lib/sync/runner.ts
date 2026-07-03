@@ -87,7 +87,10 @@ export async function runConnector(key: string): Promise<{ ok: boolean; detail: 
   try {
     await lock.query('SELECT pg_advisory_lock(hashtext($1))', [`sync:${key}`]);
     try {
-      const { stdout } = await run('npm', ['run', `sync:${key}`], { cwd: process.cwd(), timeout: 150_000 });
+      // 15 min: a full WooCommerce resync of a large store (e.g. ~13k orders,
+      // 133 pages at ~4s each) legitimately takes ~9 min; connectors run in
+      // parallel and the cron interval is hourly, so this has ample headroom.
+      const { stdout } = await run('npm', ['run', `sync:${key}`], { cwd: process.cwd(), timeout: 900_000 });
       const detail = stdout.trim().split('\n').filter(Boolean).pop() ?? 'OK';
       await record(key, 'ok', detail);
       return { ok: true, detail };
