@@ -128,3 +128,14 @@ CREATE TABLE IF NOT EXISTS bpm_audit_log (
   id BIGSERIAL PRIMARY KEY, ts TIMESTAMPTZ NOT NULL DEFAULT now(),
   actor TEXT, action TEXT NOT NULL, detail TEXT
 );
+
+CREATE TABLE IF NOT EXISTS bpm_price_history (
+  product_id TEXT NOT NULL, date DATE NOT NULL, price DOUBLE PRECISION, cost DOUBLE PRECISION,
+  PRIMARY KEY (product_id, date)
+);
+
+CREATE TABLE IF NOT EXISTS bpm_competitor_prices (
+  product_id TEXT NOT NULL, competitor TEXT NOT NULL, date DATE NOT NULL,
+  own_price DOUBLE PRECISION, comp_price DOUBLE PRECISION,
+  PRIMARY KEY (product_id, competitor, date)
+);

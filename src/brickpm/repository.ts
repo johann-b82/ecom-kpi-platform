@@ -80,6 +80,20 @@ export async function listIntegrations(): Promise<BpmIntegration[]> {
   }));
 }
 
+export async function listPriceHistory(productId?: string): Promise<import('./history').PricePoint[]> {
+  const r = productId
+    ? await pool.query(`SELECT product_id, date::text AS date, price, cost FROM bpm_price_history WHERE product_id = $1 ORDER BY date`, [productId])
+    : await pool.query(`SELECT product_id, date::text AS date, price, cost FROM bpm_price_history ORDER BY product_id, date`);
+  return r.rows.map((x) => ({ productId: x.product_id, date: x.date, price: x.price, cost: x.cost }));
+}
+
+export async function listCompetitorPrices(): Promise<import('./history').CompPoint[]> {
+  const r = await pool.query(
+    `SELECT product_id, competitor, date::text AS date, own_price, comp_price FROM bpm_competitor_prices ORDER BY product_id, competitor, date`,
+  );
+  return r.rows.map((x) => ({ productId: x.product_id, competitor: x.competitor, date: x.date, ownPrice: x.own_price, compPrice: x.comp_price }));
+}
+
 export interface AuditEntry { id: number; ts: string; actor: string | null; action: string; detail: string | null }
 export async function listAuditLog(limit = 50): Promise<AuditEntry[]> {
   const r = await pool.query(
