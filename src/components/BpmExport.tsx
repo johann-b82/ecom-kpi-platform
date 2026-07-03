@@ -22,7 +22,7 @@ function toCsv(rows: Row[]): string {
   return [cols.join(';'), ...rows.map((r) => cols.map((c) => esc(r[c])).join(';'))].join('\n');
 }
 
-export function BpmExport({ data }: { data: Record<string, Row[]> }) {
+export function BpmExport({ data }: { data: Record<string, readonly unknown[]> }) {
   const btn = 'rounded-md border border-neutral-300 px-3 py-1 text-sm text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800';
   return (
     <div className="space-y-3">
@@ -36,7 +36,7 @@ export function BpmExport({ data }: { data: Record<string, Row[]> }) {
         <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-neutral-500">CSV</p>
         <div className="flex flex-wrap gap-2">
           {Object.entries(data).map(([name, rows]) => (
-            <button key={name} type="button" className={btn} onClick={() => download(`brickpm-${name}.csv`, toCsv(rows), 'text/csv')}>
+            <button key={name} type="button" className={btn} onClick={() => download(`brickpm-${name}.csv`, toCsv(rows as Row[]), 'text/csv')}>
               {name}.csv
             </button>
           ))}
