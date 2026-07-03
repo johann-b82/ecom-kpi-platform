@@ -44,6 +44,33 @@ export async function getBranding(): Promise<Branding> {
   }
 }
 
+export type SyncInterval = 'off' | 'hourly' | '6h' | 'daily';
+export const SYNC_INTERVALS: SyncInterval[] = ['off', 'hourly', '6h', 'daily'];
+export const SYNC_INTERVAL_MS: Record<Exclude<SyncInterval, 'off'>, number> = {
+  hourly: 60 * 60 * 1000,
+  '6h': 6 * 60 * 60 * 1000,
+  daily: 24 * 60 * 60 * 1000,
+};
+
+/** How often the automatic sync runs. 'off' = manual only. Defaults to 'off'. */
+export async function getSyncInterval(): Promise<SyncInterval> {
+  try {
+    const res = await pool.query("SELECT value FROM app_settings WHERE key = 'sync_interval'");
+    const v = res.rows[0]?.value as string | undefined;
+    return (SYNC_INTERVALS as string[]).includes(v ?? '') ? (v as SyncInterval) : 'off';
+  } catch {
+    return 'off';
+  }
+}
+
+export async function setSyncInterval(value: SyncInterval): Promise<void> {
+  await pool.query(
+    `INSERT INTO app_settings(key, value, updated_at) VALUES('sync_interval', $1, now())
+     ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = now()`,
+    [value],
+  );
+}
+
 export async function setBranding(b: Partial<Branding>): Promise<void> {
   const entries: [string, string][] = [];
   if (b.title !== undefined) entries.push(['brand_title', b.title]);

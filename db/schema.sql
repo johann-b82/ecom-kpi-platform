@@ -58,6 +58,13 @@ CREATE TABLE IF NOT EXISTS app_settings (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS sync_state (
+  connector   TEXT PRIMARY KEY,
+  last_run_at TIMESTAMPTZ,
+  status      TEXT,
+  detail      TEXT
+);
+
 CREATE TABLE IF NOT EXISTS oauth_connections (
   provider          TEXT PRIMARY KEY,
   refresh_token_enc TEXT,

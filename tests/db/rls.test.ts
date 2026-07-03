@@ -45,6 +45,17 @@ describe('RLS on KPI tables', () => {
     }
   });
 
+  it('authenticated is denied on sync_state', async () => {
+    const c = await pool.connect();
+    try {
+      await c.query('SET ROLE authenticated');
+      await expect(c.query('SELECT count(*) FROM sync_state')).rejects.toThrow(/permission denied/i);
+    } finally {
+      await c.query('RESET ROLE');
+      c.release();
+    }
+  });
+
   for (const t of ['groups', 'group_members', 'group_app_access']) {
     it(`authenticated is denied on ${t}`, async () => {
       const c = await pool.connect();

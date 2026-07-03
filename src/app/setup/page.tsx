@@ -2,7 +2,9 @@ import { listStatus, getCredential } from '@/lib/credentials';
 import { CONNECTOR_FIELDS, CONNECTORS } from '@/lib/connector-fields';
 import { CredentialsForm, type FieldView } from '@/components/CredentialsForm';
 import { BrandingForm } from '@/components/BrandingForm';
-import { getBranding } from '@/lib/settings';
+import { getBranding, getSyncInterval } from '@/lib/settings';
+import { listSyncState } from '@/lib/sync/runner';
+import { SyncForm } from '@/components/SyncForm';
 import { UsersForm } from '@/components/UsersForm';
 import { listUsers } from '@/lib/users';
 import { createClient } from '@/lib/supabase/server';
@@ -21,6 +23,7 @@ export default async function SetupPage() {
   const groups = access.isAdmin ? await listGroups() : [];
   const status = await listStatus();
   const oauth = await listOAuthStatus();
+  const [syncInterval, syncState] = await Promise.all([getSyncInterval(), listSyncState()]);
   const fields: FieldView[] = [];
   for (const connector of CONNECTORS) {
     for (const f of CONNECTOR_FIELDS[connector]) {
@@ -43,6 +46,7 @@ export default async function SetupPage() {
           </p>
           <CredentialsForm fields={fields} oauth={oauth} />
         </div>
+        <SyncForm interval={syncInterval} state={syncState} />
       </div>
     </SetupShell>
   );
