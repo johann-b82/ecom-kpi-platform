@@ -73,12 +73,14 @@ export const CONNECTOR_LABELS: Record<Connector, string> = {
   google: 'Google Ads',
 };
 
-// Connectors that write the same underlying tables and therefore must not both
+// Connectors that write the same underlying data and therefore must not both
 // be configured; setting credentials for one is blocked while a sibling is
 // configured. The shop pair TRUNCATE-replaces orders/customers (no source
-// column), so only one shop system can be active at a time.
+// column). The e-mail pair both feed `subscribers`, which `newsletter_signups`
+// sums across sources — configuring both would double-count signups.
 export const EXCLUSIVE_GROUPS: Connector[][] = [
   ['shopware', 'woocommerce'],
+  ['klaviyo', 'mailchimp'],
 ];
 
 // The connectors that block `connector` from being configured (its group peers).

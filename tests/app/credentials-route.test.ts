@@ -85,6 +85,10 @@ describe('exclusiveSiblings', () => {
     expect(exclusiveSiblings('woocommerce')).toEqual(['shopware']);
     expect(exclusiveSiblings('shopware')).toEqual(['woocommerce']);
   });
+  it('paart Klaviyo und Mailchimp', () => {
+    expect(exclusiveSiblings('mailchimp')).toEqual(['klaviyo']);
+    expect(exclusiveSiblings('klaviyo')).toEqual(['mailchimp']);
+  });
   it('gibt [] für Connectoren ohne Exklusivgruppe zurück', () => {
     expect(exclusiveSiblings('ga4')).toEqual([]);
     expect(exclusiveSiblings('meta')).toEqual([]);
