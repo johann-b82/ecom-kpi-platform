@@ -7,8 +7,24 @@ CREATE TABLE IF NOT EXISTS daily_metrics (
   PRIMARY KEY (date, source, channel, metric_key)
 );
 
+-- Source-scope orders/customers (legacy single-key → composite). Cache tables:
+-- drop + recreate, and clear the WooCommerce watermarks so the next sync does a
+-- full backfill instead of an incremental delta against empty tables.
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_name = 'orders' AND column_name = 'order_id') THEN
+    DROP TABLE IF EXISTS orders CASCADE;
+    DROP TABLE IF EXISTS customers CASCADE;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'app_settings') THEN
+      DELETE FROM app_settings
+       WHERE key IN ('woocommerce_orders_synced_at', 'woocommerce_orders_full_synced_at');
+    END IF;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS customers (
-  customer_id      TEXT PRIMARY KEY,
+  uid              TEXT PRIMARY KEY,
+  source           TEXT NOT NULL,
   first_order_date DATE NOT NULL,
   last_order_date  DATE NOT NULL,
   orders_count     INTEGER NOT NULL,
@@ -16,13 +32,16 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 
 CREATE TABLE IF NOT EXISTS orders (
-  order_id      TEXT PRIMARY KEY,
-  customer_id   TEXT NOT NULL,
+  source        TEXT NOT NULL,
+  source_id     TEXT NOT NULL,
+  customer_uid  TEXT NOT NULL,
   date          DATE NOT NULL,
   revenue       DOUBLE PRECISION NOT NULL,
-  is_first_order BOOLEAN NOT NULL
+  is_first_order BOOLEAN NOT NULL,
+  PRIMARY KEY (source, source_id)
 );
 CREATE INDEX IF NOT EXISTS orders_date_idx ON orders (date);
+CREATE INDEX IF NOT EXISTS orders_customer_idx ON orders (customer_uid);
 
 CREATE TABLE IF NOT EXISTS ad_spend (
   date        DATE NOT NULL,
