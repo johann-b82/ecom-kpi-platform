@@ -16,7 +16,10 @@ export class WooCommerceClient {
     private readonly config: WooConfig,
     private readonly fetchImpl: typeof fetch = fetch,
   ) {
-    this.base = `${config.storeUrl.replace(/\/+$/, '')}/wp-json/wc/v3`;
+    // Store URL may be entered without a scheme (e.g. "bryxtoys.com"); default
+    // to https:// so fetch can parse it. Trailing slashes are stripped.
+    const storeUrl = /^https?:\/\//i.test(config.storeUrl) ? config.storeUrl : `https://${config.storeUrl}`;
+    this.base = `${storeUrl.replace(/\/+$/, '')}/wp-json/wc/v3`;
     // HTTP Basic auth over HTTPS — keeps the secrets out of the URL.
     this.auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
   }
