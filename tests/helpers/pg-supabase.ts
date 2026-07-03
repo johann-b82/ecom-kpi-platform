@@ -9,8 +9,8 @@ import { pool } from '@/lib/db';
 
 const TABLE_SQL: Record<string, string> = {
   daily_metrics: `SELECT date::text AS date, source, channel, metric_key AS "metricKey", value FROM daily_metrics`,
-  orders: `SELECT order_id AS "orderId", customer_id AS "customerId", date::text AS date, revenue, is_first_order AS "isFirstOrder" FROM orders`,
-  customers: `SELECT customer_id AS "customerId", first_order_date::text AS "firstOrderDate", last_order_date::text AS "lastOrderDate", orders_count AS "ordersCount", total_revenue AS "totalRevenue" FROM customers`,
+  orders: `SELECT source_id AS "orderId", customer_uid AS "customerId", date::text AS date, revenue, is_first_order AS "isFirstOrder" FROM orders`,
+  customers: `SELECT uid AS "customerId", first_order_date::text AS "firstOrderDate", last_order_date::text AS "lastOrderDate", orders_count AS "ordersCount", total_revenue AS "totalRevenue" FROM customers`,
   ad_spend: `SELECT date::text AS date, platform, spend, impressions, clicks, conversions, conv_value AS "convValue" FROM ad_spend`,
   subscribers: `SELECT date::text AS date, source, signups, unsubscribes, nps_score AS "npsScore" FROM subscribers`,
 };
