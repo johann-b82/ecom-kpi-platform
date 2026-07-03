@@ -1,8 +1,11 @@
 import { WooCommerceClient } from '../src/connectors/woocommerce/client';
-import { normalizeOrders } from '../src/connectors/woocommerce/connector';
-import { writeOrdersAndCustomers } from '../src/connectors/woocommerce/write';
+import { normalizeDelta } from '../src/connectors/woocommerce/connector';
+import { fullReplace, applyDelta } from '../src/connectors/woocommerce/write';
+import { getWatermarks, setWatermarks, shouldFullResync } from '../src/connectors/woocommerce/watermark';
 import { pool } from '../src/lib/db';
 import { loadConnectorConfig } from '../src/lib/credentials';
+
+const DELTA_OVERLAP_MS = 60_000; // clock-skew insurance on the modified_after boundary
 
 async function main() {
   const cfg = await loadConnectorConfig('woocommerce');
@@ -11,15 +14,28 @@ async function main() {
     consumerKey: cfg.WOOCOMMERCE_CONSUMER_KEY,
     consumerSecret: cfg.WOOCOMMERCE_CONSUMER_SECRET,
   });
-  console.log('Fetching orders from WooCommerce…');
-  const raw = await client.fetchAllOrders();
-  console.log(`Fetched ${raw.length} raw orders.`);
 
-  const data = normalizeOrders(raw);
-  console.log(`Normalized → ${data.orders.length} orders / ${data.customers.length} customers (nur completed+processing).`);
+  const startedAt = new Date();
+  const { syncedAt, fullSyncedAt } = await getWatermarks();
+  const full = shouldFullResync(syncedAt, fullSyncedAt, startedAt);
 
-  await writeOrdersAndCustomers(data);
-  console.log('Wrote orders + customers to canonical DB. Done.');
+  if (full) {
+    console.log('Full resync: fetching all orders…');
+    const raw = await client.fetchAllOrders();
+    const { upserts } = normalizeDelta(raw);
+    console.log(`Fetched ${raw.length}; ${upserts.length} revenue orders → full replace.`);
+    await fullReplace(upserts);
+  } else {
+    const since = new Date(syncedAt!.getTime() - DELTA_OVERLAP_MS);
+    console.log(`Incremental sync: orders modified after ${since.toISOString()}…`);
+    const raw = await client.fetchAllOrders(since);
+    const { upserts, deleteIds } = normalizeDelta(raw);
+    console.log(`Fetched ${raw.length} modified; upsert ${upserts.length}, delete ${deleteIds.length}.`);
+    await applyDelta(upserts, deleteIds);
+  }
+
+  await setWatermarks(startedAt, { full });
+  console.log(`Wrote orders + customers to canonical DB. Done (${full ? 'full' : 'incremental'}).`);
   await pool.end();
 }
 

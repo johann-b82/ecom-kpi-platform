@@ -8,7 +8,7 @@ export interface WooConfig {
 
 const PER_PAGE = 100;
 const REQUEST_TIMEOUT_MS = 30_000;
-// Only the fields normalizeOrders consumes — cuts the per-page payload ~99%
+// Only the fields normalizeDelta consumes — cuts the per-page payload ~99%
 // (full orders are ~27 KB each; a store with thousands of orders otherwise
 // downloads hundreds of MB per full sync).
 const ORDER_FIELDS = 'id,status,date_created,total,customer_id,billing';
@@ -30,11 +30,14 @@ export class WooCommerceClient {
     this.auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
   }
 
-  async fetchAllOrders(): Promise<WooOrder[]> {
+  async fetchAllOrders(modifiedAfter?: Date): Promise<WooOrder[]> {
     const all: WooOrder[] = [];
     let page = 1;
+    const mod = modifiedAfter
+      ? `&modified_after=${encodeURIComponent(modifiedAfter.toISOString())}&dates_are_gmt=true`
+      : '';
     for (;;) {
-      const url = `${this.base}/orders?per_page=${PER_PAGE}&page=${page}&orderby=id&order=asc&status=any&_fields=${ORDER_FIELDS}`;
+      const url = `${this.base}/orders?per_page=${PER_PAGE}&page=${page}&orderby=id&order=asc&status=any&_fields=${ORDER_FIELDS}${mod}`;
       const res = await this.get(url);
       if (!res.ok) {
         throw new Error(`WooCommerce fetch failed: ${res.status} ${await res.text()}`);
