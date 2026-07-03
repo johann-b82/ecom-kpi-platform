@@ -1,0 +1,24 @@
+# Production deploy for the budp app on the shared mocafe VPS.
+# Fronted by the shared mocafe-caddy proxy (budp.lumeapps.de → budp-app:3000),
+# so no ports are published. Run via deploy/deploy.sh.
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile.prod
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+    image: budp-app:local
+    container_name: budp-app
+    restart: unless-stopped
+    env_file: ${APP_ENV_FILE:-/opt/budp/app.env}
+    networks:
+      - supabase_default
+      - mocafe_internal
+
+networks:
+  supabase_default:
+    external: true
+  mocafe_internal:
+    external: true
