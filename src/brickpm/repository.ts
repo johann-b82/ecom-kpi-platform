@@ -1,5 +1,5 @@
 import { pool } from '@/lib/db';
-import type { BpmProduct, BpmPromotion, BpmNotification, BpmGoodie, BpmCompetitor } from './types';
+import type { BpmProduct, BpmPromotion, BpmNotification, BpmGoodie, BpmCompetitor, BpmIntegration } from './types';
 import { computeCockpitStats, sortHeuteWichtig, type CockpitStats } from './cockpit';
 
 // DATE columns are cast to text in SQL (`::text` → 'YYYY-MM-DD' or null) so the value is
@@ -67,6 +67,16 @@ export async function listCompetitors(): Promise<BpmCompetitor[]> {
   return r.rows.map((x) => ({
     id: x.id, productId: x.product_id, competitor: x.competitor, compProduct: x.comp_product,
     ownPrice: x.own_price, compPrice: x.comp_price, avail: x.avail, date: x.date, rec: x.rec,
+  }));
+}
+
+export async function listIntegrations(): Promise<BpmIntegration[]> {
+  const r = await pool.query(
+    `SELECT id,type,system,purpose,objects,dir,status,ep,last_sync FROM bpm_integrations ORDER BY id`,
+  );
+  return r.rows.map((x) => ({
+    id: x.id, type: x.type, system: x.system, purpose: x.purpose, objects: x.objects,
+    dir: x.dir, status: x.status, ep: x.ep, lastSync: x.last_sync,
   }));
 }
 
