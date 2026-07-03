@@ -2,20 +2,15 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { pool } from '@/lib/db';
 import { getSyncInterval, SYNC_INTERVAL_MS } from '@/lib/settings';
+import { CONNECTORS, CONNECTOR_LABELS, type Connector } from '@/lib/connector-fields';
 
 const run = promisify(execFile);
 
-/** Connectors the scheduler knows about; `key` matches the `npm run sync:<key>` scripts. */
-export const SYNC_CONNECTORS: { key: string; label: string }[] = [
-  { key: 'ga4', label: 'Google Analytics (GA4)' },
-  { key: 'google', label: 'Google Ads' },
-  { key: 'meta', label: 'Meta Ads' },
-  { key: 'tiktok', label: 'TikTok Ads' },
-  { key: 'shopware', label: 'Shopware' },
-  { key: 'woocommerce', label: 'WooCommerce' },
-  { key: 'klaviyo', label: 'Klaviyo' },
-  { key: 'mailchimp', label: 'Mailchimp' },
-];
+/** Connectors the scheduler knows about; `key` matches the `npm run sync:<key>`
+ *  scripts. Derived from the connector registry (connector-fields.ts) so the two
+ *  never drift. */
+export const SYNC_CONNECTORS: { key: Connector; label: string }[] =
+  CONNECTORS.map((key) => ({ key, label: CONNECTOR_LABELS[key] }));
 
 export interface SyncStateRow {
   connector: string;
