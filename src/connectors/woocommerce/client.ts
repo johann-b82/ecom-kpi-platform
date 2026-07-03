@@ -30,11 +30,14 @@ export class WooCommerceClient {
     this.auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
   }
 
-  async fetchAllOrders(): Promise<WooOrder[]> {
+  async fetchAllOrders(modifiedAfter?: Date): Promise<WooOrder[]> {
     const all: WooOrder[] = [];
     let page = 1;
+    const mod = modifiedAfter
+      ? `&modified_after=${encodeURIComponent(modifiedAfter.toISOString())}&dates_are_gmt=true`
+      : '';
     for (;;) {
-      const url = `${this.base}/orders?per_page=${PER_PAGE}&page=${page}&orderby=id&order=asc&status=any&_fields=${ORDER_FIELDS}`;
+      const url = `${this.base}/orders?per_page=${PER_PAGE}&page=${page}&orderby=id&order=asc&status=any&_fields=${ORDER_FIELDS}${mod}`;
       const res = await this.get(url);
       if (!res.ok) {
         throw new Error(`WooCommerce fetch failed: ${res.status} ${await res.text()}`);

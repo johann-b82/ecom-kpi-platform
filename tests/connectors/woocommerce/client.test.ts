@@ -37,6 +37,22 @@ describe('WooCommerceClient', () => {
     expect(fetchMock.mock.calls[0][0]).toContain('_fields=id,status,date_created,total,customer_id,billing');
   });
 
+  it('fügt modified_after (GMT) hinzu, wenn ein Datum übergeben wird', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res([]));
+    const client = new WooCommerceClient(cfg, fetchMock as unknown as typeof fetch);
+    await client.fetchAllOrders(new Date('2026-07-01T10:00:00.000Z'));
+    const url = fetchMock.mock.calls[0][0] as string;
+    expect(url).toContain('modified_after=2026-07-01T10%3A00%3A00.000Z');
+    expect(url).toContain('dates_are_gmt=true');
+  });
+
+  it('lässt modified_after weg, wenn kein Datum übergeben wird', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res([]));
+    const client = new WooCommerceClient(cfg, fetchMock as unknown as typeof fetch);
+    await client.fetchAllOrders();
+    expect(fetchMock.mock.calls[0][0]).not.toContain('modified_after');
+  });
+
   it('ergänzt https:// wenn die Store-URL kein Schema hat', async () => {
     const fetchMock = vi.fn().mockResolvedValue(res([]));
     const client = new WooCommerceClient(
