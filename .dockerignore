@@ -1,3 +1,9 @@
 node_modules
 .next
 .git
+.claude
+docs
+tests
+*.md
+tsconfig.tsbuildinfo
+.dev-server.log
