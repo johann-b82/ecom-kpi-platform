@@ -73,22 +73,6 @@ export const CONNECTOR_LABELS: Record<Connector, string> = {
   google: 'Google Ads',
 };
 
-// Connectors that write the same underlying data and therefore must not both
-// be configured; setting credentials for one is blocked while a sibling is
-// configured. The shop pair TRUNCATE-replaces orders/customers (no source
-// column). The e-mail pair both feed `subscribers`, which `newsletter_signups`
-// sums across sources — configuring both would double-count signups.
-export const EXCLUSIVE_GROUPS: Connector[][] = [
-  ['shopware', 'woocommerce'],
-  ['klaviyo', 'mailchimp'],
-];
-
-// The connectors that block `connector` from being configured (its group peers).
-export function exclusiveSiblings(connector: Connector): Connector[] {
-  const group = EXCLUSIVE_GROUPS.find((g) => g.includes(connector));
-  return group ? group.filter((c) => c !== connector) : [];
-}
-
 // Connectors grouped into named sections by data-source category.
 export const CONNECTOR_GROUPS: { title: string; connectors: Connector[] }[] = [
   { title: 'Shop', connectors: ['shopware', 'woocommerce'] },

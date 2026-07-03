@@ -43,19 +43,20 @@ describe('POST /api/credentials', () => {
     expect(deleteCredential).toHaveBeenCalledWith('shopware', 'SHOPWARE_API_URL');
   });
 
-  it('blockiert WooCommerce mit 409, wenn Shopware bereits konfiguriert ist', async () => {
-    setCredential.mockClear(); isConfigured.mockResolvedValue(true); // shopware sibling gesetzt
+  it('setzt WooCommerce auch, wenn Shopware bereits konfiguriert ist (keine Exklusiv-Sperre)', async () => {
+    setCredential.mockClear(); isConfigured.mockResolvedValue(true); // shopware gesetzt
     const req = new Request('http://x/api/credentials', {
       method: 'POST',
       body: JSON.stringify({ connector: 'woocommerce', fields: { WOOCOMMERCE_STORE_URL: 'https://shop', WOOCOMMERCE_CONSUMER_KEY: 'ck', WOOCOMMERCE_CONSUMER_SECRET: 'cs' } }),
     });
     const res = await POST(req);
-    expect(res.status).toBe(409);
-    expect((await res.json()).error).toMatch(/Shopware ist bereits konfiguriert/);
-    expect(setCredential).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(setCredential).toHaveBeenCalledWith('woocommerce', 'WOOCOMMERCE_STORE_URL', 'https://shop');
+    expect(setCredential).toHaveBeenCalledWith('woocommerce', 'WOOCOMMERCE_CONSUMER_KEY', 'ck');
+    expect(setCredential).toHaveBeenCalledWith('woocommerce', 'WOOCOMMERCE_CONSUMER_SECRET', 'cs');
   });
 
-  it('erlaubt das Trennen (null) auch wenn das Geschwister gesetzt ist', async () => {
+  it('erlaubt das Trennen (null) auch wenn der andere Connector gesetzt ist', async () => {
     deleteCredential.mockClear(); isConfigured.mockResolvedValue(true);
     const req = new Request('http://x/api/credentials', {
       method: 'POST',
@@ -66,31 +67,4 @@ describe('POST /api/credentials', () => {
     expect(deleteCredential).toHaveBeenCalledWith('woocommerce', 'WOOCOMMERCE_STORE_URL');
   });
 
-  it('erlaubt das Setzen, wenn kein Geschwister konfiguriert ist', async () => {
-    setCredential.mockClear(); isConfigured.mockResolvedValue(false);
-    const req = new Request('http://x/api/credentials', {
-      method: 'POST',
-      body: JSON.stringify({ connector: 'woocommerce', fields: { WOOCOMMERCE_STORE_URL: 'https://shop' } }),
-    });
-    const res = await POST(req);
-    expect(res.status).toBe(200);
-    expect(setCredential).toHaveBeenCalledWith('woocommerce', 'WOOCOMMERCE_STORE_URL', 'https://shop');
-  });
-});
-
-import { exclusiveSiblings } from '@/lib/connector-fields';
-
-describe('exclusiveSiblings', () => {
-  it('paart Shopware und WooCommerce', () => {
-    expect(exclusiveSiblings('woocommerce')).toEqual(['shopware']);
-    expect(exclusiveSiblings('shopware')).toEqual(['woocommerce']);
-  });
-  it('paart Klaviyo und Mailchimp', () => {
-    expect(exclusiveSiblings('mailchimp')).toEqual(['klaviyo']);
-    expect(exclusiveSiblings('klaviyo')).toEqual(['mailchimp']);
-  });
-  it('gibt [] für Connectoren ohne Exklusivgruppe zurück', () => {
-    expect(exclusiveSiblings('ga4')).toEqual([]);
-    expect(exclusiveSiblings('meta')).toEqual([]);
-  });
 });
