@@ -16,6 +16,5 @@ export function formatValue(kpi: Kpi): string {
 
 export function formatDelta(deltaPct: number | null): string | null {
   if (deltaPct === null) return null;
-  const sign = deltaPct >= 0 ? '▲' : '▼';
-  return `${sign} ${pf.format(Math.abs(deltaPct))} %`;
+  return `${pf.format(Math.abs(deltaPct))} %`;
 }
