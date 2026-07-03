@@ -15,3 +15,12 @@ export function redirectUriFor(request: Request, provider: string): string {
   const { host, proto } = resolveOrigin(request);
   return `${proto}://${host}/api/oauth/${provider}/callback`;
 }
+
+/** Absolute app URL on the externally-visible origin. Use this for user-facing
+ *  redirects instead of `new URL(path, request.url)` — behind a reverse proxy
+ *  `request.url` is the internal address (localhost:3000), which would send the
+ *  browser somewhere it can't reach. */
+export function appUrl(request: Request, path: string): string {
+  const { host, proto } = resolveOrigin(request);
+  return `${proto}://${host}${path}`;
+}

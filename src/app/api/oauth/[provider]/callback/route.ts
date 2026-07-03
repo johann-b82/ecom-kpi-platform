@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { getProvider } from '@/lib/oauth/providers';
 import { loadAppCredentials } from '@/lib/oauth/token';
 import { saveConnection } from '@/lib/oauth/store';
-import { redirectUriFor, STATE_COOKIE } from '@/lib/oauth/redirect';
+import { appUrl, redirectUriFor, STATE_COOKIE } from '@/lib/oauth/redirect';
 
 export const dynamic = 'force-dynamic';
 
 function setupRedirect(request: Request, query: string) {
-  return NextResponse.redirect(new URL(`/setup?${query}`, request.url));
+  // Use the external origin (forwarded headers), NOT request.url — behind Caddy
+  // request.url is http://localhost:3000, which the user's browser can't reach.
+  return NextResponse.redirect(appUrl(request, `/setup?${query}`));
 }
 
 export async function GET(request: Request, { params }: { params: { provider: string } }) {
