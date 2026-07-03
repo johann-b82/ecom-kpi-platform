@@ -8,7 +8,7 @@ const prod = (o: Partial<BpmProduct>): BpmProduct => ({
   channel: '', succ: null, descr: '', ...o,
 });
 const notif = (o: Partial<BpmNotification>): BpmNotification => ({
-  id: 'N', type: '', priority: 'mittel', refId: '', msg: '', action: '', status: 'offen', due: '2026-07-10', role: '', target: '', ...o,
+  id: 'N', type: '', priority: 'mittel', refId: '', msg: '', action: '', status: 'offen', due: '2026-07-10', role: '', target: '', note: null, ...o,
 });
 
 describe('computeCockpitStats', () => {

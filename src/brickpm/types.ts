@@ -18,7 +18,7 @@ export interface BpmCompetitor {
 }
 export interface BpmNotification {
   id: string; type: string; priority: string; refId: string; msg: string; action: string;
-  status: string; due: string | null; role: string; target: string;
+  status: string; due: string | null; role: string; target: string; note: string | null;
 }
 export interface BpmIntegration {
   id: string; type: string; system: string; purpose: string; objects: string[]; dir: string;
