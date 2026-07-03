@@ -1,4 +1,4 @@
-export type Connector = 'shopware' | 'ga4' | 'klaviyo' | 'mailchimp' | 'meta' | 'tiktok' | 'google';
+export type Connector = 'shopware' | 'woocommerce' | 'ga4' | 'klaviyo' | 'mailchimp' | 'meta' | 'tiktok' | 'google';
 
 export interface FieldDef {
   field: string;
@@ -15,6 +15,11 @@ export const CONNECTOR_FIELDS: Record<Connector, FieldDef[]> = {
     { field: 'SHOPWARE_API_URL', label: 'API URL', secret: false, optional: false },
     { field: 'SHOPWARE_CLIENT_ID', label: 'Client ID', secret: false, optional: false },
     { field: 'SHOPWARE_CLIENT_SECRET', label: 'Client Secret', secret: true, optional: false },
+  ],
+  woocommerce: [
+    { field: 'WOOCOMMERCE_STORE_URL', label: 'Store URL', secret: false, optional: false },
+    { field: 'WOOCOMMERCE_CONSUMER_KEY', label: 'Consumer Key', secret: true, optional: false },
+    { field: 'WOOCOMMERCE_CONSUMER_SECRET', label: 'Consumer Secret', secret: true, optional: false },
   ],
   ga4: [
     { field: 'GA4_PROPERTY_ID', label: 'Property ID', secret: false, optional: false },
@@ -59,6 +64,7 @@ export const CONNECTORS = Object.keys(CONNECTOR_FIELDS) as Connector[];
 // Human-readable connector names shown in the UI.
 export const CONNECTOR_LABELS: Record<Connector, string> = {
   shopware: 'Shopware',
+  woocommerce: 'WooCommerce',
   ga4: 'Google Analytics 4',
   klaviyo: 'Klaviyo',
   mailchimp: 'Mailchimp',
@@ -69,7 +75,7 @@ export const CONNECTOR_LABELS: Record<Connector, string> = {
 
 // Connectors grouped into named sections by data-source category.
 export const CONNECTOR_GROUPS: { title: string; connectors: Connector[] }[] = [
-  { title: 'Shop', connectors: ['shopware'] },
+  { title: 'Shop', connectors: ['shopware', 'woocommerce'] },
   { title: 'Web-Analytics', connectors: ['ga4'] },
   { title: 'Werbung', connectors: ['meta', 'tiktok', 'google'] },
   { title: 'E-Mail & CRM', connectors: ['klaviyo', 'mailchimp'] },

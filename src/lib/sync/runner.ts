@@ -12,6 +12,7 @@ export const SYNC_CONNECTORS: { key: string; label: string }[] = [
   { key: 'meta', label: 'Meta Ads' },
   { key: 'tiktok', label: 'TikTok Ads' },
   { key: 'shopware', label: 'Shopware' },
+  { key: 'woocommerce', label: 'WooCommerce' },
   { key: 'klaviyo', label: 'Klaviyo' },
   { key: 'mailchimp', label: 'Mailchimp' },
 ];

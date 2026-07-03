@@ -85,15 +85,15 @@ export const KPI_HELP: Record<string, KpiHelp> = {
   // CARE — Loyalty
   repeat_rate: {
     formula: 'Anteil aktiver Kunden mit ≥ 2 Bestellungen.',
-    source: 'Shopware → customers/orders.',
+    source: 'Shop (Shopware/WooCommerce) → customers/orders.',
   },
   clv: {
     formula: 'Ø Gesamtumsatz je aktivem Kunden (Σ totalRevenue ÷ aktive Kunden).',
-    source: 'Shopware → customers.',
+    source: 'Shop (Shopware/WooCommerce) → customers.',
   },
   repurchase_interval: {
     formula: 'Ø Tage zwischen Erst- und Letztbestellung ÷ (Bestellungen − 1), über Kunden mit ≥ 2 Bestellungen.',
-    source: 'Shopware → customers.',
+    source: 'Shop (Shopware/WooCommerce) → customers.',
   },
   nps: {
     formula: 'Ø NPS-Score der Einträge im Zeitraum.',
@@ -101,10 +101,10 @@ export const KPI_HELP: Record<string, KpiHelp> = {
   },
   retention: {
     formula: 'Anteil der Vorperioden-Kunden, die im Zeitraum erneut bestellt haben.',
-    source: 'Shopware → orders.',
+    source: 'Shop (Shopware/WooCommerce) → orders.',
   },
   churn: {
     formula: '1 − Retention Rate.',
-    source: 'Shopware → orders.',
+    source: 'Shop (Shopware/WooCommerce) → orders.',
   },
 };
