@@ -74,8 +74,8 @@ export const KPI_HELP: Record<string, KpiHelp> = {
     source: 'Ad-Plattformen (Meta/Google/TikTok Ads) → ad_spend.',
   },
   cac: {
-    formula: 'Ad-Spend ÷ Neukunden (Erstbesteller im Zeitraum).',
-    source: 'Ad-Spend (Ads) + Shopware (Neukunden).',
+    formula: 'Ad-Spend ÷ GA4-Käufe (ecommercePurchases).',
+    source: 'Ad-Plattformen (Ad-Spend) + GA4 (ecommercePurchases).',
   },
   cart_abandonment: {
     formula: '1 − (GA4-Käufe ÷ begonnene Checkouts).',
