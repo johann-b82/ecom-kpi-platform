@@ -16,7 +16,9 @@ function toCsv(rows: Row[]): string {
   if (rows.length === 0) return '';
   const cols = Object.keys(rows[0]);
   const esc = (v: unknown) => {
-    const s = Array.isArray(v) ? v.join('|') : v == null ? '' : String(v);
+    let s = Array.isArray(v) ? v.join('|') : v == null ? '' : String(v);
+    // Neutralize CSV formula injection: a leading =,+,-,@ would run as a formula in Excel/Sheets.
+    if (/^[=+\-@]/.test(s)) s = `'${s}`;
     return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   return [cols.join(';'), ...rows.map((r) => cols.map((c) => esc(r[c])).join(';'))].join('\n');
