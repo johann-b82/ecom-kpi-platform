@@ -15,7 +15,7 @@ export const KPI_HELP: Record<string, KpiHelp> = {
   },
   video_views: {
     formula: 'Summe der Metrik „video_views" im Zeitraum.',
-    source: 'Web-Analytics (GA4) → daily_metrics.',
+    source: 'Ad-Plattformen (Meta/Google/TikTok Ads) → daily_metrics.',
   },
   cpm: {
     formula: 'Ad-Spend ÷ Impressions × 1000 (Kosten pro 1.000 Impressions).',
