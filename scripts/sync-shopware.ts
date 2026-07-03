@@ -1,6 +1,6 @@
 import { ShopwareClient } from '../src/connectors/shopware/client';
 import { normalizeOrders } from '../src/connectors/shopware/connector';
-import { writeOrdersAndCustomers } from '../src/connectors/shopware/write';
+import { fullReplace } from '../src/lib/orders-store';
 import { pool } from '../src/lib/db';
 import { loadConnectorConfig } from '../src/lib/credentials';
 
@@ -11,10 +11,10 @@ async function main() {
   const raw = await client.fetchAllOrders();
   console.log(`Fetched ${raw.length} raw orders.`);
 
-  const data = normalizeOrders(raw);
-  console.log(`Normalized → ${data.orders.length} orders / ${data.customers.length} customers (cancelled excluded).`);
+  const orders = normalizeOrders(raw);
+  console.log(`Normalized → ${orders.length} orders (cancelled excluded).`);
 
-  await writeOrdersAndCustomers(data);
+  await fullReplace('shopware', orders);
   console.log('Wrote orders + customers to canonical DB. Done.');
   await pool.end();
 }
