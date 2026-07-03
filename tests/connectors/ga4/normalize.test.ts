@@ -7,10 +7,11 @@ const report: Ga4Report = {
   metricHeaders: [
     { name: 'sessions' }, { name: 'screenPageViews' }, { name: 'totalUsers' },
     { name: 'newUsers' }, { name: 'engagedSessions' }, { name: 'addToCarts' }, { name: 'checkouts' },
+    { name: 'ecommercePurchases' },
   ],
   rows: [
-    { dimensionValues: [{ value: '20260101' }], metricValues: [{ value: '1000' }, { value: '3000' }, { value: '800' }, { value: '600' }, { value: '650' }, { value: '120' }, { value: '40' }] },
-    { dimensionValues: [{ value: '20260102' }], metricValues: [{ value: '500' }, { value: '1500' }, { value: '400' }, { value: '500' }, { value: '480' }, { value: '60' }, { value: '20' }] },
+    { dimensionValues: [{ value: '20260101' }], metricValues: [{ value: '1000' }, { value: '3000' }, { value: '800' }, { value: '600' }, { value: '650' }, { value: '120' }, { value: '40' }, { value: '25' }] },
+    { dimensionValues: [{ value: '20260102' }], metricValues: [{ value: '500' }, { value: '1500' }, { value: '400' }, { value: '500' }, { value: '480' }, { value: '60' }, { value: '20' }, { value: '12' }] },
   ],
 };
 
@@ -19,9 +20,9 @@ function val(ds: ReturnType<typeof normalizeReport>, date: string, key: string):
 }
 
 describe('normalizeReport', () => {
-  it('erzeugt 7 numerische daily_metrics je Tag, source ga4', () => {
+  it('erzeugt 8 numerische daily_metrics je Tag, source ga4', () => {
     const ds = normalizeReport(report);
-    expect(ds.dailyMetrics).toHaveLength(14); // 2 Tage × 7 Keys
+    expect(ds.dailyMetrics).toHaveLength(16); // 2 Tage × 8 Keys
     expect(ds.dailyMetrics.every((m) => m.source === 'ga4' && m.channel === 'default')).toBe(true);
     expect(ds.dailyMetrics.every((m) => typeof m.value === 'number')).toBe(true);
   });
@@ -32,6 +33,7 @@ describe('normalizeReport', () => {
     expect(val(ds, '2026-01-01', 'total_users')).toBe(800);
     expect(val(ds, '2026-01-01', 'add_to_carts')).toBe(120);
     expect(val(ds, '2026-01-01', 'checkouts_started')).toBe(40);
+    expect(val(ds, '2026-01-01', 'ecommerce_purchases')).toBe(25);
   });
   it('leitet returning_users und bounced_sessions ab (≥0 geklemmt)', () => {
     const ds = normalizeReport(report);

@@ -3,6 +3,7 @@ import type { Ga4Report } from './types';
 
 export const GA4_METRICS = [
   'sessions', 'screenPageViews', 'totalUsers', 'newUsers', 'engagedSessions', 'addToCarts', 'checkouts',
+  'ecommercePurchases',
 ] as const;
 
 export type TokenProvider = () => Promise<string>;
