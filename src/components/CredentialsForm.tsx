@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatDeDate } from '@/lib/dates';
-import { CONNECTOR_GROUPS, CONNECTOR_LABELS, type Connector } from '@/lib/connector-fields';
+import { CONNECTOR_GROUPS, CONNECTOR_LABELS, exclusiveSiblings, type Connector } from '@/lib/connector-fields';
 import type { OAuthProviderStatus } from '@/lib/oauth/status';
 
 export interface FieldView {
@@ -26,12 +26,22 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
 
   const k = (c: string, f: string) => `${c}:${f}`;
 
+  // A connector is locked while a mutually-exclusive sibling is configured.
+  const configured = new Set(fields.filter((f) => f.isSet).map((f) => f.connector));
+  const lockedBy = (connector: Connector): Connector | null =>
+    exclusiveSiblings(connector).find((s) => configured.has(s)) ?? null;
+
   async function save(connector: Connector) {
     const payload: Record<string, string> = {};
     for (const f of fields.filter((x) => x.connector === connector)) {
       payload[f.field] = inputs[k(connector, f.field)] ?? '';
     }
-    await fetch('/api/credentials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ connector, fields: payload }) });
+    const res = await fetch('/api/credentials', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ connector, fields: payload }) });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setMsg(err.error ?? `${CONNECTOR_LABELS[connector]}: Speichern fehlgeschlagen.`);
+      return;
+    }
     setMsg(`${CONNECTOR_LABELS[connector]} gespeichert.`);
     router.refresh();
   }
@@ -40,7 +50,7 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
     router.refresh();
   }
 
-  function renderField(f: FieldView) {
+  function renderField(f: FieldView, disabled = false) {
     const key = k(f.connector, f.field);
     return (
       <div key={f.field} className="flex items-center gap-3">
@@ -48,10 +58,11 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
           {f.label}{f.optional && <span className="text-neutral-500"> (optional)</span>}
         </label>
         <input
-          className="flex-1 rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100"
+          className="flex-1 rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100"
           type={f.secret && !show[key] ? 'password' : 'text'}
           placeholder={f.secret && f.isSet ? `•••••••• (gesetzt am ${f.updatedAt ? formatDeDate(f.updatedAt) : ''})` : ''}
           value={inputs[key] ?? ''}
+          disabled={disabled}
           onChange={(e) => setInputs({ ...inputs, [key]: e.target.value })}
         />
         {f.secret && (
@@ -79,9 +90,16 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
         <section key={group.title}>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">{group.title}</h2>
           <div className="space-y-4">
-            {group.connectors.map((connector) => (
+            {group.connectors.map((connector) => {
+              const locked = lockedBy(connector);
+              return (
               <div key={connector} className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
                 <h3 className="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{CONNECTOR_LABELS[connector]}</h3>
+                {locked && (
+                  <div className="mb-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                    Gesperrt: {CONNECTOR_LABELS[locked]} ist aktiv. Beide teilen dieselbe Datenquelle — bitte zuerst {CONNECTOR_LABELS[locked]} trennen, um {CONNECTOR_LABELS[connector]} zu aktivieren.
+                  </div>
+                )}
                 {(() => {
                   const oc = oauth.find((o) => o.connectors.includes(connector as Connector));
                   if (!oc) return null;
@@ -125,7 +143,7 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
                           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand">
                             OAuth-Zugangsdaten — für „Mit {CONNECTOR_LABELS[connector]} verbinden"
                           </p>
-                          <div className="space-y-3">{oauthFields.map(renderField)}</div>
+                          <div className="space-y-3">{oauthFields.map((f) => renderField(f, !!locked))}</div>
                         </div>
                       )}
                       {otherFields.length > 0 && (
@@ -133,15 +151,16 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
                           {oauthFields.length > 0 && (
                             <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Weitere Felder</p>
                           )}
-                          {otherFields.map(renderField)}
+                          {otherFields.map((f) => renderField(f, !!locked))}
                         </div>
                       )}
                     </>
                   );
                 })()}
-                <button type="button" onClick={() => save(connector)} className="mt-3 rounded bg-brand px-3 py-1 text-sm text-white">Speichern</button>
+                <button type="button" onClick={() => save(connector)} disabled={!!locked} className="mt-3 rounded bg-brand px-3 py-1 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50">Speichern</button>
               </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       ))}
