@@ -9,8 +9,8 @@ function unwrap<T>(res: { data: T[] | null; error: { message: string } | null })
 export async function loadDataset(supabase: SupabaseClient): Promise<CanonicalDataset> {
   const [dm, ord, cust, ads, subs] = await Promise.all([
     supabase.from('daily_metrics').select('date, source, channel, metricKey:metric_key, value'),
-    supabase.from('orders').select('orderId:order_id, customerId:customer_id, date, revenue, isFirstOrder:is_first_order'),
-    supabase.from('customers').select('customerId:customer_id, firstOrderDate:first_order_date, lastOrderDate:last_order_date, ordersCount:orders_count, totalRevenue:total_revenue'),
+    supabase.from('orders').select('orderId:source_id, customerId:customer_uid, date, revenue, isFirstOrder:is_first_order'),
+    supabase.from('customers').select('customerId:uid, firstOrderDate:first_order_date, lastOrderDate:last_order_date, ordersCount:orders_count, totalRevenue:total_revenue'),
     supabase.from('ad_spend').select('date, platform, spend, impressions, clicks, conversions, convValue:conv_value'),
     supabase.from('subscribers').select('date, source, signups, unsubscribes, npsScore:nps_score'),
   ]);

@@ -18,14 +18,14 @@ async function main() {
   }
   for (const c of data.customers) {
     await pool.query(
-      'INSERT INTO customers(customer_id, first_order_date, last_order_date, orders_count, total_revenue) VALUES($1,$2,$3,$4,$5)',
-      [c.customerId, c.firstOrderDate, c.lastOrderDate, c.ordersCount, c.totalRevenue],
+      'INSERT INTO customers(uid, source, first_order_date, last_order_date, orders_count, total_revenue) VALUES($1,$2,$3,$4,$5,$6)',
+      [`seed:${c.customerId}`, 'seed', c.firstOrderDate, c.lastOrderDate, c.ordersCount, c.totalRevenue],
     );
   }
   for (const o of data.orders) {
     await pool.query(
-      'INSERT INTO orders(order_id, customer_id, date, revenue, is_first_order) VALUES($1,$2,$3,$4,$5)',
-      [o.orderId, o.customerId, o.date, o.revenue, o.isFirstOrder],
+      'INSERT INTO orders(source, source_id, customer_uid, date, revenue, is_first_order) VALUES($1,$2,$3,$4,$5,$6)',
+      ['seed', o.orderId, `seed:${o.customerId}`, o.date, o.revenue, o.isFirstOrder],
     );
   }
   for (const a of data.adSpend) {

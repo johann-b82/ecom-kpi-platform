@@ -1,6 +1,6 @@
 import { WooCommerceClient } from '../src/connectors/woocommerce/client';
 import { normalizeDelta } from '../src/connectors/woocommerce/connector';
-import { fullReplace, applyDelta } from '../src/connectors/woocommerce/write';
+import { fullReplace, applyDelta } from '../src/lib/orders-store';
 import { getWatermarks, setWatermarks, shouldFullResync } from '../src/connectors/woocommerce/watermark';
 import { pool } from '../src/lib/db';
 import { loadConnectorConfig } from '../src/lib/credentials';
@@ -24,14 +24,14 @@ async function main() {
     const raw = await client.fetchAllOrders();
     const { upserts } = normalizeDelta(raw);
     console.log(`Fetched ${raw.length}; ${upserts.length} revenue orders → full replace.`);
-    await fullReplace(upserts);
+    await fullReplace('woocommerce', upserts);
   } else {
     const since = new Date(syncedAt!.getTime() - DELTA_OVERLAP_MS);
     console.log(`Incremental sync: orders modified after ${since.toISOString()}…`);
     const raw = await client.fetchAllOrders(since);
     const { upserts, deleteIds } = normalizeDelta(raw);
     console.log(`Fetched ${raw.length} modified; upsert ${upserts.length}, delete ${deleteIds.length}.`);
-    await applyDelta(upserts, deleteIds);
+    await applyDelta('woocommerce', upserts, deleteIds);
   }
 
   await setWatermarks(startedAt, { full });
