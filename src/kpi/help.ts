@@ -62,12 +62,12 @@ export const KPI_HELP: Record<string, KpiHelp> = {
     source: 'GA4 (ecommercePurchases + Sessions).',
   },
   aov: {
-    formula: 'Umsatz ÷ Anzahl Bestellungen (Average Order Value).',
-    source: 'Shopware → orders.',
+    formula: 'GA4-Umsatz (purchaseRevenue) ÷ GA4-Käufe (ecommercePurchases).',
+    source: 'GA4 (purchaseRevenue + ecommercePurchases).',
   },
   revenue: {
-    formula: 'Summe des Bestellumsatzes im Zeitraum (brutto, ohne stornierte).',
-    source: 'Shopware → orders.',
+    formula: 'Summe des GA4-Umsatzes (purchaseRevenue) im Zeitraum.',
+    source: 'GA4 (purchaseRevenue).',
   },
   roas: {
     formula: 'Conversion-Value ÷ Ad-Spend (Return on Ad Spend).',

@@ -11,7 +11,7 @@ function res(body: unknown, status = 200): Response {
 }
 
 describe('Ga4Client.runReport', () => {
-  it('ruft den Property-Report mit Datum-Dimension und 8 Metriken auf', async () => {
+  it('ruft den Property-Report mit Datum-Dimension und 9 Metriken auf', async () => {
     const fetchMock = vi.fn().mockResolvedValue(res({ rows: [], metricHeaders: [] }));
     const client = new Ga4Client('12345', async () => 'TOK', fetchMock as unknown as typeof fetch);
     await client.runReport(30);
@@ -23,7 +23,7 @@ describe('Ga4Client.runReport', () => {
     expect(body.dimensions).toEqual([{ name: 'date' }]);
     expect(body.metrics.map((m: { name: string }) => m.name)).toEqual([
       'sessions', 'screenPageViews', 'totalUsers', 'newUsers', 'engagedSessions', 'addToCarts', 'checkouts',
-      'ecommercePurchases',
+      'ecommercePurchases', 'purchaseRevenue',
     ]);
     expect(body.dateRanges).toEqual([{ startDate: '29daysAgo', endDate: 'today' }]);
   });
