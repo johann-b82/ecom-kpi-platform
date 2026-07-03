@@ -68,4 +68,15 @@ describe('WooCommerceClient', () => {
     const client = new WooCommerceClient(cfg, fetchMock as unknown as typeof fetch);
     await expect(client.fetchAllOrders()).rejects.toThrow(/WooCommerce fetch failed: 401/);
   });
+
+  it('wirft einen klaren Timeout-Fehler, wenn der Store nicht antwortet', async () => {
+    // fetch that hangs until its abort signal fires — like a real unresponsive host.
+    const fetchMock = vi.fn((_url: string, init: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+      }),
+    );
+    const client = new WooCommerceClient(cfg, fetchMock as unknown as typeof fetch, 20);
+    await expect(client.fetchAllOrders()).rejects.toThrow(/timed out after 0\.02s/i);
+  });
 });
