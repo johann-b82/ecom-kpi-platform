@@ -8,7 +8,7 @@ export interface WooConfig {
 
 const PER_PAGE = 100;
 const REQUEST_TIMEOUT_MS = 30_000;
-// Only the fields normalizeOrders consumes — cuts the per-page payload ~99%
+// Only the fields normalizeDelta consumes — cuts the per-page payload ~99%
 // (full orders are ~27 KB each; a store with thousands of orders otherwise
 // downloads hundreds of MB per full sync).
 const ORDER_FIELDS = 'id,status,date_created,total,customer_id,billing';
