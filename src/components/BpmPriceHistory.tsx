@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { LineChart, Card } from '@tremor/react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { ChartCard } from '@/components/charts/ChartCard';
+import { BRAND, MUTED, TICK, TOOLTIP_LABEL_STYLE, eur, pct } from '@/components/charts/chart-style';
 import type { BpmProduct } from '@/brickpm/types';
 import type { PricePoint } from '@/brickpm/history';
 
@@ -29,16 +31,32 @@ export function BpmPriceHistory({ products, history }: { products: BpmProduct[];
         </select>
       </label>
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="bg-white dark:bg-neutral-900">
-          <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Preis &amp; Kosten (€)</p>
-          <LineChart className="mt-3 h-64" data={rows} index="date" categories={['Preis (€)', 'Kosten (€)']}
-            colors={['blue', 'gray']} valueFormatter={(n) => `${n.toLocaleString('de-DE')} €`} yAxisWidth={64} />
-        </Card>
-        <Card className="bg-white dark:bg-neutral-900">
-          <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Marge-Verlauf (%)</p>
-          <LineChart className="mt-3 h-64" data={rows} index="date" categories={['Marge (%)']}
-            colors={['emerald']} valueFormatter={(n) => `${n} %`} showLegend={false} yAxisWidth={48} />
-        </Card>
+        <ChartCard title="Preis & Kosten (€)">
+          <div className="mt-3 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                <XAxis dataKey="date" tick={TICK} minTickGap={24} />
+                <YAxis tick={TICK} width={64} tickFormatter={(n) => eur(Number(n))} />
+                <Tooltip formatter={(v, n) => [eur(Number(v)), n as string]} labelStyle={TOOLTIP_LABEL_STYLE} />
+                <Legend />
+                <Line type="monotone" dataKey="Preis (€)" stroke={BRAND} strokeWidth={2.5} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="Kosten (€)" stroke={MUTED} strokeWidth={2} dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+        <ChartCard title="Marge-Verlauf (%)">
+          <div className="mt-3 h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                <XAxis dataKey="date" tick={TICK} minTickGap={24} />
+                <YAxis tick={TICK} width={48} tickFormatter={(n) => pct(Number(n))} />
+                <Tooltip formatter={(v) => [pct(Number(v)), 'Marge']} labelStyle={TOOLTIP_LABEL_STYLE} />
+                <Line type="monotone" dataKey="Marge (%)" stroke={BRAND} strokeWidth={2.5} dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
       </div>
     </div>
   );
