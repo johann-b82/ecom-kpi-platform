@@ -26,7 +26,7 @@ describe('doKpis', () => {
     expect(by('aov').value).toBeCloseTo(20);                // GA4: 600 purchase_revenue / 30 ecommerce_purchases
     expect(by('revenue').value).toBe(600);                  // GA4 purchase_revenue
     expect(by('roas').value).toBeCloseTo(4);                // 800 / 200
-    expect(by('cac').value).toBeCloseTo(100);               // 200 / 2 Neukunden
+    expect(by('cac').value).toBeCloseTo(200 / 30);          // GA4: 200 spend / 30 ecommerce_purchases
     expect(by('cart_abandonment').value).toBeCloseTo(0.4); // GA4: 1 - 30 ecommerce_purchases / 50 checkouts
   });
 });
