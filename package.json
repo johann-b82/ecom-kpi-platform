@@ -17,7 +17,8 @@
     "sync:google": "tsx scripts/sync-google.ts",
     "create-user": "tsx scripts/create-user.ts",
     "seed-groups": "tsx scripts/seed-groups.ts",
-    "seed-brickpm": "tsx scripts/seed-brickpm.ts"
+    "seed-brickpm": "tsx scripts/seed-brickpm.ts",
+    "sync-runner": "tsx scripts/sync-runner.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
