@@ -1,9 +1,11 @@
 'use client';
 import { useMemo, useState } from 'react';
-import { LineChart, Card } from '@tremor/react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import type { CompPoint } from '@/brickpm/history';
 import type { BpmCompetitor } from '@/brickpm/types';
 import { eur, pct, deviation } from '@/brickpm/format';
+import { ChartCard } from '@/components/charts/ChartCard';
+import { BRAND, MUTED, TICK, TOOLTIP_LABEL_STYLE, eur as eurAxis } from '@/components/charts/chart-style';
 
 const selectClass =
   'rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100';
@@ -56,11 +58,20 @@ export function BpmMonitoring({ points, alerts }: { points: CompPoint[]; alerts:
             {combos.map((c) => <option key={c.key} value={c.key}>{c.productId} · {c.competitor}</option>)}
           </select>
         </label>
-        <Card className="bg-white dark:bg-neutral-900">
-          <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Preisverlauf: eigener vs. Wettbewerb</p>
-          <LineChart className="mt-3 h-72" data={rows} index="date" categories={['Eigener Preis', 'Wettbewerb']}
-            colors={['blue', 'red']} valueFormatter={(n) => `${n.toLocaleString('de-DE')} €`} yAxisWidth={64} />
-        </Card>
+        <ChartCard title="Preisverlauf: eigener vs. Wettbewerb">
+          <div className="mt-3 h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                <XAxis dataKey="date" tick={TICK} minTickGap={24} />
+                <YAxis tick={TICK} width={64} tickFormatter={(n) => eurAxis(Number(n))} />
+                <Tooltip formatter={(v, n) => [eurAxis(Number(v)), n as string]} labelStyle={TOOLTIP_LABEL_STYLE} />
+                <Legend />
+                <Line type="monotone" dataKey="Eigener Preis" stroke={BRAND} strokeWidth={2.5} dot={false} isAnimationActive={false} />
+                <Line type="monotone" dataKey="Wettbewerb" stroke={MUTED} strokeWidth={2} dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
       </section>
     </div>
   );
