@@ -28,6 +28,7 @@ export function normalizeReport(report: Ga4Report): CanonicalDataset {
       add_to_carts: num('addToCarts'),
       checkouts_started: num('checkouts'),
       ecommerce_purchases: num('ecommercePurchases'),
+      purchase_revenue: num('purchaseRevenue'),
     };
     for (const [metricKey, value] of Object.entries(derived)) {
       dailyMetrics.push({ date, source: 'ga4', channel: 'default', metricKey, value });
