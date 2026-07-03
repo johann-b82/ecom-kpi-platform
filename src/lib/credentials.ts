@@ -20,6 +20,11 @@ export async function getCredential(connector: Connector, field: string): Promis
   return res.rows[0] ? decrypt(res.rows[0].ciphertext) : null;
 }
 
+export async function isConfigured(connector: Connector): Promise<boolean> {
+  const res = await pool.query('SELECT 1 FROM connector_credentials WHERE connector = $1 LIMIT 1', [connector]);
+  return (res.rowCount ?? 0) > 0;
+}
+
 export async function getCredentials(connector: Connector): Promise<Record<string, string>> {
   const res = await pool.query('SELECT field, ciphertext FROM connector_credentials WHERE connector = $1', [connector]);
   const out: Record<string, string> = {};
