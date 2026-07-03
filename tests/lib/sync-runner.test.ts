@@ -35,3 +35,15 @@ describe('dueConnectors', () => {
     expect(out).toEqual(['ga4']);
   });
 });
+
+import { SYNC_CONNECTORS } from '@/lib/sync/runner';
+import { CONNECTORS, CONNECTOR_LABELS } from '@/lib/connector-fields';
+
+describe('SYNC_CONNECTORS is derived from the connector registry', () => {
+  it('covers exactly CONNECTORS with labels from CONNECTOR_LABELS', () => {
+    expect(SYNC_CONNECTORS.map((c) => c.key)).toEqual(CONNECTORS);
+    for (const { key, label } of SYNC_CONNECTORS) {
+      expect(label).toBe(CONNECTOR_LABELS[key]);
+    }
+  });
+});

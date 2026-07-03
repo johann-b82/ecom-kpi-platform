@@ -1,3 +1,5 @@
+// Canonical connector registry: the single source of truth for every connector's
+// credential fields, label, and UI group. The sync runner derives its list from here.
 export type Connector = 'shopware' | 'woocommerce' | 'ga4' | 'klaviyo' | 'mailchimp' | 'meta' | 'tiktok' | 'google';
 
 export interface FieldDef {
