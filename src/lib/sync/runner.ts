@@ -31,24 +31,41 @@ async function configuredConnectors(): Promise<Set<string>> {
 }
 
 export async function listSyncState(): Promise<SyncStateRow[]> {
-  const [stateRes, configured] = await Promise.all([
-    pool.query<{ connector: string; last_run_at: string | null; status: string | null; detail: string | null }>(
-      'SELECT connector, last_run_at::text AS last_run_at, status, detail FROM sync_state',
-    ),
-    configuredConnectors(),
-  ]);
-  const byKey = new Map(stateRes.rows.map((x) => [x.connector, x]));
-  return SYNC_CONNECTORS.map((c) => {
-    const row = byKey.get(c.key);
-    return {
-      connector: c.key,
-      label: c.label,
-      configured: configured.has(c.key),
-      lastRunAt: row?.last_run_at ?? null,
-      status: row?.status ?? null,
-      detail: row?.detail ?? null,
-    };
-  });
+  try {
+    const [stateRes, configured] = await Promise.all([
+      pool.query<{ connector: string; last_run_at: string | null; status: string | null; detail: string | null }>(
+        'SELECT connector, last_run_at::text AS last_run_at, status, detail FROM sync_state',
+      ),
+      configuredConnectors(),
+    ]);
+    const byKey = new Map(stateRes.rows.map((x) => [x.connector, x]));
+    return SYNC_CONNECTORS.map((c) => {
+      const row = byKey.get(c.key);
+      return {
+        connector: c.key,
+        label: c.label,
+        configured: configured.has(c.key),
+        lastRunAt: row?.last_run_at ?? null,
+        status: row?.status ?? null,
+        detail: row?.detail ?? null,
+      };
+    });
+  } catch {
+    // Degrade gracefully so the whole Einstellungen page never 500s on a DB hiccup.
+    return SYNC_CONNECTORS.map((c) => ({
+      connector: c.key, label: c.label, configured: false, lastRunAt: null, status: null, detail: null,
+    }));
+  }
+}
+
+/** Pick a human-readable line from a script's output — the error message, not a stack frame. */
+function summarize(raw: string): string {
+  const lines = raw.split('\n').map((l) => l.trim()).filter(Boolean);
+  return (
+    lines.find((l) => /error/i.test(l) && !l.startsWith('at ')) ??
+    lines.find((l) => !l.startsWith('at ') && !l.startsWith('^')) ??
+    lines[0] ?? 'Fehler'
+  );
 }
 
 async function record(connector: string, status: string, detail: string): Promise<void> {
@@ -68,8 +85,7 @@ export async function runConnector(key: string): Promise<{ ok: boolean; detail: 
     return { ok: true, detail };
   } catch (e) {
     const err = e as { stderr?: string; stdout?: string; message?: string };
-    const raw = (err.stderr || err.stdout || err.message || 'Fehler').trim();
-    const detail = raw.split('\n').filter(Boolean).pop() ?? 'Fehler';
+    const detail = summarize(err.stderr || err.stdout || err.message || 'Fehler');
     await record(key, 'fehler', detail);
     return { ok: false, detail };
   }
