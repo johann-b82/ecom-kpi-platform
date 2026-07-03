@@ -13,6 +13,7 @@ export const SYNC_CONNECTORS: { key: string; label: string }[] = [
   { key: 'tiktok', label: 'TikTok Ads' },
   { key: 'shopware', label: 'Shopware' },
   { key: 'klaviyo', label: 'Klaviyo' },
+  { key: 'mailchimp', label: 'Mailchimp' },
 ];
 
 export interface SyncStateRow {

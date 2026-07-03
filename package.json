@@ -12,6 +12,7 @@
     "sync:shopware": "tsx scripts/sync-shopware.ts",
     "sync:ga4": "tsx scripts/sync-ga4.ts",
     "sync:klaviyo": "tsx scripts/sync-klaviyo.ts",
+    "sync:mailchimp": "tsx scripts/sync-mailchimp.ts",
     "sync:meta": "tsx scripts/sync-meta.ts",
     "sync:tiktok": "tsx scripts/sync-tiktok.ts",
     "sync:google": "tsx scripts/sync-google.ts",
