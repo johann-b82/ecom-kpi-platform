@@ -40,6 +40,8 @@ ALTER TABLE bpm_competitors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bpm_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bpm_integrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bpm_audit_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bpm_price_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bpm_competitor_prices ENABLE ROW LEVEL SECURITY;
 
 -- Drill-down aggregation (PostgREST can't GROUP BY): SECURITY INVOKER so RLS applies.
 CREATE OR REPLACE FUNCTION daily_series(p_metric_key text, p_start date, p_end date)

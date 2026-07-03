@@ -2,6 +2,7 @@ import { pool } from '../src/lib/db';
 import {
   PRODUCTS, PROMOTIONS, GOODIES, COMPETITORS, NOTIFICATIONS, INTEGRATIONS,
 } from '../src/brickpm/seed-data';
+import { buildPriceHistory, buildCompetitorPrices } from '../src/brickpm/history';
 
 export async function seedBrickpm(): Promise<void> {
   for (const p of PRODUCTS) {
@@ -60,6 +61,20 @@ export async function seedBrickpm(): Promise<void> {
        ON CONFLICT (id) DO UPDATE SET type=excluded.type,system=excluded.system,purpose=excluded.purpose,objects=excluded.objects,
          dir=excluded.dir,status=excluded.status,ep=excluded.ep,last_sync=excluded.last_sync`,
       [i.id,i.type,i.system,i.purpose,i.objects,i.dir,i.status,i.ep,i.lastSync],
+    );
+  }
+  for (const h of buildPriceHistory(PRODUCTS)) {
+    await pool.query(
+      `INSERT INTO bpm_price_history (product_id,date,price,cost) VALUES ($1,$2,$3,$4)
+       ON CONFLICT (product_id,date) DO UPDATE SET price=excluded.price, cost=excluded.cost`,
+      [h.productId, h.date, h.price, h.cost],
+    );
+  }
+  for (const h of buildCompetitorPrices(COMPETITORS)) {
+    await pool.query(
+      `INSERT INTO bpm_competitor_prices (product_id,competitor,date,own_price,comp_price) VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (product_id,competitor,date) DO UPDATE SET own_price=excluded.own_price, comp_price=excluded.comp_price`,
+      [h.productId, h.competitor, h.date, h.ownPrice, h.compPrice],
     );
   }
   console.log('BrickPM seed applied.');
