@@ -76,18 +76,28 @@ async function record(connector: string, status: string, detail: string): Promis
   );
 }
 
-/** Runs one connector's sync script and records the outcome in sync_state. */
+/** Runs one connector's sync script and records the outcome in sync_state.
+ *  A per-connector Postgres advisory lock serializes concurrent runs of the SAME
+ *  connector (e.g. the "Jetzt" button overlapping the hourly cron), so their
+ *  delete-then-insert writes to daily_metrics can't race into a duplicate-key. */
 export async function runConnector(key: string): Promise<{ ok: boolean; detail: string }> {
+  const lock = await pool.connect();
   try {
-    const { stdout } = await run('npm', ['run', `sync:${key}`], { cwd: process.cwd(), timeout: 150_000 });
-    const detail = stdout.trim().split('\n').filter(Boolean).pop() ?? 'OK';
-    await record(key, 'ok', detail);
-    return { ok: true, detail };
-  } catch (e) {
-    const err = e as { stderr?: string; stdout?: string; message?: string };
-    const detail = summarize(err.stderr || err.stdout || err.message || 'Fehler');
-    await record(key, 'fehler', detail);
-    return { ok: false, detail };
+    await lock.query('SELECT pg_advisory_lock(hashtext($1))', [`sync:${key}`]);
+    try {
+      const { stdout } = await run('npm', ['run', `sync:${key}`], { cwd: process.cwd(), timeout: 150_000 });
+      const detail = stdout.trim().split('\n').filter(Boolean).pop() ?? 'OK';
+      await record(key, 'ok', detail);
+      return { ok: true, detail };
+    } catch (e) {
+      const err = e as { stderr?: string; stdout?: string; message?: string };
+      const detail = summarize(err.stderr || err.stdout || err.message || 'Fehler');
+      await record(key, 'fehler', detail);
+      return { ok: false, detail };
+    }
+  } finally {
+    await lock.query('SELECT pg_advisory_unlock(hashtext($1))', [`sync:${key}`]).catch(() => {});
+    lock.release();
   }
 }
 
