@@ -4,13 +4,32 @@ KPI dashboard that unifies e-commerce data sources (Shopware, GA4, Meta/TikTok/G
 
 ## Environments
 
-| Environment | Host | Path | Purpose |
+| Environment | Host | Path | URL |
 |---|---|---|---|
-| **Dev VPS** (this machine) | `root@31.70.108.191` | `/root/ecom-platform` | Development, tests, dev deployments |
-| **Production** | `root@194.164.204.249` (SSH alias `prod`) | `/opt/budp` | Live at https://budp.lumeapps.de |
+| **Dev VPS** (this machine) | `root@31.70.108.191` | `/root/ecom-platform` | https://bryx-test.lumeapps.de |
+| **Production** | `root@194.164.204.249` (SSH alias `prod`) | `/opt/budp` | https://budp.lumeapps.de |
 
-- Develop and run the app stack **on the dev VPS only**. Dev deployments via Docker here are fine and encouraged as part of testing.
+- Develop and run the app stack **on the dev VPS only**. Dev deployments via Docker here are encouraged as part of testing.
 - **Production is client-facing.** Never deploy to production without explicit user confirmation.
+
+## Development workflow (dev → verify → merge → prod)
+
+Follow this loop for every feature/fix:
+
+1. **Branch** from `main`; implement **test-first** (TDD — see global guidelines).
+2. **Verify locally:** `npm test` and `npm run build` (both must pass).
+3. **Dev-deploy:** run `/opt/budp-dev/deploy.sh`. It builds the app image **from the
+   current working tree** (uncommitted changes included), runs migrations, and
+   recreates the local `budp-app` container. Live at **https://bryx-test.lumeapps.de**.
+4. **Self-check in a browser** with headless Chrome (Chrome DevTools MCP / screenshots)
+   — never hand off UI you haven't driven yourself.
+5. **User verification:** ask the user to check https://bryx-test.lumeapps.de and
+   confirm before merging.
+6. **Merge:** after approval, open a PR (`gh pr create`), the user reviews, then merge to `main`.
+7. **Prod-deploy** (only after merge **and** explicit user confirmation — prod is
+   client-facing): `ssh prod '/opt/budp/deploy.sh'`.
+8. **Verify prod:** `curl -s -o /dev/null -w "%{http_code}" https://budp.lumeapps.de/login`
+   → `200`; report back.
 
 ## Commands
 
