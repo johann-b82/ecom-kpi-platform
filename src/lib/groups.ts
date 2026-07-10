@@ -1,6 +1,6 @@
 import { pool } from '@/lib/db';
 import { createClient } from '@/lib/supabase/server';
-import { APP_KEYS, type AppKey } from './apps';
+import { APP_KEYS, APPS, type AppKey, type AppDef } from './apps';
 
 export type Right = 'view' | 'edit';
 
@@ -147,4 +147,9 @@ export async function addUserToDefaultGroup(userId: string): Promise<void> {
      ON CONFLICT DO NOTHING`,
     [userId],
   );
+}
+
+/** Apps to surface in the Rail/Launchpad. Dashboard is always shown (ungated baseline); others gated. */
+export function accessibleApps(access: UserAccess): AppDef[] {
+  return APPS.filter((a) => a.key === 'dashboard' || access.isAdmin || !!access.apps[a.key]);
 }
