@@ -29,4 +29,8 @@ describe('branding settings (integration, benötigt DB)', () => {
     expect(darken('#ffffff', 0.5)).toBe('#808080');
     expect(darken('#D9004C')).toMatch(/^#[0-9a-f]{6}$/);
   });
+
+  it('Default-Akzentfarbe ist Amber #D97706', () => {
+    expect(BRANDING_DEFAULTS.color).toBe('#D97706');
+  });
 });

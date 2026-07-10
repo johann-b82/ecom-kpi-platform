@@ -11,7 +11,7 @@ export const BRANDING_DEFAULTS: Branding = {
   title: 'Unified Data Platform',
   tagline: 'Own the core',
   logo: null,
-  color: '#D9004C',
+  color: '#D97706',
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
