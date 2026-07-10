@@ -3,7 +3,7 @@ import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BpmIntegration } from '@/brickpm/types';
 import { BpmChip } from './BpmChip';
-import { simulateSync } from '@/app/brickpm/actions';
+import { simulateSync } from '@/app/(shell)/brickpm/actions';
 
 export function BpmIntegrations({ items }: { items: BpmIntegration[] }) {
   const router = useRouter();

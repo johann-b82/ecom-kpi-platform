@@ -3,7 +3,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { BpmNotification } from '@/brickpm/types';
 import { BpmChip } from './BpmChip';
-import { changeNotificationStatus } from '@/app/brickpm/actions';
+import { changeNotificationStatus } from '@/app/(shell)/brickpm/actions';
 
 const selectClass =
   'rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100';

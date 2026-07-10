@@ -17,13 +17,13 @@ export default async function BrickpmLayout({ children }: { children: ReactNode 
   const access = user ? await getUserAccess(user.id) : { apps: {}, isAdmin: false };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-neutral-50 dark:bg-neutral-950">
+    <div className="flex flex-1 overflow-hidden">
       <BpmSidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-6 py-3 dark:border-neutral-800 dark:bg-neutral-900">
           <h1 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">BrickPM</h1>
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-sm text-brand hover:text-brand-dark">← Dashboard</Link>
+            <Link href="/dashboard" className="text-sm text-brand hover:text-brand-dark">← Dashboard</Link>
             <UserMenu email={user?.email} canBrickPM={!!access.apps.brickpm} />
           </div>
         </header>
