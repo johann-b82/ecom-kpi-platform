@@ -5,3 +5,4 @@
 :root { color-scheme: light; --brand: #D9004C; --brand-dark: #B0003D; }
 .dark { color-scheme: dark; }
 body { @apply bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100; }
+.bpm-focus { box-shadow: inset 3px 0 0 0 var(--brand); background: color-mix(in srgb, var(--brand) 8%, transparent); }

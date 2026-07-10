@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { BpmProduct } from '@/brickpm/types';
 import { computeMarge } from '@/brickpm/marge';
 import { eur, pct } from '@/brickpm/format';
@@ -20,7 +21,9 @@ function recoTone(r: string): string {
 }
 
 export function BpmMargeCalc({ products }: { products: BpmProduct[] }) {
-  const [productId, setProductId] = useState(products[0]?.id ?? '');
+  const focus = useSearchParams().get('focus');
+  const initialId = (focus && products.some((p) => p.id === focus) ? focus : products[0]?.id) ?? '';
+  const [productId, setProductId] = useState(initialId);
   const [mode, setMode] = useState<'pct' | 'eur'>('pct');
   const [discPct, setDiscPct] = useState(0);
   const [discEur, setDiscEur] = useState(0);

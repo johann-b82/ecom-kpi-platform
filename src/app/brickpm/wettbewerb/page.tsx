@@ -24,7 +24,7 @@ export default async function WettbewerbPage() {
             {competitors.map((c) => {
               const dev = deviation(c.ownPrice, c.compPrice);
               return (
-                <tr key={c.id} className="border-b border-neutral-100 dark:border-neutral-800/60">
+                <tr key={c.id} data-focus={c.productId} className="border-b border-neutral-100 dark:border-neutral-800/60">
                   <td className={`${td} font-mono text-xs`}>{c.productId}</td>
                   <td className={td}>{c.competitor}</td>
                   <td className={td}>{c.compProduct}</td>

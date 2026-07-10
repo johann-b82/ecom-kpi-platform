@@ -25,7 +25,7 @@ export default async function AktionenPage() {
             {promotions.map((a) => {
               const ratio = a.targetUnits > 0 ? Math.min(1, a.sold / a.targetUnits) : 0;
               return (
-                <tr key={a.id} className="border-b border-neutral-100 dark:border-neutral-800/60">
+                <tr key={a.id} data-focus={`${a.id} ${a.productId}`} className="border-b border-neutral-100 dark:border-neutral-800/60">
                   <td className={`${td} font-mono text-xs`}>{a.id}</td>
                   <td className={td}>{a.name}</td>
                   <td className={`${td} font-mono text-xs`}>{a.productId}</td>

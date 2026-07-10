@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getUserAccess, requireAppAccess } from '@/lib/groups';
 import { BpmSidebar } from '@/components/BpmSidebar';
+import { BpmFocus } from '@/components/BpmFocus';
 import { UserMenu } from '@/components/UserMenu';
 
 export const dynamic = 'force-dynamic';
@@ -27,7 +28,10 @@ export default async function BrickpmLayout({ children }: { children: ReactNode 
             <UserMenu email={user?.email} canBrickPM={!!access.apps.brickpm} />
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6">
+          <Suspense fallback={null}><BpmFocus /></Suspense>
+          {children}
+        </main>
       </div>
     </div>
   );

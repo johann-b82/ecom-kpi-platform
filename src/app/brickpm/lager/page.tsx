@@ -25,7 +25,7 @@ export default async function LagerPage() {
             </thead>
             <tbody>
               {reorder.map((r) => (
-                <tr key={r.id} className="border-b border-neutral-100 dark:border-neutral-800/60">
+                <tr key={r.id} data-focus={r.id} className="border-b border-neutral-100 dark:border-neutral-800/60">
                   <td className={`${td} font-mono text-xs`}>{r.id}</td>
                   <td className={td}>{r.name}</td>
                   <td className={`${td} font-semibold text-red-600 dark:text-red-400`}>{r.stock}</td>
