@@ -20,16 +20,18 @@ export default async function Page({ searchParams }: { searchParams: { days?: st
   const phases = computeKpis(await loadDataset(supabase), range);
 
   return (
-    <main className="mx-auto max-w-7xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <BrandHeader />
-        <div className="flex items-center gap-4">
-          <Filters range={range} />
-          <UserMenu email={user?.email} canBrickPM={!!access.apps.brickpm} />
+    <main className="flex-1 overflow-y-auto">
+      <div className="mx-auto max-w-7xl p-6">
+        <header className="mb-6 flex items-center justify-between">
+          <BrandHeader />
+          <div className="flex items-center gap-4">
+            <Filters range={range} />
+            <UserMenu email={user?.email} canBrickPM={!!access.apps.brickpm} />
+          </div>
+        </header>
+        <div className="flex gap-4">
+          {phases.map((p) => <PhaseColumn key={p.phase} phase={p} />)}
         </div>
-      </header>
-      <div className="flex gap-4">
-        {phases.map((p) => <PhaseColumn key={p.phase} phase={p} />)}
       </div>
     </main>
   );
