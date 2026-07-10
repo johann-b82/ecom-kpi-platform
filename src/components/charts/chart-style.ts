@@ -1,11 +1,11 @@
 // The lumeapps chart look, codified once so every chart stays consistent.
 export const BRAND = 'var(--brand)';
-export const MUTED = '#94a3b8';       // slate-400 — secondary series
-export const AXIS_LABEL = '#737373';  // neutral-500 — reads on light + dark
+export const MUTED = '#9a9488';       // warm neutral-500 — secondary series
+export const AXIS_LABEL = '#6b6560';  // warm neutral-600 — reads on light + dark
 export const TICK = { fontSize: 11 } as const;
-export const TOOLTIP_LABEL_STYLE = { color: '#171717', fontWeight: 600 } as const;
-// Distinct slices for the status donut (brand, slate, amber, emerald, red).
-export const CATEGORICAL = ['var(--brand)', '#94a3b8', '#f59e0b', '#10b981', '#ef4444'];
+export const TOOLTIP_LABEL_STYLE = { color: '#1e1c1a', fontWeight: 600 } as const;
+// Distinct slices for the status donut (brand, warm neutral, amber, emerald, red).
+export const CATEGORICAL = ['var(--brand)', '#9a9488', '#f59e0b', '#10b981', '#ef4444'];
 
 const de = new Intl.NumberFormat('de-DE');
 const de1 = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 1 });
