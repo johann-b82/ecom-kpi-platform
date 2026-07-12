@@ -11,6 +11,9 @@ export interface SeedContact {
   paymentTerms: number; priceListId: string | null; currency: string; language: string;
   status: 'aktiv' | 'inaktiv'; notes: string | null;
 }
+export interface SeedConnection {
+  id: string; app: string; provider: string; label: string; status: string; lastSyncedAt: string | null;
+}
 
 const PL_HANDEL = 'a1a1a1a1-0000-4000-8000-000000000001';
 const PL_ENDKUNDE = 'a1a1a1a1-0000-4000-8000-000000000002';
@@ -65,4 +68,11 @@ export const CONTACTS: SeedContact[] = [
     paymentTerms: 14, priceListId: PL_HANDEL, currency: 'EUR', language: 'de',
     status: 'aktiv', notes: 'Kunde und Lieferant (Streckengeschäft).',
   },
+];
+
+export const CONNECTIONS: SeedConnection[] = [
+  { id: 'b0b0b0b0-0000-4000-8000-000000000001', app: 'kontakte', provider: 'datev', label: 'DATEV',
+    status: 'verbunden (Demo)', lastSyncedAt: '2026-07-01T09:00:00Z' },
+  { id: 'b0b0b0b0-0000-4000-8000-000000000002', app: 'kontakte', provider: 'hubspot', label: 'HubSpot',
+    status: 'nicht verbunden', lastSyncedAt: null },
 ];

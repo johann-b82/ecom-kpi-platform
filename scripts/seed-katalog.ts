@@ -1,5 +1,5 @@
 import { pool } from '../src/lib/db';
-import { PRODUCTS, VARIANTS, PRICES, BUNDLES } from '../src/katalog/seed-data';
+import { PRODUCTS, VARIANTS, PRICES, BUNDLES, CONNECTIONS } from '../src/katalog/seed-data';
 
 export async function seedKatalog(): Promise<void> {
   for (const p of PRODUCTS) {
@@ -34,6 +34,13 @@ export async function seedKatalog(): Promise<void> {
        VALUES ($1,$2,$3,$4)
        ON CONFLICT (id) DO UPDATE SET quantity=excluded.quantity`,
       [b.id, b.bundleVariantId, b.componentVariantId, b.quantity]);
+  }
+  for (const cn of CONNECTIONS) {
+    await pool.query(
+      `INSERT INTO integration_connections (id, app, provider, label, status, last_synced_at)
+       VALUES ($1,$2,$3,$4,$5,$6::timestamptz)
+       ON CONFLICT (id) DO UPDATE SET status=excluded.status, last_synced_at=excluded.last_synced_at, label=excluded.label`,
+      [cn.id, cn.app, cn.provider, cn.label, cn.status, cn.lastSyncedAt]);
   }
   console.log('Katalog seed applied.');
 }

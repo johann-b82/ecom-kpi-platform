@@ -25,6 +25,9 @@ export interface SeedPrice {
   id: string; variantId: string; priceListId: string; minQty: number; amount: number | null; validFrom: string | null;
 }
 export interface SeedBundle { id: string; bundleVariantId: string; componentVariantId: string; quantity: number }
+export interface SeedConnection {
+  id: string; app: string; provider: string; label: string; status: string; lastSyncedAt: string | null;
+}
 
 const P_STERNENJAEGER = 'd0d0d0d0-0000-4000-8000-000000000001';
 const P_BAUKLOETZE = 'd0d0d0d0-0000-4000-8000-000000000002';
@@ -79,4 +82,11 @@ export const PRICES: SeedPrice[] = [
 export const BUNDLES: SeedBundle[] = [
   // 3er-Pack: bundle variant SJ-3ER contains 3× SJ-ROT.
   { id: '90909090-0000-4000-8000-000000000001', bundleVariantId: V_SJ_3ER, componentVariantId: V_SJ_ROT, quantity: 3 },
+];
+
+export const CONNECTIONS: SeedConnection[] = [
+  { id: 'b0b0b0b0-0000-4000-8000-000000000101', app: 'katalog', provider: 'shopware', label: 'Shopware',
+    status: 'verbunden (Demo)', lastSyncedAt: '2026-07-01T09:00:00Z' },
+  { id: 'b0b0b0b0-0000-4000-8000-000000000102', app: 'katalog', provider: 'amazon', label: 'Amazon',
+    status: 'nicht verbunden', lastSyncedAt: null },
 ];

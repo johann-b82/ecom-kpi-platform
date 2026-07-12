@@ -1,5 +1,5 @@
 import { pool } from '../src/lib/db';
-import { PRICE_LISTS, CONTACTS } from '../src/kontakte/seed-data';
+import { PRICE_LISTS, CONTACTS, CONNECTIONS } from '../src/kontakte/seed-data';
 
 export async function seedKontakte(): Promise<void> {
   for (const pl of PRICE_LISTS) {
@@ -17,6 +17,13 @@ export async function seedKontakte(): Promise<void> {
          is_supplier=excluded.is_supplier, payment_terms=excluded.payment_terms`,
       [c.id, c.number, c.name, c.legalForm, c.isCustomer, c.isSupplier, c.vatId, c.taxCountry,
        c.paymentTerms, c.priceListId, c.currency, c.language, c.status, c.notes]);
+  }
+  for (const cn of CONNECTIONS) {
+    await pool.query(
+      `INSERT INTO integration_connections (id, app, provider, label, status, last_synced_at)
+       VALUES ($1,$2,$3,$4,$5,$6::timestamptz)
+       ON CONFLICT (id) DO UPDATE SET status=excluded.status, last_synced_at=excluded.last_synced_at, label=excluded.label`,
+      [cn.id, cn.app, cn.provider, cn.label, cn.status, cn.lastSyncedAt]);
   }
   console.log('Kontakte seed applied.');
 }
