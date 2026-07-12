@@ -74,6 +74,11 @@ Use as `bg-success-subtle`, `text-success`, `border-success-border`, etc.
   `text-transform: uppercase`, color `#9a9488` (neutral-500). Use it for
   micro-labels/table headers/annotations — it is the **only** sanctioned
   UPPERCASE styling; don't uppercase body copy or headings by hand.
+- **Base type scale** (`src/app/globals.css`): responsive root font-size
+  `clamp(16px, 13px + 0.35vw, 21px)` so the rem-based Tailwind scale stays dense
+  on laptops (~18px @ 1440px) and grows on large desktop monitors (21px @ 2560px)
+  instead of reading too small. Absolute-px sizes (`.anno`, `AppRail`
+  micro-labels) deliberately do not scale.
 
 ## 3. Shell architecture
 
