@@ -12,6 +12,11 @@
   --accent-hover: var(--brand-dark);
 }
 .dark { color-scheme: dark; }
+/* Base type scale: responsive root so the rem-based Tailwind scale stays dense on
+   laptops (~17-18px) and grows on large desktop displays (~21px), instead of the
+   browser default 16px reading too small on big monitors. Absolute-px micro labels
+   (.anno, AppRail) deliberately stay put. */
+html { font-size: clamp(16px, 13px + 0.35vw, 21px); }
 body { @apply bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100; }
 
 /* Micro-labels / table headers / annotations (DM Mono, uppercase, wide). */
