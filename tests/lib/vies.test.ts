@@ -12,7 +12,7 @@ describe('parseVatId', () => {
 });
 
 describe('checkVatId', () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => { vi.unstubAllGlobals(); });
 
   it('returns a format error without calling the network', async () => {
     const fetchSpy = vi.fn();

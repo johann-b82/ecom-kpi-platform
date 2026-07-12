@@ -14,7 +14,7 @@ import { requireAppAccess } from '@/lib/groups';
 import { createContact } from '@/kontakte/repository';
 import { revalidatePath } from 'next/cache';
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => { vi.clearAllMocks(); });
 
 describe('kontakte actions', () => {
   it('createContactAction gates on edit, writes, revalidates', async () => {
