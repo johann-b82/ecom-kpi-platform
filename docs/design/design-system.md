@@ -84,7 +84,7 @@ Use as `bg-success-subtle`, `text-success`, `border-success-border`, etc.
 
 Route group `src/app/(shell)/` holds every "in the ERP" screen:
 
-- `(shell)/layout.tsx` — persistent 54px dark `AppRail` (`src/components/AppRail.tsx`)
+- `(shell)/layout.tsx` — persistent `w-16` dark `AppRail` (`src/components/AppRail.tsx`)
   + a flex content column. Fetches `getUserAccess`/`getBranding`, passes
   `accessibleApps(access)` (from `src/lib/groups.ts`) into the rail.
 - `(shell)/page.tsx` — the Launchpad (`/`), rendering `Launchpad`
