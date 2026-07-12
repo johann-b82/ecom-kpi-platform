@@ -47,6 +47,9 @@ ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE price_lists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE external_references ENABLE ROW LEVEL SECURITY;
 ALTER TABLE integration_connections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_addresses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE contact_persons ENABLE ROW LEVEL SECURITY;
 
 -- Drill-down aggregation (PostgREST can't GROUP BY): SECURITY INVOKER so RLS applies.
 CREATE OR REPLACE FUNCTION daily_series(p_metric_key text, p_start date, p_end date)

@@ -204,3 +204,45 @@ CREATE TABLE IF NOT EXISTS integration_connections (
   status         TEXT NOT NULL DEFAULT 'nicht verbunden',
   last_synced_at TIMESTAMPTZ
 );
+
+-- ── Kontakte ───────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS contacts (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id     UUID REFERENCES tenants(id),
+  number        TEXT UNIQUE NOT NULL,
+  name          TEXT NOT NULL,
+  legal_form    TEXT,
+  is_customer   BOOLEAN NOT NULL DEFAULT false,
+  is_supplier   BOOLEAN NOT NULL DEFAULT false,
+  vat_id        TEXT,
+  tax_country   CHAR(2),
+  payment_terms INT NOT NULL DEFAULT 14,
+  price_list_id UUID REFERENCES price_lists(id),
+  currency      CHAR(3) NOT NULL DEFAULT 'EUR',
+  language      CHAR(2) NOT NULL DEFAULT 'de',
+  status        TEXT NOT NULL DEFAULT 'aktiv' CHECK (status IN ('aktiv','inaktiv')),
+  notes         TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS contact_addresses (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id  UUID REFERENCES tenants(id),
+  contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  type       TEXT NOT NULL CHECK (type IN ('rechnung','lieferung')),
+  street     TEXT,
+  zip        TEXT,
+  city       TEXT,
+  country    CHAR(2),
+  is_default BOOLEAN NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS contact_persons (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id  UUID REFERENCES tenants(id),
+  contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  name       TEXT NOT NULL,
+  email      TEXT,
+  phone      TEXT,
+  role       TEXT
+);
