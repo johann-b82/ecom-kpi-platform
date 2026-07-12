@@ -8,10 +8,10 @@ export interface Branding {
 }
 
 export const BRANDING_DEFAULTS: Branding = {
-  title: 'Unified Data Platform',
+  title: 'bryx',
   tagline: 'Own the core',
   logo: null,
-  color: '#D97706',
+  color: '#d9004c',
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;

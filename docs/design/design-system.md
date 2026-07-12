@@ -34,7 +34,7 @@ class (including `dark:bg-neutral-900/950`) warms up automatically.
 ### Brand / accent (`globals.css` `:root` + `tailwind.config.ts`)
 
 - `--brand` / `--brand-dark` — white-label brand color, DB-driven via `getBranding()`,
-  default `#D97706` (Amber) / `#B45309`.
+  default `#d9004c` (bryx magenta) / `#b2003e`. A customer white-label swaps it.
 - `--accent: var(--brand)`, `--accent-hover: var(--brand-dark)` — the design
   system's accent always maps onto the white-label brand; never hardcode a
   competing accent color.
@@ -86,7 +86,11 @@ Route group `src/app/(shell)/` holds every "in the ERP" screen:
 
 - `(shell)/layout.tsx` — persistent `w-16` dark `AppRail` (`src/components/AppRail.tsx`)
   + a flex content column. Fetches `getUserAccess`/`getBranding`, passes
-  `accessibleApps(access)` (from `src/lib/groups.ts`) into the rail.
+  `accessibleApps(access)` (from `src/lib/groups.ts`) into the rail. It also renders
+  the platform-wide **top bar** (brand logo → `/`, `UserMenu` on the right) above the
+  content column, so every shell screen shares one brand + profile/theme control.
+  App layouts (`brickpm`/`kontakte`/`katalog`) therefore only add their own module
+  sidebar, not their own header.
 - `(shell)/page.tsx` — the Launchpad (`/`), rendering `Launchpad`
   (`src/components/Launchpad.tsx`): an app grid over the same `accessibleApps` list.
 - `(shell)/dashboard/` — the KPI dashboard, moved here from the old `/` route.

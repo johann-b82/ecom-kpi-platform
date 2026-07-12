@@ -4,9 +4,10 @@
 
 :root {
   color-scheme: light;
-  /* White-label brand — overridden at runtime by RootLayout inline style (getBranding). */
-  --brand: #D97706;
-  --brand-dark: #B45309;
+  /* White-label brand — overridden at runtime by RootLayout inline style (getBranding).
+     Default is the bryx brand magenta; a customer white-label swaps it via getBranding. */
+  --brand: #d9004c;
+  --brand-dark: #b2003e;
   /* Design-system accent maps onto the white-label brand. */
   --accent: var(--brand);
   --accent-hover: var(--brand-dark);

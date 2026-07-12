@@ -11,7 +11,7 @@ const dmMono = DM_Mono({
   subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm-mono', display: 'swap',
 });
 
-export const metadata = { title: 'Unified Data Platform' };
+export const metadata = { title: 'bryx' };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const { color } = await getBranding();
