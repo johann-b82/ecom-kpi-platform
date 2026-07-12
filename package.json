@@ -20,6 +20,7 @@
     "create-user": "tsx scripts/create-user.ts",
     "seed-groups": "tsx scripts/seed-groups.ts",
     "seed-brickpm": "tsx scripts/seed-brickpm.ts",
+    "seed-kontakte": "tsx scripts/seed-kontakte.ts",
     "sync-runner": "tsx scripts/sync-runner.ts"
   },
   "dependencies": {
