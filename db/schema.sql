@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS group_app_access (
 INSERT INTO groups (name, is_admin) VALUES ('Alle Nutzer', true)
   ON CONFLICT (name) DO NOTHING;
 INSERT INTO group_app_access (group_id, app, permission)
-  SELECT g.id, a.app, 'edit' FROM groups g, (VALUES ('dashboard'),('brickpm')) AS a(app)
+  SELECT g.id, a.app, 'edit' FROM groups g, (VALUES ('dashboard'),('brickpm'),('kontakte'),('katalog')) AS a(app)
   WHERE g.name = 'Alle Nutzer'
   ON CONFLICT (group_id, app) DO NOTHING;
 
@@ -164,4 +164,43 @@ CREATE TABLE IF NOT EXISTS bpm_competitor_prices (
   product_id TEXT NOT NULL, competitor TEXT NOT NULL, date DATE NOT NULL,
   own_price DOUBLE PRECISION, comp_price DOUBLE PRECISION,
   PRIMARY KEY (product_id, competitor, date)
+);
+
+-- ── bryx control plane ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS tenants (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       TEXT NOT NULL,
+  subdomain  TEXT UNIQUE,
+  db_mode    TEXT NOT NULL DEFAULT 'dedicated' CHECK (db_mode IN ('dedicated','pooled')),
+  status     TEXT NOT NULL DEFAULT 'aktiv' CHECK (status IN ('aktiv','inaktiv','gekuendigt')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS price_lists (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id  UUID REFERENCES tenants(id),
+  name       TEXT NOT NULL,
+  currency   CHAR(3) NOT NULL DEFAULT 'EUR',
+  is_default BOOLEAN NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS external_references (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id      UUID REFERENCES tenants(id),
+  entity_type    TEXT NOT NULL,
+  entity_id      UUID NOT NULL,
+  source_system  TEXT NOT NULL,
+  external_id    TEXT NOT NULL,
+  last_synced_at TIMESTAMPTZ,
+  raw_payload    JSONB
+);
+
+CREATE TABLE IF NOT EXISTS integration_connections (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id      UUID REFERENCES tenants(id),
+  app            TEXT NOT NULL,
+  provider       TEXT NOT NULL,
+  label          TEXT NOT NULL,
+  status         TEXT NOT NULL DEFAULT 'nicht verbunden',
+  last_synced_at TIMESTAMPTZ
 );
