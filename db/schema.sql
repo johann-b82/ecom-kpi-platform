@@ -246,3 +246,61 @@ CREATE TABLE IF NOT EXISTS contact_persons (
   phone      TEXT,
   role       TEXT
 );
+
+-- ── Katalog ────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS products (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id          UUID REFERENCES tenants(id),
+  name               TEXT NOT NULL,
+  description        TEXT,
+  lifecycle_status   TEXT NOT NULL DEFAULT 'konzept'
+                       CHECK (lifecycle_status IN ('konzept','freigegeben','aktiv','auslaufend','eingestellt')),
+  category           TEXT,
+  brand              TEXT,
+  default_supplier_id UUID REFERENCES contacts(id),
+  image_url          TEXT,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS product_variants (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id         UUID REFERENCES tenants(id),
+  product_id        UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  sku               TEXT UNIQUE NOT NULL,
+  gtin              TEXT,
+  attributes        JSONB,
+  purchase_price    NUMERIC(12,2),
+  weight_g          INT,
+  reorder_point     INT NOT NULL DEFAULT 0,
+  customs_tariff_no TEXT,
+  status            TEXT NOT NULL DEFAULT 'aktiv' CHECK (status IN ('aktiv','inaktiv'))
+);
+
+CREATE TABLE IF NOT EXISTS prices (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id     UUID REFERENCES tenants(id),
+  variant_id    UUID NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
+  price_list_id UUID NOT NULL REFERENCES price_lists(id),
+  min_qty       INT NOT NULL DEFAULT 1,
+  amount        NUMERIC(12,2),
+  valid_from    DATE,
+  UNIQUE (variant_id, price_list_id, min_qty)
+);
+
+CREATE TABLE IF NOT EXISTS product_bundles (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id           UUID REFERENCES tenants(id),
+  bundle_variant_id   UUID NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
+  component_variant_id UUID NOT NULL REFERENCES product_variants(id),
+  quantity            INT NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS product_documents (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id   UUID REFERENCES tenants(id),
+  product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  type        TEXT NOT NULL,
+  file_url    TEXT,
+  expires_at  DATE,
+  uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
