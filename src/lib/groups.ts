@@ -149,7 +149,9 @@ export async function addUserToDefaultGroup(userId: string): Promise<void> {
   );
 }
 
-/** Apps to surface in the Rail/Launchpad. Dashboard is always shown (ungated baseline); others gated. */
+/** Apps to surface in the Rail/Launchpad. Dashboard + Hilfe are always shown (ungated baseline); others gated. */
 export function accessibleApps(access: UserAccess): AppDef[] {
-  return APPS.filter((a) => a.key === 'dashboard' || access.isAdmin || !!access.apps[a.key]);
+  return APPS.filter(
+    (a) => a.key === 'dashboard' || a.key === 'hilfe' || access.isAdmin || !!access.apps[a.key],
+  );
 }

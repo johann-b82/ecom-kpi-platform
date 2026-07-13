@@ -1,4 +1,4 @@
-export type AppKey = 'dashboard' | 'brickpm' | 'kontakte' | 'katalog';
+export type AppKey = 'dashboard' | 'brickpm' | 'kontakte' | 'katalog' | 'hilfe';
 
 export interface AppDef {
   key: AppKey;
@@ -12,6 +12,7 @@ export const APPS: AppDef[] = [
   { key: 'brickpm', label: 'BrickPM', abbr: 'BP', href: '/brickpm' },
   { key: 'kontakte', label: 'Kontakte', abbr: 'KO', href: '/kontakte' },
   { key: 'katalog', label: 'Katalog', abbr: 'KA', href: '/katalog' },
+  { key: 'hilfe', label: 'Hilfe', abbr: 'HI', href: '/hilfe' },
 ];
 
 export const APP_KEYS: AppKey[] = APPS.map((a) => a.key);
