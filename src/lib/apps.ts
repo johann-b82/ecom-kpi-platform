@@ -15,6 +15,7 @@ export const APPS: AppDef[] = [
   { key: 'brickpm', label: 'BrickPM', abbr: 'BP', href: '/brickpm' },
   { key: 'kontakte', label: 'Kontakte', abbr: 'KO', href: '/kontakte' },
   { key: 'katalog', label: 'Katalog', abbr: 'KA', href: '/katalog' },
+  { key: 'verkauf', label: 'Verkauf', abbr: 'VK', href: '/verkauf' },
   { key: 'hilfe', label: 'Hilfe', abbr: 'HI', href: '/hilfe' },
 ];
 

@@ -148,6 +148,31 @@ export const HELP_PAGES: DocPage[] = [
       },
     ],
   },
+  {
+    slug: 'verkauf',
+    title: 'Verkauf',
+    summary: 'Belege über alle Kanäle — mit Faden von Bestellung bis Zahlung.',
+    group: 'module',
+    sections: [
+      {
+        heading: 'Was macht das Modul?',
+        blocks: [
+          { type: 'p', text: 'Verkauf zeigt alle Belege (Angebote, Aufträge, Rechnungen, Gutschriften) über sämtliche Kanäle. Jeder Beleg trägt einen Faden: die Perlen bestellt, kommissioniert, Rechnung gestellt, bezahlt — und bei einer Retoure eine fünfte Perle.' },
+        ],
+      },
+      {
+        heading: 'Wichtige Funktionen',
+        blocks: [
+          { type: 'list', items: [
+            'Belegliste über alle Kanäle mit Kurz-Spur je Zeile.',
+            'Beleg-Detail mit vollständigem, klickbarem Faden (Perlen zeigen Zeitpunkt und Auslöser).',
+            'Genau eine primäre Aktion je Status (z. B. In Auftrag wandeln, Rechnung stellen, Retoure anlegen).',
+            'Beleg manuell anlegen: Kunde wählen, Positionen erfassen — Preis und Bestand werden vorbelegt.',
+          ] },
+        ],
+      },
+    ],
+  },
 
   // ── Administration (nur Admin) ────────────────────────────────────
   {

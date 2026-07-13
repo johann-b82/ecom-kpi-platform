@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS group_app_access (
 INSERT INTO groups (name, is_admin) VALUES ('Alle Nutzer', true)
   ON CONFLICT (name) DO NOTHING;
 INSERT INTO group_app_access (group_id, app, permission)
-  SELECT g.id, a.app, 'edit' FROM groups g, (VALUES ('dashboard'),('brickpm'),('kontakte'),('katalog')) AS a(app)
+  SELECT g.id, a.app, 'edit' FROM groups g, (VALUES ('dashboard'),('brickpm'),('kontakte'),('katalog'),('verkauf')) AS a(app)
   WHERE g.name = 'Alle Nutzer'
   ON CONFLICT (group_id, app) DO NOTHING;
 
