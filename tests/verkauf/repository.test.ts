@@ -3,7 +3,7 @@ import { pool } from '@/lib/db';
 import { seedKontakte } from '../../scripts/seed-kontakte';
 import { seedKatalog } from '../../scripts/seed-katalog';
 import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
-import { createOrder, getOrder, transitionOrderStatus } from '@/verkauf/repository';
+import { createOrder, getOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001'; // Spielwaren Müller, K-0001
 const PL_HANDEL = 'a1a1a1a1-0000-4000-8000-000000000001';
@@ -125,5 +125,36 @@ describe('verkauf repository — transitionOrderStatus', () => {
     orderIds.push(o.id);
     // angebot → bezahlt ist nicht erlaubt
     await expect(transitionOrderStatus(o.id, 'bezahlt')).rejects.toThrow(/Übergang/i);
+  });
+});
+
+describe('verkauf repository — createReturn', () => {
+  it('legt einen Gutschriftbeleg an, hängt die retoure-Perle an den Ursprung und bucht Bestand zurück', async () => {
+    const vid = await variantId('BK-CLASSIC');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: vid, quantity: 4, unitPrice: 16.9 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'versendet');
+    await transitionOrderStatus(o.id, 'rechnung_gestellt');
+    await transitionOrderStatus(o.id, 'bezahlt');
+
+    const onHandBefore = await onHandFor('BK-CLASSIC');
+    const credit = await createReturn(o.id);
+    // credit NICHT in orderIds pushen: die FK related_order_id → o.id verlangt,
+    // dass die Gutschrift VOR dem Ursprung gelöscht wird. Das erledigt die
+    // gezielte DELETE-Zeile am Testende; o.id bleibt für afterAll in orderIds.
+
+    expect(credit.status).toBe('retoure');
+    expect(credit.relatedOrderId).toBe(o.id);
+    expect(credit.lines[0].quantity).toBe(-4);              // negative Menge
+    expect(await onHandFor('BK-CLASSIC')).toBe(onHandBefore + 4);
+
+    const original = await getOrder(o.id);
+    expect(original!.events[original!.events.length - 1].stage).toBe('retoure'); // Perle am Ursprung
+
+    // Gutschrift zuerst entfernen (FK related_order_id), Ursprung räumt afterAll ab.
+    await pool.query('DELETE FROM sales_orders WHERE related_order_id = $1', [o.id]);
   });
 });

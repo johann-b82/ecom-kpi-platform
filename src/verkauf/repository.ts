@@ -202,3 +202,51 @@ export async function transitionOrderStatus(orderId: string, target: OrderStatus
     c.release();
   }
 }
+
+export async function createReturn(originalOrderId: string): Promise<SalesOrderDetail> {
+  const c = await pool.connect();
+  try {
+    await c.query('BEGIN');
+    const orig = await c.query(
+      `SELECT ${ORDER_COLS} FROM sales_orders WHERE id = $1 FOR UPDATE`, [originalOrderId]);
+    if (orig.rows.length === 0) throw new Error(`Beleg ${originalOrderId} nicht gefunden.`);
+    const o = mapOrder(orig.rows[0]);
+    if (o.status !== 'bezahlt') throw new Error('Retoure nur aus Status bezahlt möglich.');
+
+    const existing = await c.query<{ number: string }>('SELECT number FROM sales_orders');
+    const number = nextOrderNumber(existing.rows.map((x) => x.number), new Date().getFullYear());
+    const ins = await c.query(
+      `INSERT INTO sales_orders (number, contact_id, channel, status, price_list_id, related_order_id, currency)
+       VALUES ($1,$2,$3,'retoure',$4,$5,$6) RETURNING id`,
+      [number, o.contactId, o.channel, o.priceListId, originalOrderId, o.currency]);
+    const creditId = ins.rows[0].id as string;
+
+    // Positionen des Ursprungs gespiegelt mit negativer Menge
+    await c.query(
+      `INSERT INTO sales_order_lines (order_id, variant_id, quantity, unit_price)
+         SELECT $2, variant_id, -quantity, unit_price FROM sales_order_lines WHERE order_id = $1`,
+      [originalOrderId, creditId]);
+
+    // Retoure-Perle am URSPRUNGSBELEG
+    await writeEvent(c, originalOrderId, 'retoure', 'verkauf');
+
+    // Bestand zurückbuchen (Standardlager); je Variante aggregiert, damit ein
+    // Ursprung mit zwei Zeilen auf derselben Variante nicht denselben
+    // ON CONFLICT-Datensatz zweimal trifft (siehe reserveStock).
+    const wh = await defaultWarehouseId(c);
+    await c.query(
+      `INSERT INTO stock_levels (variant_id, warehouse_id, quantity_on_hand)
+         SELECT variant_id, $2, SUM(quantity) FROM sales_order_lines WHERE order_id = $1 GROUP BY variant_id
+       ON CONFLICT (variant_id, warehouse_id)
+         DO UPDATE SET quantity_on_hand = stock_levels.quantity_on_hand + excluded.quantity_on_hand`,
+      [originalOrderId, wh]);
+
+    await c.query('COMMIT');
+    return (await getOrder(creditId))!;
+  } catch (e) {
+    await c.query('ROLLBACK');
+    throw e;
+  } finally {
+    c.release();
+  }
+}
