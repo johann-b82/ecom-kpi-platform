@@ -4,6 +4,9 @@ import { seedKontakte } from '../../scripts/seed-kontakte';
 import { seedKatalog } from '../../scripts/seed-katalog';
 import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, getOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
+import {
+  listOrderRows, getOrderView, sellableVariants, priceForVariant, availableStock,
+} from '@/verkauf/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001'; // Spielwaren Müller, K-0001
 const PL_HANDEL = 'a1a1a1a1-0000-4000-8000-000000000001';
@@ -186,5 +189,47 @@ describe('verkauf repository — storniert', () => {
     orderIds.push(o.id);
     await transitionOrderStatus(o.id, 'versendet');
     await expect(transitionOrderStatus(o.id, 'storniert')).rejects.toThrow(/Übergang/);
+  });
+});
+
+describe('verkauf repository — Lesefunktionen für die UI', () => {
+  it('listOrderRows liefert Kundenname und Stages in Reihenfolge', async () => {
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('BK-CLASSIC'), quantity: 1, unitPrice: 16.9 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'versendet');
+    const rows = await listOrderRows();
+    const row = rows.find((r) => r.id === o.id)!;
+    expect(row.contactName).toBe('Spielwaren Müller GmbH');
+    expect(row.stages).toEqual(['bestellt', 'kommissioniert']);
+  });
+
+  it('getOrderView liefert Positions-Labels und Kundenname', async () => {
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'b2b_portal', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 2, unitPrice: 11.9 }],
+    });
+    orderIds.push(o.id);
+    const v = await getOrderView(o.id);
+    expect(v!.contactName).toBe('Spielwaren Müller GmbH');
+    expect(v!.lines[0].sku).toBe('SJ-BLAU');
+    expect(v!.lines[0].productName).toBe('Sternenjäger');
+  });
+
+  it('availableStock = on_hand − reserved über alle Lager; priceForVariant wählt die Staffel', async () => {
+    const av = await availableStock(await variantId('SJ-ROT'));
+    expect(typeof av).toBe('number'); // SJ-ROT: 8 + 4 on_hand, minus Reservierungen aus anderen Tests
+    // Staffel: SJ-ROT Handel min_qty=1 → 12.90, min_qty=10 → 11.90
+    expect(await priceForVariant(await variantId('SJ-ROT'), PL_HANDEL, 1)).toBe(12.9);
+    expect(await priceForVariant(await variantId('SJ-ROT'), PL_HANDEL, 10)).toBe(11.9);
+  });
+
+  it('sellableVariants enthält Produktname + verfügbare Menge', async () => {
+    const vs = await sellableVariants();
+    const bk = vs.find((v) => v.sku === 'BK-CLASSIC')!;
+    expect(bk.productName).toBe('Bauklötze Classic');
+    expect(typeof bk.available).toBe('number');
   });
 });

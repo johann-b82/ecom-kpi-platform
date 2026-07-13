@@ -4,6 +4,7 @@ import { nextOrderNumber } from './number';
 import type {
   SalesOrder, SalesOrderDetail, SalesOrderEvent, SalesOrderInput, SalesOrderLine,
   EventStage, SourceApp, OrderStatus,
+  OrderRow, OrderView, SellableVariant, CustomerOption, PriceEntry,
 } from './types';
 
 const ORDER_COLS = `id, tenant_id, number, contact_id, channel, status, price_list_id,
@@ -249,4 +250,89 @@ export async function createReturn(originalOrderId: string): Promise<SalesOrderD
   } finally {
     c.release();
   }
+}
+
+export async function listOrderRows(): Promise<OrderRow[]> {
+  const r = await pool.query(
+    `SELECT o.id, o.number, o.contact_id, c.name AS contact_name, o.channel, o.status,
+            o.created_at::text AS created_at,
+            COALESCE(array_agg(e.stage ORDER BY e.occurred_at) FILTER (WHERE e.stage IS NOT NULL), '{}') AS stages
+       FROM sales_orders o
+       JOIN contacts c ON c.id = o.contact_id
+       LEFT JOIN sales_order_events e ON e.order_id = o.id
+      GROUP BY o.id, c.name
+      ORDER BY o.created_at DESC`);
+  return r.rows.map((x: any) => ({
+    id: x.id, number: x.number, contactId: x.contact_id, contactName: x.contact_name,
+    channel: x.channel, status: x.status, createdAt: x.created_at, stages: x.stages,
+  }));
+}
+
+export async function getOrderView(id: string): Promise<OrderView | null> {
+  const base = await getOrder(id);
+  if (!base) return null;
+  const c = await pool.query(`SELECT name FROM contacts WHERE id = $1`, [base.contactId]);
+  const lines = await pool.query(
+    `SELECT l.id, l.variant_id, l.quantity, l.unit_price, v.sku, p.name AS product_name
+       FROM sales_order_lines l
+       JOIN product_variants v ON v.id = l.variant_id
+       JOIN products p ON p.id = v.product_id
+      WHERE l.order_id = $1 ORDER BY l.id`, [id]);
+  return {
+    ...base,
+    contactName: c.rows[0]?.name ?? '',
+    lines: lines.rows.map((x: any) => ({
+      id: x.id, variantId: x.variant_id, sku: x.sku, productName: x.product_name,
+      quantity: x.quantity, unitPrice: Number(x.unit_price),
+    })),
+    events: base.events,
+  };
+}
+
+export async function sellableVariants(): Promise<SellableVariant[]> {
+  const r = await pool.query(
+    `SELECT v.id AS variant_id, v.sku, p.name AS product_name,
+            COALESCE((SELECT SUM(quantity_on_hand) - SUM(quantity_reserved)
+                        FROM stock_levels s WHERE s.variant_id = v.id), 0)::int AS available
+       FROM product_variants v JOIN products p ON p.id = v.product_id
+      WHERE v.status = 'aktiv'
+      ORDER BY p.name, v.sku`);
+  return r.rows.map((x: any) => ({
+    variantId: x.variant_id, sku: x.sku, productName: x.product_name, available: x.available,
+  }));
+}
+
+export async function priceForVariant(variantId: string, priceListId: string, qty = 1): Promise<number | null> {
+  const r = await pool.query(
+    `SELECT amount FROM prices
+      WHERE variant_id = $1 AND price_list_id = $2 AND min_qty <= $3
+      ORDER BY min_qty DESC LIMIT 1`, [variantId, priceListId, qty]);
+  return r.rows.length ? Number(r.rows[0].amount) : null;
+}
+
+export async function availableStock(variantId: string): Promise<number> {
+  const r = await pool.query(
+    `SELECT COALESCE(SUM(quantity_on_hand) - SUM(quantity_reserved), 0)::int AS available
+       FROM stock_levels WHERE variant_id = $1`, [variantId]);
+  return r.rows[0].available;
+}
+
+export async function listCustomerOptions(): Promise<CustomerOption[]> {
+  const r = await pool.query(
+    `SELECT c.id, c.name, c.price_list_id, c.payment_terms,
+            (SELECT street || ', ' || zip || ' ' || city FROM contact_addresses a
+               WHERE a.contact_id = c.id AND a.type = 'lieferung'
+               ORDER BY a.is_default DESC LIMIT 1) AS delivery_label
+       FROM contacts c WHERE c.is_customer = true ORDER BY c.name`);
+  return r.rows.map((x: any) => ({
+    id: x.id, name: x.name, priceListId: x.price_list_id,
+    paymentTerms: x.payment_terms, deliveryLabel: x.delivery_label,
+  }));
+}
+
+export async function defaultPrices(): Promise<PriceEntry[]> {
+  const r = await pool.query(`SELECT variant_id, price_list_id, amount FROM prices WHERE min_qty = 1`);
+  return r.rows.map((x: any) => ({
+    variantId: x.variant_id, priceListId: x.price_list_id, amount: Number(x.amount),
+  }));
 }

@@ -25,3 +25,19 @@ export interface SalesOrderInput {
   contactId: string; channel: OrderChannel; priceListId?: string | null;
   currency?: string; placedAt?: string | null; lines: SalesOrderLineInput[];
 }
+
+export interface OrderRow {
+  id: string; number: string; contactId: string; contactName: string;
+  channel: OrderChannel; status: OrderStatus; createdAt: string; stages: EventStage[];
+}
+export interface OrderViewLine {
+  id: string; variantId: string; sku: string; productName: string; quantity: number; unitPrice: number;
+}
+export interface OrderView extends SalesOrder {
+  contactName: string; lines: OrderViewLine[]; events: SalesOrderEvent[];
+}
+export interface SellableVariant { variantId: string; sku: string; productName: string; available: number }
+export interface CustomerOption {
+  id: string; name: string; priceListId: string | null; paymentTerms: number; deliveryLabel: string | null;
+}
+export interface PriceEntry { variantId: string; priceListId: string; amount: number }
