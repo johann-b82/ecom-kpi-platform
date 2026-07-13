@@ -57,4 +57,21 @@ describe('verkauf repository — createOrder', () => {
     const back = await getOrder(o.id);
     expect(back?.lines).toHaveLength(1);
   });
+
+  it('shop mit zwei Zeilen auf derselben Variante reserviert die Summe', async () => {
+    const before = await reservedFor('SJ-BLAU');
+    const vid = await variantId('SJ-BLAU');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [
+        { variantId: vid, quantity: 2, unitPrice: 11.9 },
+        { variantId: vid, quantity: 3, unitPrice: 11.9 },
+      ],
+    });
+    orderIds.push(o.id);
+    expect(o.status).toBe('auftrag');
+    expect(await reservedFor('SJ-BLAU')).toBe(before + 5);
+    const back = await getOrder(o.id);
+    expect(back?.lines).toHaveLength(2);
+  });
 });

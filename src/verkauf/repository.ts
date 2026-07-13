@@ -67,7 +67,7 @@ async function reserveStock(c: PoolClient, orderId: string): Promise<void> {
   const wh = await defaultWarehouseId(c);
   await c.query(
     `INSERT INTO stock_levels (variant_id, warehouse_id, quantity_reserved)
-       SELECT variant_id, $2, quantity FROM sales_order_lines WHERE order_id = $1
+       SELECT variant_id, $2, SUM(quantity) FROM sales_order_lines WHERE order_id = $1 GROUP BY variant_id
      ON CONFLICT (variant_id, warehouse_id)
        DO UPDATE SET quantity_reserved = stock_levels.quantity_reserved + excluded.quantity_reserved`,
     [orderId, wh]);
@@ -77,6 +77,7 @@ export async function createOrder(input: SalesOrderInput): Promise<SalesOrderDet
   const startsAsAuftrag = input.channel === 'shop' || input.channel === 'marktplatz';
   const status = startsAsAuftrag ? 'auftrag' : 'angebot';
   const c = await pool.connect();
+  let orderId: string;
   try {
     await c.query('BEGIN');
     const existing = await c.query<{ number: string }>('SELECT number FROM sales_orders');
@@ -86,7 +87,7 @@ export async function createOrder(input: SalesOrderInput): Promise<SalesOrderDet
        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
       [number, input.contactId, input.channel, status, input.priceListId ?? null,
        input.currency ?? 'EUR', input.placedAt ?? null]);
-    const orderId = ins.rows[0].id as string;
+    orderId = ins.rows[0].id as string;
     for (const l of input.lines) {
       await c.query(
         `INSERT INTO sales_order_lines (order_id, variant_id, quantity, unit_price) VALUES ($1,$2,$3,$4)`,
@@ -97,12 +98,11 @@ export async function createOrder(input: SalesOrderInput): Promise<SalesOrderDet
       await reserveStock(c, orderId);
     }
     await c.query('COMMIT');
-    const detail = await getOrder(orderId);
-    return detail!;
   } catch (e) {
     await c.query('ROLLBACK');
     throw e;
   } finally {
     c.release();
   }
+  return (await getOrder(orderId))!;
 }
