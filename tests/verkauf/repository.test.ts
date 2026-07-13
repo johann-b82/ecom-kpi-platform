@@ -3,7 +3,7 @@ import { pool } from '@/lib/db';
 import { seedKontakte } from '../../scripts/seed-kontakte';
 import { seedKatalog } from '../../scripts/seed-katalog';
 import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
-import { createOrder, getOrder } from '@/verkauf/repository';
+import { createOrder, getOrder, transitionOrderStatus } from '@/verkauf/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001'; // Spielwaren Müller, K-0001
 const PL_HANDEL = 'a1a1a1a1-0000-4000-8000-000000000001';
@@ -24,7 +24,10 @@ beforeAll(async () => {
   await seedKontakte(); await seedKatalog(); await seedVerfuegbarkeit();
 });
 afterAll(async () => {
-  for (const id of orderIds) await pool.query('DELETE FROM sales_orders WHERE id = $1', [id]);
+  for (const id of orderIds) {
+    await pool.query('DELETE FROM open_items WHERE order_id = $1', [id]);
+    await pool.query('DELETE FROM sales_orders WHERE id = $1', [id]);
+  }
   await pool.end();
 });
 
@@ -73,5 +76,54 @@ describe('verkauf repository — createOrder', () => {
     expect(await reservedFor('SJ-BLAU')).toBe(before + 5);
     const back = await getOrder(o.id);
     expect(back?.lines).toHaveLength(2);
+  });
+});
+
+async function onHandFor(sku: string): Promise<number> {
+  const r = await pool.query<{ s: string }>(
+    `SELECT COALESCE(SUM(quantity_on_hand),0)::text AS s FROM stock_levels
+       WHERE variant_id = (SELECT id FROM product_variants WHERE sku=$1)`, [sku]);
+  return parseInt(r.rows[0].s, 10);
+}
+
+describe('verkauf repository — transitionOrderStatus', () => {
+  it('führt einen Beleg auftrag→versendet→rechnung_gestellt→bezahlt mit Perlen + Seiteneffekten', async () => {
+    const vid = await variantId('BK-CLASSIC');
+    const onHandBefore = await onHandFor('BK-CLASSIC');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: vid, quantity: 5, unitPrice: 16.9 }],
+    });
+    orderIds.push(o.id);
+
+    const shipped = await transitionOrderStatus(o.id, 'versendet');
+    expect(shipped.status).toBe('versendet');
+    expect(shipped.events.map((e) => e.stage)).toEqual(['bestellt', 'kommissioniert']);
+    expect(shipped.events[1].sourceApp).toBe('verfuegbarkeit');
+    expect(await onHandFor('BK-CLASSIC')).toBe(onHandBefore - 5);
+
+    const invoiced = await transitionOrderStatus(o.id, 'rechnung_gestellt');
+    expect(invoiced.status).toBe('rechnung_gestellt');
+    const oi = await pool.query(
+      `SELECT direction, status, amount::text AS amount FROM open_items WHERE order_id = $1`, [o.id]);
+    expect(oi.rows).toHaveLength(1);
+    expect(oi.rows[0].direction).toBe('debitor');
+    expect(oi.rows[0].amount).toBe('84.50'); // 5 × 16.90
+
+    const paid = await transitionOrderStatus(o.id, 'bezahlt');
+    expect(paid.status).toBe('bezahlt');
+    expect(paid.events[paid.events.length - 1].stage).toBe('bezahlt');
+    const oi2 = await pool.query(`SELECT status FROM open_items WHERE order_id = $1`, [o.id]);
+    expect(oi2.rows[0].status).toBe('bezahlt');
+  });
+
+  it('verweigert einen unerlaubten Übergang', async () => {
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'b2b_portal', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 1, unitPrice: 11.9 }],
+    });
+    orderIds.push(o.id);
+    // angebot → bezahlt ist nicht erlaubt
+    await expect(transitionOrderStatus(o.id, 'bezahlt')).rejects.toThrow(/Übergang/i);
   });
 });

@@ -3,7 +3,7 @@ import type { PoolClient } from 'pg';
 import { nextOrderNumber } from './number';
 import type {
   SalesOrder, SalesOrderDetail, SalesOrderEvent, SalesOrderInput, SalesOrderLine,
-  EventStage, SourceApp,
+  EventStage, SourceApp, OrderStatus,
 } from './types';
 
 const ORDER_COLS = `id, tenant_id, number, contact_id, channel, status, price_list_id,
@@ -105,4 +105,100 @@ export async function createOrder(input: SalesOrderInput): Promise<SalesOrderDet
     c.release();
   }
   return (await getOrder(orderId))!;
+}
+
+const ALLOWED: Record<OrderStatus, OrderStatus[]> = {
+  angebot: ['auftrag', 'storniert'],
+  auftrag: ['versendet', 'storniert'],
+  versendet: ['rechnung_gestellt', 'storniert'],
+  rechnung_gestellt: ['bezahlt', 'storniert'],
+  bezahlt: [],       // Retoure läuft über createReturn (neuer Beleg), nicht über einen Statuswechsel
+  retoure: [],
+  storniert: [],
+};
+
+async function shipStock(c: PoolClient, orderId: string): Promise<void> {
+  const wh = await defaultWarehouseId(c);
+  const lines = await c.query<{ variant_id: string; quantity: number }>(
+    `SELECT variant_id, quantity FROM sales_order_lines WHERE order_id = $1`, [orderId]);
+  for (const l of lines.rows) {
+    // Reservierung auf dem Standardlager freigeben ...
+    await c.query(
+      `UPDATE stock_levels SET quantity_reserved = quantity_reserved - $3
+         WHERE variant_id = $1 AND warehouse_id = $2`, [l.variant_id, wh, l.quantity]);
+    // ... und aus dem Lager mit dem höchsten Bestand entnehmen (Phase-2-simpel, überschreibbar später).
+    const pick = await c.query<{ warehouse_id: string }>(
+      `SELECT warehouse_id FROM stock_levels WHERE variant_id = $1 ORDER BY quantity_on_hand DESC LIMIT 1`,
+      [l.variant_id]);
+    const pickWh = pick.rows[0]?.warehouse_id ?? wh;
+    await c.query(
+      `INSERT INTO stock_levels (variant_id, warehouse_id, quantity_on_hand)
+         VALUES ($1,$2,$3)
+       ON CONFLICT (variant_id, warehouse_id)
+         DO UPDATE SET quantity_on_hand = stock_levels.quantity_on_hand - $3`,
+      [l.variant_id, pickWh, l.quantity]);
+  }
+}
+
+async function createDebitorOpenItem(c: PoolClient, orderId: string): Promise<void> {
+  await c.query(
+    `INSERT INTO open_items (direction, contact_id, reference, order_id, amount, due_date, status)
+     SELECT 'debitor', o.contact_id, o.number, o.id,
+            (SELECT COALESCE(SUM(quantity * unit_price), 0) FROM sales_order_lines WHERE order_id = o.id),
+            (CURRENT_DATE + (ct.payment_terms * INTERVAL '1 day'))::date, 'offen'
+       FROM sales_orders o JOIN contacts ct ON ct.id = o.contact_id
+      WHERE o.id = $1`,
+    [orderId]);
+}
+
+async function releaseReservation(c: PoolClient, orderId: string): Promise<void> {
+  const wh = await defaultWarehouseId(c);
+  await c.query(
+    `UPDATE stock_levels s SET quantity_reserved = s.quantity_reserved - l.quantity
+       FROM sales_order_lines l
+      WHERE l.order_id = $1 AND s.variant_id = l.variant_id AND s.warehouse_id = $2`,
+    [orderId, wh]);
+}
+
+export async function transitionOrderStatus(orderId: string, target: OrderStatus): Promise<SalesOrderDetail> {
+  const c = await pool.connect();
+  try {
+    await c.query('BEGIN');
+    const cur = await c.query<{ status: OrderStatus }>(
+      `SELECT status FROM sales_orders WHERE id = $1 FOR UPDATE`, [orderId]);
+    if (cur.rows.length === 0) throw new Error(`Beleg ${orderId} nicht gefunden.`);
+    const from = cur.rows[0].status;
+    if (!ALLOWED[from].includes(target)) {
+      throw new Error(`Übergang ${from} → ${target} ist nicht erlaubt.`);
+    }
+    switch (target) {
+      case 'auftrag':
+        await writeEvent(c, orderId, 'bestellt', 'verkauf');
+        await reserveStock(c, orderId);
+        break;
+      case 'versendet':
+        await writeEvent(c, orderId, 'kommissioniert', 'verfuegbarkeit');
+        await shipStock(c, orderId);
+        break;
+      case 'rechnung_gestellt':
+        await writeEvent(c, orderId, 'rechnung_gestellt', 'verkauf');
+        await createDebitorOpenItem(c, orderId);
+        break;
+      case 'bezahlt':
+        await writeEvent(c, orderId, 'bezahlt', 'finanzen');
+        await c.query(`UPDATE open_items SET status = 'bezahlt' WHERE order_id = $1 AND direction = 'debitor'`, [orderId]);
+        break;
+      case 'storniert':
+        if (from === 'auftrag') await releaseReservation(c, orderId);
+        break;
+    }
+    await c.query(`UPDATE sales_orders SET status = $2 WHERE id = $1`, [orderId, target]);
+    await c.query('COMMIT');
+    return (await getOrder(orderId))!;
+  } catch (e) {
+    await c.query('ROLLBACK');
+    throw e;
+  } finally {
+    c.release();
+  }
 }
