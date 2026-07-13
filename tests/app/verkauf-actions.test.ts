@@ -13,11 +13,11 @@ import { revalidatePath } from 'next/cache';
 import { createOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
 import { createOrderAction, transitionOrderStatusAction, createReturnAction } from '@/app/(shell)/verkauf/actions';
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => { vi.clearAllMocks(); });
 
 describe('verkauf actions', () => {
   it('createOrderAction gated auf verkauf/edit, delegiert, revalidiert', async () => {
-    const input = { contactId: 'k1', channel: 'manuell', lines: [] };
+    const input = { contactId: 'k1', channel: 'manuell' as const, lines: [] };
     await createOrderAction(input);
     expect(requireAppAccess).toHaveBeenCalledWith('verkauf', 'edit');
     expect(createOrder).toHaveBeenCalledWith(input);
