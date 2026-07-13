@@ -19,6 +19,7 @@
 - Belegnummern: `A-<jahr>-####` (Verkauf) über reinen Helper.
 - Verfügbare Menge ist überall `SUM(quantity_on_hand) − SUM(quantity_reserved)` über alle Lager.
 - Deployment/Verifikation der laufenden App **nur auf der VPS** (`root@194.164.204.249`, `budp.lumeapps.de`) — nie lokal. Tests (`npx vitest`) laufen lokal.
+- **Env laden vor jedem DB-Befehl:** `DATABASE_URL` liegt nur in `.env` und wird von nichts automatisch geladen (kein dotenv; die Fallback-Credentials in `src/lib/db.ts` sind falsch). Vor **jedem** `npm run migrate` / `npm run seed-*` / `npx vitest`, der die DB berührt, zuerst: `set -a; source .env; set +a`. `psql` ist **nicht** installiert — für Ad-hoc-DB-Abfragen `node -e` mit dem `pg`-Pool nutzen, nicht `psql`.
 - **Bekannter Host-Caveat:** `tests/db/rls.test.ts` schlägt auf diesem Dev-Host vor (Projekt-Memory: 16 erwartete Failures, keine Regression), weil RLS-Rollen lokal nicht erzwungen werden. Neue RLS-Deny-Tests teilen dieses Verhalten. Lokal verifizierbar ist die **Migration** und **Tabellenexistenz**; die Deny-Semantik greift real erst in der Supabase/VPS-Umgebung.
 
 ---
@@ -363,13 +364,17 @@ In `package.json` unter `"scripts"`, nach `"seed-katalog"`:
 
 - [ ] **Step 4: Seed ausführen (setzt Kontakte- und Katalog-Seed voraus)**
 
-Run: `npm run seed-kontakte && npm run seed-katalog && npm run seed-verfuegbarkeit`
+Run: `set -a; source .env; set +a; npm run seed-kontakte && npm run seed-katalog && npm run seed-verfuegbarkeit`
 Expected: `Verfügbarkeit seed applied.` ohne FK-Fehler.
 
-- [ ] **Step 5: DoD prüfen**
+- [ ] **Step 5: DoD prüfen** (`psql` ist nicht installiert — `node -e` mit `pg`)
 
-Run: `psql "$DATABASE_URL" -c "SELECT count(*) FILTER (WHERE is_default) AS defaults, count(*) FILTER (WHERE type='konsignation') AS konsi, count(*) AS lager FROM warehouses;"`
-Expected: `defaults=1`, `konsi=1`, `lager>=3`.
+Run:
+```bash
+set -a; source .env; set +a
+node -e "const{Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL});p.query(\"SELECT count(*) FILTER (WHERE is_default)::int AS defaults, count(*) FILTER (WHERE type='konsignation')::int AS konsi, count(*)::int AS lager FROM warehouses\").then(r=>console.log(r.rows[0])).finally(()=>p.end())"
+```
+Expected: `{ defaults: 1, konsi: 1, lager: 3 }` (bzw. `lager >= 3`).
 
 - [ ] **Step 6: Commit**
 
@@ -717,14 +722,13 @@ export async function createOrder(input: SalesOrderInput): Promise<SalesOrderDet
     c.release();
   }
 }
-
-// Export der Helfer-Signaturen für Task 7 (gleiche Datei wird erweitert):
-export const __internals = { writeEvent, reserveStock, defaultWarehouseId };
 ```
+
+Die Helfer `writeEvent`, `reserveStock`, `defaultWarehouseId` bleiben **modul-lokal** (kein Export) — Tasks 7 und 8 erweitern dieselbe Datei und haben sie im Scope.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `npx vitest run tests/verkauf/repository.test.ts`
+Run: `set -a; source .env; set +a; npx vitest run tests/verkauf/repository.test.ts`
 Expected: PASS (2 Tests).
 
 - [ ] **Step 5: Commit**
@@ -812,7 +816,7 @@ Expected: FAIL — `transitionOrderStatus` ist nicht exportiert.
 
 - [ ] **Step 3: Implementierung ergänzen**
 
-In `src/verkauf/repository.ts` die Import-Zeile um `OrderStatus` erweitern und vor der `__internals`-Zeile einfügen:
+In `src/verkauf/repository.ts` die Import-Zeile um `OrderStatus` erweitern und am Ende der Datei anfügen (die modul-lokalen Helfer `writeEvent`/`reserveStock`/`defaultWarehouseId` aus Task 6 sind in Scope):
 
 ```ts
 const ALLOWED: Record<OrderStatus, OrderStatus[]> = {
@@ -982,7 +986,7 @@ Expected: FAIL — `createReturn` nicht exportiert.
 
 - [ ] **Step 3: Implementierung ergänzen**
 
-In `src/verkauf/repository.ts` vor der `__internals`-Zeile einfügen:
+In `src/verkauf/repository.ts` am Ende der Datei anfügen:
 
 ```ts
 export async function createReturn(originalOrderId: string): Promise<SalesOrderDetail> {
@@ -1255,16 +1259,18 @@ In `package.json` unter `"scripts"`, nach `"seed-verfuegbarkeit"`:
     "seed-verkauf": "tsx scripts/seed-verkauf.ts",
 ```
 
-- [ ] **Step 4: Seed ausführen und DoD prüfen**
+- [ ] **Step 4: Seed ausführen und DoD prüfen** (`node -e`, `psql` fehlt)
 
-Run: `npm run seed-kontakte && npm run seed-katalog && npm run seed-verfuegbarkeit && npm run seed-verkauf`
+Run: `set -a; source .env; set +a; npm run seed-kontakte && npm run seed-katalog && npm run seed-verfuegbarkeit && npm run seed-verkauf`
 Expected: Log listet 5 Belege + Retoure, endet mit `Verkauf seed applied.`
 
-Run: `psql "$DATABASE_URL" -c "SELECT count(DISTINCT channel) AS kanaele FROM sales_orders;"`
-Expected: `kanaele >= 3` (Fachspec §11 #5).
-
-Run: `psql "$DATABASE_URL" -c "SELECT count(*) AS retoure_perlen FROM sales_order_events WHERE stage='retoure';"`
-Expected: `retoure_perlen >= 1` (§11 #2).
+Run:
+```bash
+set -a; source .env; set +a
+node -e "const{Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL});p.query('SELECT count(DISTINCT channel)::int AS kanaele FROM sales_orders').then(r=>console.log(r.rows[0])).finally(()=>p.end())"
+node -e "const{Pool}=require('pg');const p=new Pool({connectionString:process.env.DATABASE_URL});p.query(\"SELECT count(*)::int AS retoure_perlen FROM sales_order_events WHERE stage='retoure'\").then(r=>console.log(r.rows[0])).finally(()=>p.end())"
+```
+Expected: `{ kanaele: 3 }` (bzw. `>= 3`, §11 #5) und `{ retoure_perlen: 1 }` (bzw. `>= 1`, §11 #2).
 
 - [ ] **Step 5: Commit**
 
