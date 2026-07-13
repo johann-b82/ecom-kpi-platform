@@ -26,3 +26,15 @@ reference: `docs/design/design-system.md`. Non-negotiable rules:
 - White-label must keep working (`getBranding()` → `RootLayout` inline style).
 - New apps register in `src/lib/apps.ts` and mount under the `(shell)` route
   group.
+
+## Dokumentation
+
+- Das Hilfe-Modul (`/hilfe`, Inhalte in `src/lib/help/content.ts`) ist die
+  gepflegte Nutzer- **und** Admin-Doku. Bei jeder relevanten Funktionsänderung
+  mitpflegen:
+  - Neues Modul/neue App → Modul-Hilfeseite ergänzen und in `content.ts`
+    registrieren (der Registry-Test `tests/lib/help-content.test.ts` erzwingt,
+    dass jede App eine Hilfeseite hat).
+  - Änderung am Datenmodell → Admin-Seite `datenmodell` aktualisieren.
+  - Neue Verbindung/Connector oder Zugriffslogik → `verbindungen` bzw.
+    `rollen-gruppen` aktualisieren.
