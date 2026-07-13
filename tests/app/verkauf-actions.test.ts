@@ -10,16 +10,17 @@ vi.mock('@/verkauf/repository', () => ({
 
 import { requireAppAccess } from '@/lib/groups';
 import { revalidatePath } from 'next/cache';
-import { createOrder, transitionOrderStatus } from '@/verkauf/repository';
-import { createOrderAction, transitionOrderStatusAction } from '@/app/(shell)/verkauf/actions';
+import { createOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
+import { createOrderAction, transitionOrderStatusAction, createReturnAction } from '@/app/(shell)/verkauf/actions';
 
 beforeEach(() => vi.clearAllMocks());
 
 describe('verkauf actions', () => {
   it('createOrderAction gated auf verkauf/edit, delegiert, revalidiert', async () => {
-    await createOrderAction({ contactId: 'k1', channel: 'manuell', lines: [] });
+    const input = { contactId: 'k1', channel: 'manuell', lines: [] };
+    await createOrderAction(input);
     expect(requireAppAccess).toHaveBeenCalledWith('verkauf', 'edit');
-    expect(createOrder).toHaveBeenCalledOnce();
+    expect(createOrder).toHaveBeenCalledWith(input);
     expect(revalidatePath).toHaveBeenCalledWith('/verkauf');
   });
 
@@ -27,6 +28,15 @@ describe('verkauf actions', () => {
     await transitionOrderStatusAction('o1', 'versendet');
     expect(requireAppAccess).toHaveBeenCalledWith('verkauf', 'edit');
     expect(transitionOrderStatus).toHaveBeenCalledWith('o1', 'versendet');
+    expect(revalidatePath).toHaveBeenCalledWith('/verkauf');
+    expect(revalidatePath).toHaveBeenCalledWith('/verkauf/o1');
+  });
+
+  it('createReturnAction gated auf verkauf/edit, delegiert, revalidiert', async () => {
+    await createReturnAction('o1');
+    expect(requireAppAccess).toHaveBeenCalledWith('verkauf', 'edit');
+    expect(createReturn).toHaveBeenCalledWith('o1');
+    expect(revalidatePath).toHaveBeenCalledWith('/verkauf');
     expect(revalidatePath).toHaveBeenCalledWith('/verkauf/o1');
   });
 });
