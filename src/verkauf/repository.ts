@@ -110,8 +110,8 @@ export async function createOrder(input: SalesOrderInput): Promise<SalesOrderDet
 const ALLOWED: Record<OrderStatus, OrderStatus[]> = {
   angebot: ['auftrag', 'storniert'],
   auftrag: ['versendet', 'storniert'],
-  versendet: ['rechnung_gestellt', 'storniert'],
-  rechnung_gestellt: ['bezahlt', 'storniert'],
+  versendet: ['rechnung_gestellt'],
+  rechnung_gestellt: ['bezahlt'],
   bezahlt: [],       // Retoure läuft über createReturn (neuer Beleg), nicht über einen Statuswechsel
   retoure: [],
   storniert: [],
@@ -154,9 +154,9 @@ async function createDebitorOpenItem(c: PoolClient, orderId: string): Promise<vo
 async function releaseReservation(c: PoolClient, orderId: string): Promise<void> {
   const wh = await defaultWarehouseId(c);
   await c.query(
-    `UPDATE stock_levels s SET quantity_reserved = s.quantity_reserved - l.quantity
-       FROM sales_order_lines l
-      WHERE l.order_id = $1 AND s.variant_id = l.variant_id AND s.warehouse_id = $2`,
+    `UPDATE stock_levels s SET quantity_reserved = s.quantity_reserved - agg.qty
+       FROM (SELECT variant_id, SUM(quantity) AS qty FROM sales_order_lines WHERE order_id = $1 GROUP BY variant_id) agg
+      WHERE s.variant_id = agg.variant_id AND s.warehouse_id = $2`,
     [orderId, wh]);
 }
 

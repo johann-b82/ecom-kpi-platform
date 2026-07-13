@@ -158,3 +158,33 @@ describe('verkauf repository — createReturn', () => {
     await pool.query('DELETE FROM sales_orders WHERE related_order_id = $1', [o.id]);
   });
 });
+
+describe('verkauf repository — storniert', () => {
+  it('gibt bei zwei Zeilen auf derselben Variante die volle Reservierung frei (I1)', async () => {
+    const before = await reservedFor('SJ-BLAU');
+    const vid = await variantId('SJ-BLAU');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [
+        { variantId: vid, quantity: 2, unitPrice: 11.9 },
+        { variantId: vid, quantity: 3, unitPrice: 11.9 },
+      ],
+    });
+    orderIds.push(o.id);
+    expect(await reservedFor('SJ-BLAU')).toBe(before + 5);
+
+    const cancelled = await transitionOrderStatus(o.id, 'storniert');
+    expect(cancelled.status).toBe('storniert');
+    expect(await reservedFor('SJ-BLAU')).toBe(before);
+  });
+
+  it('verweigert storniert aus versendet (I2)', async () => {
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 1, unitPrice: 11.9 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'versendet');
+    await expect(transitionOrderStatus(o.id, 'storniert')).rejects.toThrow(/Übergang/);
+  });
+});
