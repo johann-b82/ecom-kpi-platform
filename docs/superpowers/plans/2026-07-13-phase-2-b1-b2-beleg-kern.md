@@ -819,11 +819,14 @@ Expected: FAIL — `transitionOrderStatus` ist nicht exportiert.
 In `src/verkauf/repository.ts` die Import-Zeile um `OrderStatus` erweitern und am Ende der Datei anfügen (die modul-lokalen Helfer `writeEvent`/`reserveStock`/`defaultWarehouseId` aus Task 6 sind in Scope):
 
 ```ts
+// Storniert nur aus angebot/auftrag: nur dort ist "Reservierung freigeben" (§3)
+// die vollständige Kompensation. Aus versendet/rechnung_gestellt müsste Bestand
+// zurückgebucht bzw. ein offener Posten storniert werden — nicht in Phase 2.
 const ALLOWED: Record<OrderStatus, OrderStatus[]> = {
   angebot: ['auftrag', 'storniert'],
   auftrag: ['versendet', 'storniert'],
-  versendet: ['rechnung_gestellt', 'storniert'],
-  rechnung_gestellt: ['bezahlt', 'storniert'],
+  versendet: ['rechnung_gestellt'],
+  rechnung_gestellt: ['bezahlt'],
   bezahlt: [],       // Retoure läuft über createReturn (neuer Beleg), nicht über einen Statuswechsel
   retoure: [],
   storniert: [],
