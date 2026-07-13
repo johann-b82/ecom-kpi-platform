@@ -144,6 +144,7 @@ Die Slug-Liste bleibt bewusst flach (ein Segment). Beispiel-Slugs:
   - Plattform/Zugriff: `groups`, `group_members`, `group_app_access`
   - Integrationen: `connector_credentials`, `oauth_connections`,
     `integration_connections`, `external_references`, `sync_state`
+  - BrickPM (`bpm_*`) bleibt vorerst **bewusst ausgeklammert** (später ergänzen).
 - `verbindungen` — Connector-/OAuth-Konzept, Zugangsdaten, Sync.
 - `branding` — White-Label (`getBranding()` → RootLayout), Logo/Titel.
 
