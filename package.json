@@ -23,6 +23,7 @@
     "seed-kontakte": "tsx scripts/seed-kontakte.ts",
     "seed-katalog": "tsx scripts/seed-katalog.ts",
     "seed-verfuegbarkeit": "tsx scripts/seed-verfuegbarkeit.ts",
+    "seed-verkauf": "tsx scripts/seed-verkauf.ts",
     "sync-runner": "tsx scripts/sync-runner.ts"
   },
   "dependencies": {
