@@ -15,9 +15,10 @@ describe('HilfeSidebar', () => {
     expect(screen.queryByText('Administration')).toBeNull();
   });
 
-  it('shows the admin group for admins', () => {
+  it('shows the admin group for admins, marked as admin-only', () => {
     render(<HilfeSidebar isAdmin={true} />);
     expect(screen.getByText('Administration')).toBeTruthy();
     expect(screen.getByText('Datenmodell')).toBeTruthy();
+    expect(screen.getByText('Nur Admin')).toBeTruthy();
   });
 });

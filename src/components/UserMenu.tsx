@@ -3,11 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { createClient } from '@/lib/supabase/client';
+import { LockIcon } from '@/components/AdminOnlyTag';
 
 const itemClass =
   'flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800';
 
-export function UserMenu({ email, canBrickPM }: { email?: string | null; canBrickPM?: boolean }) {
+export function UserMenu({ email, canBrickPM, isAdmin }: { email?: string | null; canBrickPM?: boolean; isAdmin?: boolean }) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -67,9 +68,11 @@ export function UserMenu({ email, canBrickPM }: { email?: string | null; canBric
               <GridIcon /> BrickPM
             </a>
           )}
-          <a href="/setup" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
-            <GearIcon /> Einstellungen
-          </a>
+          {isAdmin && (
+            <a href="/setup" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
+              <GearIcon /> <span className="flex-1">Einstellungen</span> <LockIcon />
+            </a>
+          )}
           <button type="button" role="menuitem" className={itemClass} onClick={() => setTheme(isDark ? 'light' : 'dark')}>
             <ThemeIcon dark={isDark} /> Theme wechseln
           </button>

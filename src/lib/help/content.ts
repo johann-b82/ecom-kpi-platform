@@ -176,7 +176,7 @@ export const HELP_PAGES: DocPage[] = [
             'Neue Nutzer werden der Standardgruppe „Alle Nutzer" zugeordnet.',
             'Die letzte Admin-Gruppe kann nicht entzogen werden (Aussperr-Schutz).',
           ] },
-          { type: 'note', text: 'Verwaltung unter Einstellungen (/setup): Nutzer, Gruppen, Zugriffe.' },
+          { type: 'note', text: 'Verwaltung unter Einstellungen (/setup): Nutzer, Gruppen, Zugriffe. Die Einstellungen sind ausschließlich für Admins zugänglich — der Link erscheint nur bei ihnen und die Seite ist serverseitig geschützt.' },
         ],
       },
     ],

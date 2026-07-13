@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HELP_PAGES, type DocPage } from '@/lib/help/content';
+import { AdminOnlyTag } from '@/components/AdminOnlyTag';
 
 const GROUPS: { key: DocPage['group']; label: string; adminOnly?: boolean }[] = [
   { key: 'start', label: 'Erste Schritte' },
@@ -20,7 +21,10 @@ export function HilfeSidebar({ isAdmin }: { isAdmin: boolean }) {
           if (pages.length === 0) return null;
           return (
             <div key={g.key}>
-              <p className="anno mb-1 px-2 text-neutral-400 dark:text-neutral-500">{g.label}</p>
+              <p className="mb-1 flex items-center gap-1.5 px-2">
+                <span className="anno text-neutral-400 dark:text-neutral-500">{g.label}</span>
+                {g.adminOnly && <AdminOnlyTag />}
+              </p>
               <ul className="space-y-1">
                 {pages.map((p) => {
                   const href = `/hilfe/${p.slug}`;

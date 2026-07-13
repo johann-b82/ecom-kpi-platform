@@ -22,7 +22,7 @@ export default async function ShellLayout({ children }: { children: ReactNode })
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logo || '/bryx-logo.svg'} alt={title} className="h-7 w-auto" />
           </Link>
-          <UserMenu email={user?.email} canBrickPM={!!access.apps.brickpm} />
+          <UserMenu email={user?.email} canBrickPM={!!access.apps.brickpm} isAdmin={access.isAdmin} />
         </header>
         <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
       </div>

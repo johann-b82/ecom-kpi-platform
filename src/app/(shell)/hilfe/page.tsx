@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { getUserAccess } from '@/lib/groups';
 import { HELP_USER_PAGES, HELP_ADMIN_PAGES, type DocPage } from '@/lib/help/content';
+import { AdminOnlyTag } from '@/components/AdminOnlyTag';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,10 @@ export default async function HilfeHome() {
 
       {access.isAdmin && (
         <>
-          <h2 className="anno mt-10 text-neutral-500 dark:text-neutral-400">Administration</h2>
+          <h2 className="mt-10 flex items-center gap-2">
+            <span className="anno text-neutral-500 dark:text-neutral-400">Administration</span>
+            <AdminOnlyTag />
+          </h2>
           <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {HELP_ADMIN_PAGES.map((p) => <Card key={p.slug} page={p} />)}
           </div>
