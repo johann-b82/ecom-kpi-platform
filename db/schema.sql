@@ -304,3 +304,114 @@ CREATE TABLE IF NOT EXISTS product_documents (
   expires_at  DATE,
   uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ── Verkauf (Phase 2) ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS sales_orders (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id        UUID REFERENCES tenants(id),
+  number           TEXT UNIQUE NOT NULL,
+  contact_id       UUID NOT NULL REFERENCES contacts(id),
+  channel          TEXT NOT NULL CHECK (channel IN ('shop','b2b_portal','marktplatz','telefon','manuell')),
+  status           TEXT NOT NULL CHECK (status IN ('angebot','auftrag','versendet','rechnung_gestellt','bezahlt','retoure','storniert')),
+  price_list_id    UUID REFERENCES price_lists(id),
+  related_order_id UUID REFERENCES sales_orders(id),
+  currency         CHAR(3) NOT NULL DEFAULT 'EUR',
+  placed_at        TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS sales_order_lines (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id  UUID REFERENCES tenants(id),
+  order_id   UUID NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
+  variant_id UUID NOT NULL REFERENCES product_variants(id),
+  quantity   INT NOT NULL,
+  unit_price NUMERIC(12,2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sales_order_events (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id   UUID REFERENCES tenants(id),
+  order_id    UUID NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
+  stage       TEXT NOT NULL CHECK (stage IN ('bestellt','kommissioniert','rechnung_gestellt','bezahlt','retoure')),
+  source_app  TEXT NOT NULL CHECK (source_app IN ('verkauf','verfuegbarkeit','finanzen')),
+  note        TEXT,
+  automated   BOOLEAN NOT NULL DEFAULT false,
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS sales_order_events_order_idx ON sales_order_events (order_id, occurred_at);
+
+-- ── Verfügbarkeit (Phase 2) ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS warehouses (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id  UUID REFERENCES tenants(id),
+  name       TEXT NOT NULL,
+  type       TEXT NOT NULL DEFAULT 'eigen' CHECK (type IN ('eigen','konsignation')),
+  is_default BOOLEAN NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS stock_levels (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id         UUID REFERENCES tenants(id),
+  variant_id        UUID NOT NULL REFERENCES product_variants(id),
+  warehouse_id      UUID NOT NULL REFERENCES warehouses(id),
+  quantity_on_hand  INT NOT NULL DEFAULT 0,
+  quantity_reserved INT NOT NULL DEFAULT 0,
+  UNIQUE (variant_id, warehouse_id)
+);
+
+CREATE TABLE IF NOT EXISTS stock_adjustments (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id    UUID REFERENCES tenants(id),
+  variant_id   UUID NOT NULL REFERENCES product_variants(id),
+  warehouse_id UUID NOT NULL REFERENCES warehouses(id),
+  delta        INT NOT NULL,
+  reason       TEXT NOT NULL CHECK (reason IN ('inventurdifferenz','bruch_schwund','korrektur_fehlbuchung')),
+  note         TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS purchase_orders (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id   UUID REFERENCES tenants(id),
+  number      TEXT UNIQUE NOT NULL,
+  supplier_id UUID NOT NULL REFERENCES contacts(id),
+  status      TEXT NOT NULL DEFAULT 'entwurf' CHECK (status IN ('entwurf','bestellt','teilweise_eingegangen','abgeschlossen','storniert')),
+  expected_at DATE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS purchase_order_lines (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id         UUID REFERENCES tenants(id),
+  purchase_order_id UUID NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
+  variant_id        UUID NOT NULL REFERENCES product_variants(id),
+  quantity_ordered  INT NOT NULL,
+  quantity_received INT NOT NULL DEFAULT 0,
+  unit_cost         NUMERIC(12,2)
+);
+
+-- ── Finanzen (Phase 2) ────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS open_items (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id         UUID REFERENCES tenants(id),
+  direction         TEXT NOT NULL CHECK (direction IN ('debitor','kreditor')),
+  contact_id        UUID NOT NULL REFERENCES contacts(id),
+  reference         TEXT,
+  order_id          UUID REFERENCES sales_orders(id),
+  purchase_order_id UUID REFERENCES purchase_orders(id),
+  amount            NUMERIC(12,2) NOT NULL,
+  due_date          DATE NOT NULL,
+  status            TEXT NOT NULL DEFAULT 'offen' CHECK (status IN ('offen','teilweise_bezahlt','bezahlt','ueberfaellig')),
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS payments (
+  id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id          UUID REFERENCES tenants(id),
+  open_item_id       UUID REFERENCES open_items(id),
+  amount             NUMERIC(12,2) NOT NULL,
+  paid_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  method             TEXT NOT NULL CHECK (method IN ('ueberweisung','lastschrift','kreditkarte','paypal','sonstige')),
+  external_reference TEXT
+);
