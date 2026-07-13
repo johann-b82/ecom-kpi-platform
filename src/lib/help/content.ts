@@ -234,6 +234,14 @@ export const HELP_PAGES: DocPage[] = [
           { type: 'note', text: 'BrickPM-Tabellen (bpm_*) sind hier noch nicht dokumentiert.' },
         ],
       },
+      {
+        heading: 'Phase 2 — Kette (Verkauf · Verfügbarkeit · Finanzen)',
+        blocks: [
+          { type: 'p', text: 'Der Beleg ist eine Tabelle mit Status: sales_orders (Angebot/Auftrag/Rechnung/Gutschrift). sales_order_lines hält die Positionen, sales_order_events den Faden (eine Zeile pro Perle). Gutschriften sind sales_orders-Zeilen mit status=retoure, negativen Mengen und related_order_id auf den Ursprung.' },
+          { type: 'p', text: 'Verfügbarkeit: warehouses (inkl. Konsignation, is_default), stock_levels je Lager (quantity_on_hand/quantity_reserved), stock_adjustments mit Pflicht-Grund, purchase_orders/purchase_order_lines für den Einkauf.' },
+          { type: 'p', text: 'Finanzen: open_items führt Debitoren und Kreditoren in einer Tabelle (direction-Flag); payments bucht Zahlungen, open_item_id ist nullable (nicht zugeordnete Zahlung landet in der Zuordnen-Warteschlange).' },
+        ],
+      },
     ],
   },
   {
