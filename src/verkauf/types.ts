@@ -41,3 +41,12 @@ export interface CustomerOption {
   id: string; name: string; priceListId: string | null; paymentTerms: number; deliveryLabel: string | null;
 }
 export interface PriceEntry { variantId: string; priceListId: string; amount: number }
+
+export interface DateRange { start: string; end: string } // ISO YYYY-MM-DD, inklusiv
+export interface SalesTotals {
+  revenueNet: number; orders: number; avgOrderValueNet: number; openOffers: number;
+}
+export interface ChannelSummary {
+  channel: OrderChannel; revenueNet: number; orders: number; avgOrderValueNet: number;
+}
+export interface StatusCount { status: OrderStatus; count: number }

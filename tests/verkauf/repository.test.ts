@@ -1,11 +1,13 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
 import { pool } from '@/lib/db';
+import { addDays } from '@/lib/dates';
 import { seedKontakte } from '../../scripts/seed-kontakte';
 import { seedKatalog } from '../../scripts/seed-katalog';
 import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, getOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
 import {
   listOrderRows, getOrderView, sellableVariants, priceForVariant, availableStock,
+  salesTotals, channelSummary, statusFunnel,
 } from '@/verkauf/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001'; // Spielwaren Müller, K-0001
@@ -231,5 +233,90 @@ describe('verkauf repository — Lesefunktionen für die UI', () => {
     const bk = vs.find((v) => v.sku === 'BK-CLASSIC')!;
     expect(bk.productName).toBe('Bauklötze Classic');
     expect(typeof bk.available).toBe('number');
+  });
+});
+
+describe('B4 aggregates', () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const range = { start: addDays(today, -30), end: today };
+
+  it('salesTotals: Umsatz ∉ {angebot,storniert}, offene Angebote separat, Ø = Umsatz/Belege', async () => {
+    const before = await salesTotals(range);
+
+    // Angebot (manuell) → zählt NUR als openOffer, nicht Umsatz/Beleg
+    const offer = await createOrder({
+      contactId: MUELLER, channel: 'manuell', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 2, unitPrice: 10 }],
+    });
+    orderIds.push(offer.id);
+
+    // Auftrag (shop, startet als auftrag) → Umsatz 3*10=30, Beleg 1
+    const order = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 3, unitPrice: 10 }],
+    });
+    orderIds.push(order.id);
+
+    const after = await salesTotals(range);
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(30);
+    expect(after.orders - before.orders).toBe(1);       // nur der Auftrag
+    expect(after.openOffers - before.openOffers).toBe(1); // das Angebot
+    expect(after.avgOrderValueNet).toBeCloseTo(after.revenueNet / after.orders);
+  });
+
+  it('salesTotals: avgOrderValueNet ist 0 statt Division-durch-0 bei leerem Zeitraum', async () => {
+    const empty = { start: addDays(today, -365), end: addDays(today, -300) };
+    const t = await salesTotals(empty);
+    expect(t.orders).toBe(0);
+    expect(t.avgOrderValueNet).toBe(0);
+  });
+
+  it('channelSummary: alle 5 Kanäle, umsatzloser Kanal = 0', async () => {
+    const rows = await channelSummary(range);
+    expect(rows.map((r) => r.channel)).toEqual(
+      ['shop', 'b2b_portal', 'marktplatz', 'telefon', 'manuell']);
+    const shop = rows.find((r) => r.channel === 'shop')!;
+    expect(shop.revenueNet).toBeGreaterThan(0);
+    const markt = rows.find((r) => r.channel === 'marktplatz')!;
+    expect(markt.orders).toBe(0);
+    expect(markt.revenueNet).toBe(0);
+  });
+
+  it('statusFunnel liefert alle 7 Status (auch 0)', async () => {
+    const f = await statusFunnel(range);
+    expect(f.map((x) => x.status)).toEqual(
+      ['angebot', 'auftrag', 'versendet', 'rechnung_gestellt', 'bezahlt', 'retoure', 'storniert']);
+    expect(f.find((x) => x.status === 'angebot')!.count).toBeGreaterThanOrEqual(1);
+  });
+
+  it('Retoure mindert den Umsatz netto', async () => {
+    const vid = await variantId('BK-CLASSIC');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: vid, quantity: 2, unitPrice: 16.9 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'versendet');
+    await transitionOrderStatus(o.id, 'rechnung_gestellt');
+    await transitionOrderStatus(o.id, 'bezahlt');
+
+    const before = await salesTotals(range);
+    await createReturn(o.id);
+    // credit NICHT in orderIds pushen: die FK related_order_id → o.id verlangt,
+    // dass die Gutschrift VOR dem Ursprung gelöscht wird. Das erledigt die
+    // gezielte DELETE-Zeile am Testende; o.id bleibt für afterAll in orderIds.
+    const after = await salesTotals(range);
+
+    expect(after.revenueNet).toBeLessThan(before.revenueNet);
+
+    // Gutschrift zuerst entfernen (FK related_order_id), Ursprung räumt afterAll ab.
+    await pool.query('DELETE FROM sales_orders WHERE related_order_id = $1', [o.id]);
+  });
+
+  it('listOrderRows(channel) filtert auf den Kanal', async () => {
+    const shopRows = await listOrderRows('shop');
+    expect(shopRows.every((r) => r.channel === 'shop')).toBe(true);
+    const all = await listOrderRows();
+    expect(all.length).toBeGreaterThanOrEqual(shopRows.length);
   });
 });

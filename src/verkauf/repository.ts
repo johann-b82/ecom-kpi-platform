@@ -3,8 +3,9 @@ import type { PoolClient } from 'pg';
 import { nextOrderNumber } from './number';
 import type {
   SalesOrder, SalesOrderDetail, SalesOrderEvent, SalesOrderInput, SalesOrderLine,
-  EventStage, SourceApp, OrderStatus,
+  EventStage, SourceApp, OrderStatus, OrderChannel,
   OrderRow, OrderView, SellableVariant, CustomerOption, PriceEntry,
+  DateRange, SalesTotals, ChannelSummary, StatusCount,
 } from './types';
 
 const ORDER_COLS = `id, tenant_id, number, contact_id, channel, status, price_list_id,
@@ -252,7 +253,7 @@ export async function createReturn(originalOrderId: string): Promise<SalesOrderD
   }
 }
 
-export async function listOrderRows(): Promise<OrderRow[]> {
+export async function listOrderRows(channel?: OrderChannel): Promise<OrderRow[]> {
   const r = await pool.query(
     `SELECT o.id, o.number, o.contact_id, c.name AS contact_name, o.channel, o.status,
             o.created_at::text AS created_at,
@@ -260,12 +261,66 @@ export async function listOrderRows(): Promise<OrderRow[]> {
        FROM sales_orders o
        JOIN contacts c ON c.id = o.contact_id
        LEFT JOIN sales_order_events e ON e.order_id = o.id
+      WHERE ($1::text IS NULL OR o.channel = $1)
       GROUP BY o.id, c.name
-      ORDER BY o.created_at DESC`);
+      ORDER BY o.created_at DESC`, [channel ?? null]);
   return r.rows.map((x: any) => ({
     id: x.id, number: x.number, contactId: x.contact_id, contactName: x.contact_name,
     channel: x.channel, status: x.status, createdAt: x.created_at, stages: x.stages,
   }));
+}
+
+export async function salesTotals(range: DateRange): Promise<SalesTotals> {
+  const rev = await pool.query(
+    `SELECT COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue,
+            COUNT(DISTINCT o.id)::int AS orders
+       FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND o.status NOT IN ('angebot','storniert')`,
+    [range.start, range.end]);
+  const off = await pool.query(
+    `SELECT COUNT(*)::int AS open_offers FROM sales_orders o
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND o.status = 'angebot'`,
+    [range.start, range.end]);
+  const revenueNet = Number(rev.rows[0].revenue);
+  const orders = rev.rows[0].orders;
+  return {
+    revenueNet, orders,
+    avgOrderValueNet: orders > 0 ? revenueNet / orders : 0,
+    openOffers: off.rows[0].open_offers,
+  };
+}
+
+export async function channelSummary(range: DateRange): Promise<ChannelSummary[]> {
+  const r = await pool.query(
+    `SELECT o.channel, COUNT(DISTINCT o.id)::int AS orders,
+            COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue
+       FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND o.status NOT IN ('angebot','storniert')
+      GROUP BY o.channel`,
+    [range.start, range.end]);
+  const by = new Map<string, any>(r.rows.map((x: any) => [x.channel, x]));
+  const CH: OrderChannel[] = ['shop', 'b2b_portal', 'marktplatz', 'telefon', 'manuell'];
+  return CH.map((channel) => {
+    const row = by.get(channel);
+    const orders = row ? row.orders : 0;
+    const revenueNet = row ? Number(row.revenue) : 0;
+    return { channel, orders, revenueNet, avgOrderValueNet: orders > 0 ? revenueNet / orders : 0 };
+  });
+}
+
+export async function statusFunnel(range: DateRange): Promise<StatusCount[]> {
+  const r = await pool.query(
+    `SELECT status, COUNT(*)::int AS count FROM sales_orders o
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+      GROUP BY status`,
+    [range.start, range.end]);
+  const by = new Map<string, number>(r.rows.map((x: any) => [x.status, x.count]));
+  const ALL: OrderStatus[] =
+    ['angebot', 'auftrag', 'versendet', 'rechnung_gestellt', 'bezahlt', 'retoure', 'storniert'];
+  return ALL.map((status) => ({ status, count: by.get(status) ?? 0 }));
 }
 
 export async function getOrderView(id: string): Promise<OrderView | null> {
