@@ -7,12 +7,12 @@ afterEach(cleanup);
 
 it('renders one tile per accessible app linking to its href', () => {
   render(<Launchpad apps={APPS} />);
-  const dash = screen.getByRole('link', { name: /Dashboard/i });
-  expect(dash.getAttribute('href')).toBe('/dashboard');
-  expect(screen.getByRole('link', { name: /BrickPM/i }).getAttribute('href')).toBe('/brickpm');
+  const brickpm = screen.getByRole('link', { name: /BrickPM/i });
+  expect(brickpm.getAttribute('href')).toBe('/brickpm');
+  expect(screen.getByRole('link', { name: /Verkauf/i }).getAttribute('href')).toBe('/verkauf');
 });
 
 it('renders only the apps it is given', () => {
-  render(<Launchpad apps={APPS.filter((a) => a.key === 'dashboard')} />);
-  expect(screen.queryByRole('link', { name: /BrickPM/i })).toBeNull();
+  render(<Launchpad apps={APPS.filter((a) => a.key === 'brickpm')} />);
+  expect(screen.queryByRole('link', { name: /Verkauf/i })).toBeNull();
 });

@@ -23,23 +23,23 @@ describe('group store (integration, benötigt DB)', () => {
   it('setAdmin / setAppAccess / setMembers reflected in listGroups', async () => {
     await setAdmin(gid, true);
     await setAppAccess(gid, 'brickpm', 'edit');
-    await setAppAccess(gid, 'dashboard', 'view');
+    await setAppAccess(gid, 'kontakte', 'view');
     await setMembers(gid, [U1, U2]);
     const g = (await listGroups()).find((x) => x.id === gid)!;
     expect(g.isAdmin).toBe(true);
     expect(g.memberIds.sort()).toEqual([U1, U2].sort());
     expect(g.access.find((a) => a.app === 'brickpm')?.permission).toBe('edit');
-    expect(g.access.find((a) => a.app === 'dashboard')?.permission).toBe('view');
+    expect(g.access.find((a) => a.app === 'kontakte')?.permission).toBe('view');
   });
 
   it('setAppAccess(null) removes; setMembers replaces; rename works', async () => {
-    await setAppAccess(gid, 'dashboard', null);
+    await setAppAccess(gid, 'kontakte', null);
     await setMembers(gid, [U1]);
     await renameGroup(gid, 'Umbenannt');
     const g = (await listGroups()).find((x) => x.id === gid)!;
     expect(g.name).toBe('Umbenannt');
     expect(g.memberIds).toEqual([U1]);
-    expect(g.access.find((a) => a.app === 'dashboard')).toBeUndefined();
+    expect(g.access.find((a) => a.app === 'kontakte')).toBeUndefined();
   });
 
   it('deleteGroup removes it (cascades members/access)', async () => {
