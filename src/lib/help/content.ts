@@ -41,37 +41,13 @@ export const HELP_PAGES: DocPage[] = [
             'Logo oben links: zurück zum Launchpad (Startseite).',
             'Benutzermenü oben rechts: Einstellungen, Theme wechseln (hell/dunkel), Abmelden.',
           ] },
-          { type: 'note', text: 'Sichtbar sind nur die Module, für die deine Gruppe freigeschaltet ist. Dashboard und Hilfe sind immer verfügbar.' },
+          { type: 'note', text: 'Sichtbar sind nur die Module, für die deine Gruppe freigeschaltet ist. Hilfe ist immer verfügbar. Die Shop-/Marketing-Kennzahlen findest du im Modul Verkauf unter „Dashboard".' },
         ],
       },
     ],
   },
 
   // ── Module (Nutzer) ───────────────────────────────────────────────
-  {
-    slug: 'dashboard',
-    title: 'Dashboard',
-    summary: 'Kennzahlen-Überblick aus den angebundenen Quellen.',
-    group: 'module',
-    sections: [
-      {
-        heading: 'Was macht das Modul?',
-        blocks: [
-          { type: 'p', text: 'Das Dashboard bündelt Kennzahlen (KPIs) aus angebundenen Quellen wie Shop-, Ads- und E-Mail-Systemen zu einem Überblick.' },
-        ],
-      },
-      {
-        heading: 'Wichtige Funktionen',
-        blocks: [
-          { type: 'list', items: [
-            'KPI-Kacheln mit Vergleich zum Vorzeitraum.',
-            'Zeitraum- und Quellen-Filter.',
-            'Daten stammen aus den unter „Verbindungen" konfigurierten Connectors.',
-          ] },
-        ],
-      },
-    ],
-  },
   {
     slug: 'brickpm',
     title: 'BrickPM',
@@ -168,6 +144,18 @@ export const HELP_PAGES: DocPage[] = [
             'Beleg-Detail mit vollständigem, klickbarem Faden (Perlen zeigen Zeitpunkt und Auslöser).',
             'Genau eine primäre Aktion je Status (z. B. In Auftrag wandeln, Rechnung stellen, Retoure anlegen).',
             'Beleg manuell anlegen: Kunde wählen, Positionen erfassen — Preis und Bestand werden vorbelegt.',
+          ] },
+        ],
+      },
+      {
+        heading: 'Übersicht & Kanäle (Ebene 1)',
+        blocks: [
+          { type: 'p', text: 'Die Verkauf-Startseite zeigt für den gewählten Zeitraum (7/30/90 Tage) Umsatz, Anzahl Belege, durchschnittlichen Belegwert und offene Angebote. Alle Beträge sind netto (ohne MwSt).' },
+          { type: 'list', items: [
+            'Kanal-Vergleich: Umsatz, Belege und Ø Belegwert je Kanal (Shop, B2B-Portal, Marktplatz, Telefon, Manuell) — ein Klick öffnet die auf den Kanal gefilterte Belegliste.',
+            'Status-Funnel: Anzahl Belege je Status von Angebot bis bezahlt.',
+            'Umsatz zählt Belege ab Auftrag; Angebote sind Pipeline (eigene Kennzahl), Retouren mindern den Umsatz netto.',
+            'Die Shop-/Marketing-KPIs (GA4, Shop, Ads) liegen unter Verkauf → Dashboard.',
           ] },
         ],
       },
