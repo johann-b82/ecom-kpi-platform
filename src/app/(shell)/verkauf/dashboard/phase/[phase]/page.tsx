@@ -22,17 +22,13 @@ export default async function PhasePage({ params }: { params: { phase: string } 
   const phase = computeKpis(data, range).find((p) => p.phase === key)!;
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-6xl p-6">
-        <Link href="/dashboard" className="text-sm text-brand hover:text-brand-dark">← Zur Übersicht</Link>
-        <h1 className="mt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">{meta.title} · {meta.subtitle}</h1>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
-          {phase.kpis.map((k) => <KpiCard key={k.key} kpi={k} />)}
-        </div>
-
-        <PhaseTrendChart series={series} metric={meta.leadMetric} />
+    <div className="mx-auto max-w-6xl">
+      <Link href="/verkauf/dashboard" className="text-sm text-brand hover:text-brand-dark">← Zur Übersicht</Link>
+      <h1 className="mt-2 text-2xl font-bold text-neutral-900 dark:text-neutral-100">{meta.title} · {meta.subtitle}</h1>
+      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
+        {phase.kpis.map((k) => <KpiCard key={k.key} kpi={k} />)}
       </div>
-    </main>
+      <PhaseTrendChart series={series} metric={meta.leadMetric} />
+    </div>
   );
 }
