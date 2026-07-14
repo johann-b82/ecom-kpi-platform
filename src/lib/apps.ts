@@ -1,7 +1,7 @@
 // 'verkauf' ist der Authz-Key, auf dem die Phase-2-Verkauf-Server-Actions gaten.
 // Bewusst noch NICHT in APPS registriert (kein Rail-/Launchpad-Eintrag, keine
 // Hilfeseite) — die vollständige App-Registrierung folgt mit der UI in B3.
-export type AppKey = 'brickpm' | 'kontakte' | 'katalog' | 'hilfe' | 'verkauf';
+export type AppKey = 'brickpm' | 'kontakte' | 'katalog' | 'hilfe' | 'verkauf' | 'verfuegbarkeit';
 
 export interface AppDef {
   key: AppKey;
@@ -15,6 +15,7 @@ export const APPS: AppDef[] = [
   { key: 'kontakte', label: 'Kontakte', abbr: 'KO', href: '/kontakte' },
   { key: 'katalog', label: 'Katalog', abbr: 'KA', href: '/katalog' },
   { key: 'verkauf', label: 'Verkauf', abbr: 'VK', href: '/verkauf' },
+  { key: 'verfuegbarkeit', label: 'Verfügbarkeit', abbr: 'VF', href: '/verfuegbarkeit' },
   { key: 'hilfe', label: 'Hilfe', abbr: 'HI', href: '/hilfe' },
 ];
 

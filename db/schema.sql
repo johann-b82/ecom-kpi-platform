@@ -128,6 +128,13 @@ INSERT INTO group_app_access (group_id, app, permission)
   SELECT group_id, 'verkauf', permission FROM group_app_access WHERE app = 'katalog'
   ON CONFLICT (group_id, app) DO NOTHING;
 
+-- Phase 2 / B5: dieselbe „jeder sieht alles"-Regel für Verfügbarkeit — jede Gruppe
+-- mit Katalog-Zugriff erhält denselben Zugriff auf Verfügbarkeit. Deckt die realen
+-- Gruppen 'Administratoren'/'Nutzer' ab (die nicht über 'Alle Nutzer' laufen).
+INSERT INTO group_app_access (group_id, app, permission)
+  SELECT group_id, 'verfuegbarkeit', permission FROM group_app_access WHERE app = 'katalog'
+  ON CONFLICT (group_id, app) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS bpm_products (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, cat TEXT, series TEXT, status TEXT,
   year INT, parts INT, uvp DOUBLE PRECISION, price DOUBLE PRECISION, cost DOUBLE PRECISION,

@@ -23,7 +23,7 @@ describe('getUserAccess', () => {
      .mockResolvedValueOnce({ rows: [{ n: 0 }] } as never);
     const a = await getUserAccess('u1');
     expect(a.isAdmin).toBe(true);
-    expect(a.apps).toEqual({ brickpm: 'edit', kontakte: 'edit', katalog: 'edit', verkauf: 'edit', hilfe: 'edit' });
+    expect(a.apps).toEqual({ brickpm: 'edit', kontakte: 'edit', katalog: 'edit', verkauf: 'edit', verfuegbarkeit: 'edit', hilfe: 'edit' });
   });
 
   it('aggregates the strongest right per app and admin from any admin group', async () => {
