@@ -8,6 +8,7 @@ export async function createOrderAction(input: SalesOrderInput): Promise<SalesOr
   await requireAppAccess('verkauf', 'edit');
   const o = await createOrder(input);
   revalidatePath('/verkauf');
+  revalidatePath('/verkauf/belege');
   return o;
 }
 
@@ -15,7 +16,8 @@ export async function transitionOrderStatusAction(id: string, target: OrderStatu
   await requireAppAccess('verkauf', 'edit');
   const o = await transitionOrderStatus(id, target);
   revalidatePath('/verkauf');
-  revalidatePath(`/verkauf/${id}`);
+  revalidatePath('/verkauf/belege');
+  revalidatePath(`/verkauf/belege/${id}`);
   return o;
 }
 
@@ -23,6 +25,7 @@ export async function createReturnAction(originalOrderId: string): Promise<Sales
   await requireAppAccess('verkauf', 'edit');
   const credit = await createReturn(originalOrderId);
   revalidatePath('/verkauf');
-  revalidatePath(`/verkauf/${originalOrderId}`);
+  revalidatePath('/verkauf/belege');
+  revalidatePath(`/verkauf/belege/${originalOrderId}`);
   return credit;
 }

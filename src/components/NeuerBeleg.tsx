@@ -38,7 +38,7 @@ export function NeuerBeleg({ customers, variants, prices }:
         contactId: customer.id, channel: 'manuell', priceListId: customer.priceListId,
         lines: lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity, unitPrice: l.unitPrice })),
       });
-      router.push(`/verkauf/${order.id}`);
+      router.push(`/verkauf/belege/${order.id}`);
     });
   };
 

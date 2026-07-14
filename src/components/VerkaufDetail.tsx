@@ -25,7 +25,7 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
     const res = await primary.run(order.id);
     // Retoure erzeugt einen neuen Beleg → dorthin springen; sonst aktuellen aktualisieren.
     if (order.status === 'bezahlt' && res && typeof res === 'object' && 'id' in res) {
-      router.push(`/verkauf/${(res as { id: string }).id}`);
+      router.push(`/verkauf/belege/${(res as { id: string }).id}`);
     } else router.refresh();
   });
   const cancel = () => start(async () => { await transitionOrderStatusAction(order.id, 'storniert'); router.refresh(); });

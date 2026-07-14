@@ -9,9 +9,10 @@ const CH_LABEL: Record<string, string> = {
   '': 'Alle', shop: 'Shop', b2b_portal: 'B2B', telefon: 'Telefon', marktplatz: 'Marktplatz', manuell: 'Manuell',
 };
 
-export function VerkaufList({ rows }: { rows: OrderRow[] }) {
+export function VerkaufList({ rows, initialChannel = '' }:
+  { rows: OrderRow[]; initialChannel?: OrderChannel | '' }) {
   const [q, setQ] = useState('');
-  const [ch, setCh] = useState<OrderChannel | ''>('');
+  const [ch, setCh] = useState<OrderChannel | ''>(initialChannel);
 
   const filtered = rows.filter((r) => {
     if (ch && r.channel !== ch) return false;
@@ -40,7 +41,7 @@ export function VerkaufList({ rows }: { rows: OrderRow[] }) {
         <tbody>
           {filtered.map((r) => (
             <tr key={r.id} className="border-t border-neutral-200 dark:border-neutral-800">
-              <td className="py-2"><Link href={`/verkauf/${r.id}`} className="text-brand hover:text-brand-dark">{r.number}</Link></td>
+              <td className="py-2"><Link href={`/verkauf/belege/${r.id}`} className="text-brand hover:text-brand-dark">{r.number}</Link></td>
               <td>{r.contactName}</td>
               <td>{CH_LABEL[r.channel]}</td>
               <td>{r.status}</td>

@@ -22,6 +22,7 @@ describe('verkauf actions', () => {
     expect(requireAppAccess).toHaveBeenCalledWith('verkauf', 'edit');
     expect(createOrder).toHaveBeenCalledWith(input);
     expect(revalidatePath).toHaveBeenCalledWith('/verkauf');
+    expect(revalidatePath).toHaveBeenCalledWith('/verkauf/belege');
   });
 
   it('transitionOrderStatusAction revalidiert Liste und Detail', async () => {
@@ -29,7 +30,8 @@ describe('verkauf actions', () => {
     expect(requireAppAccess).toHaveBeenCalledWith('verkauf', 'edit');
     expect(transitionOrderStatus).toHaveBeenCalledWith('o1', 'versendet');
     expect(revalidatePath).toHaveBeenCalledWith('/verkauf');
-    expect(revalidatePath).toHaveBeenCalledWith('/verkauf/o1');
+    expect(revalidatePath).toHaveBeenCalledWith('/verkauf/belege');
+    expect(revalidatePath).toHaveBeenCalledWith('/verkauf/belege/o1');
   });
 
   it('createReturnAction gated auf verkauf/edit, delegiert, revalidiert', async () => {
@@ -37,6 +39,7 @@ describe('verkauf actions', () => {
     expect(requireAppAccess).toHaveBeenCalledWith('verkauf', 'edit');
     expect(createReturn).toHaveBeenCalledWith('o1');
     expect(revalidatePath).toHaveBeenCalledWith('/verkauf');
-    expect(revalidatePath).toHaveBeenCalledWith('/verkauf/o1');
+    expect(revalidatePath).toHaveBeenCalledWith('/verkauf/belege');
+    expect(revalidatePath).toHaveBeenCalledWith('/verkauf/belege/o1');
   });
 });
