@@ -75,9 +75,14 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
               </tr>
             ))}
           </tbody>
-          <tfoot><tr className="border-t border-neutral-300 font-medium dark:border-neutral-700">
-            <td className="py-2" colSpan={4}>Gesamt</td><td className="text-right">{total.toFixed(2)} €</td>
-          </tr></tfoot>
+          <tfoot>
+            <tr className="border-t border-neutral-300 font-medium dark:border-neutral-700">
+              <td className="py-2" colSpan={4}>Gesamt</td><td className="text-right">{total.toFixed(2)} €</td>
+            </tr>
+            <tr>
+              <td className="anno pt-1 text-neutral-500" colSpan={5}>Beträge netto, ohne MwSt</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>

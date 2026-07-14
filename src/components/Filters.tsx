@@ -8,7 +8,8 @@ const OPTIONS = [
   { days: 90, label: '90 Tage' },
 ];
 
-export function Filters({ range }: { range?: { start: string; end: string } }) {
+export function Filters({ range, basePath = '/dashboard' }:
+  { range?: { start: string; end: string }; basePath?: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const active = Number(params.get('days')) || 30;
@@ -18,7 +19,7 @@ export function Filters({ range }: { range?: { start: string; end: string } }) {
         {OPTIONS.map((o) => (
           <button
             key={o.days}
-            onClick={() => router.push(`/dashboard?days=${o.days}`)}
+            onClick={() => router.push(`${basePath}?days=${o.days}`)}
             className={`rounded px-3 py-1 text-sm ${active === o.days ? 'bg-brand text-white' : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300'}`}
           >
             {o.label}
