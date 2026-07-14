@@ -1,8 +1,10 @@
 import { pool } from '@/lib/db';
+import type { PoolClient } from 'pg';
+import { nextPurchaseOrderNumber } from './number';
 import type {
   StockRow, VariantStockDetail, WarehouseStock, StockAdjustmentRow, WarehouseOption,
   PurchaseOrderRow, PurchaseOrderDetail, PurchaseOrderLine, PurchaseOrderStatus,
-  ReorderSuggestion, SupplierOption,
+  ReorderSuggestion, SupplierOption, AdjustmentReason, PurchaseOrderInput, GoodsReceipt,
 } from './types';
 
 export async function listStock(): Promise<StockRow[]> {
@@ -122,4 +124,115 @@ export async function listReorderSuggestions(): Promise<ReorderSuggestion[]> {
     available: x.available, defaultSupplierId: x.default_supplier_id, defaultSupplierName: x.default_supplier_name,
     suggestedQty: Math.max(1, x.reorder_point * 2 - x.available),
   }));
+}
+
+async function defaultWarehouseId(c: PoolClient): Promise<string> {
+  const r = await c.query<{ id: string }>('SELECT id FROM warehouses WHERE is_default LIMIT 1');
+  if (r.rows.length === 0) throw new Error('Kein Standardlager (is_default) definiert.');
+  return r.rows[0].id;
+}
+
+export async function adjustStock(
+  variantId: string, warehouseId: string, delta: number,
+  reason: AdjustmentReason, note: string | null = null,
+): Promise<void> {
+  const c = await pool.connect();
+  try {
+    await c.query('BEGIN');
+    await c.query(
+      `INSERT INTO stock_levels (variant_id, warehouse_id, quantity_on_hand)
+         VALUES ($1,$2,$3)
+       ON CONFLICT (variant_id, warehouse_id)
+         DO UPDATE SET quantity_on_hand = stock_levels.quantity_on_hand + $3`,
+      [variantId, warehouseId, delta]);
+    const chk = await c.query<{ quantity_on_hand: number }>(
+      `SELECT quantity_on_hand FROM stock_levels WHERE variant_id = $1 AND warehouse_id = $2`,
+      [variantId, warehouseId]);
+    if (chk.rows[0].quantity_on_hand < 0) throw new Error('Bestand darf nicht negativ werden.');
+    await c.query(
+      `INSERT INTO stock_adjustments (variant_id, warehouse_id, delta, reason, note)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [variantId, warehouseId, delta, reason, note]);
+    await c.query('COMMIT');
+  } catch (e) { await c.query('ROLLBACK'); throw e; } finally { c.release(); }
+}
+
+export async function createDraftPurchaseOrder(input: PurchaseOrderInput): Promise<string> {
+  const c = await pool.connect();
+  let poId: string;
+  try {
+    await c.query('BEGIN');
+    const existing = await c.query<{ number: string }>('SELECT number FROM purchase_orders');
+    const number = nextPurchaseOrderNumber(existing.rows.map((x) => x.number), new Date().getFullYear());
+    const ins = await c.query(
+      `INSERT INTO purchase_orders (number, supplier_id, status, expected_at)
+       VALUES ($1,$2,'entwurf',$3) RETURNING id`,
+      [number, input.supplierId, input.expectedAt ?? null]);
+    poId = ins.rows[0].id as string;
+    for (const l of input.lines) {
+      await c.query(
+        `INSERT INTO purchase_order_lines (purchase_order_id, variant_id, quantity_ordered, unit_cost)
+         VALUES ($1,$2,$3,$4)`,
+        [poId, l.variantId, l.quantityOrdered, l.unitCost ?? null]);
+    }
+    await c.query('COMMIT');
+  } catch (e) { await c.query('ROLLBACK'); throw e; } finally { c.release(); }
+  return poId;
+}
+
+export async function markPurchaseOrderOrdered(poId: string): Promise<void> {
+  const r = await pool.query(
+    `UPDATE purchase_orders SET status = 'bestellt' WHERE id = $1 AND status = 'entwurf'`, [poId]);
+  if (r.rowCount === 0) throw new Error('Nur Entwürfe können bestellt werden.');
+}
+
+export async function cancelPurchaseOrder(poId: string): Promise<void> {
+  const r = await pool.query(
+    `UPDATE purchase_orders SET status = 'storniert' WHERE id = $1 AND status IN ('entwurf','bestellt')`, [poId]);
+  if (r.rowCount === 0) throw new Error('Nur Entwürfe oder bestellte Bestellungen können storniert werden.');
+}
+
+// Wareneingang: bucht ins Standardlager (§0.4). Pro Position ein eigener VALUES-Upsert
+// → der Aggregations-Trap greift hier nicht (keine INSERT..SELECT-Mehrfachtreffer).
+export async function receiveGoods(poId: string, receipts: GoodsReceipt[]): Promise<void> {
+  const c = await pool.connect();
+  try {
+    await c.query('BEGIN');
+    const po = await c.query<{ status: string }>(
+      `SELECT status FROM purchase_orders WHERE id = $1 FOR UPDATE`, [poId]);
+    if (po.rows.length === 0) throw new Error('Bestellung nicht gefunden.');
+    if (!['bestellt', 'teilweise_eingegangen'].includes(po.rows[0].status)) {
+      throw new Error('Nur bestellte Bestellungen können eingebucht werden.');
+    }
+    const wh = await defaultWarehouseId(c);
+    for (const rc of receipts) {
+      if (rc.quantity <= 0) continue;
+      const line = await c.query<{ variant_id: string; quantity_ordered: number; quantity_received: number }>(
+        `SELECT variant_id, quantity_ordered, quantity_received
+           FROM purchase_order_lines WHERE id = $1 AND purchase_order_id = $2 FOR UPDATE`,
+        [rc.lineId, poId]);
+      if (line.rows.length === 0) throw new Error('Position gehört nicht zur Bestellung.');
+      const { variant_id, quantity_ordered, quantity_received } = line.rows[0];
+      if (quantity_received + rc.quantity > quantity_ordered) {
+        throw new Error('Wareneingang übersteigt die bestellte Menge.');
+      }
+      await c.query(
+        `UPDATE purchase_order_lines SET quantity_received = quantity_received + $2 WHERE id = $1`,
+        [rc.lineId, rc.quantity]);
+      await c.query(
+        `INSERT INTO stock_levels (variant_id, warehouse_id, quantity_on_hand)
+           VALUES ($1,$2,$3)
+         ON CONFLICT (variant_id, warehouse_id)
+           DO UPDATE SET quantity_on_hand = stock_levels.quantity_on_hand + $3`,
+        [variant_id, wh, rc.quantity]);
+    }
+    const agg = await c.query<{ ordered: number; received: number }>(
+      `SELECT COALESCE(SUM(quantity_ordered),0)::int AS ordered,
+              COALESCE(SUM(quantity_received),0)::int AS received
+         FROM purchase_order_lines WHERE purchase_order_id = $1`, [poId]);
+    const done = agg.rows[0].received >= agg.rows[0].ordered;
+    await c.query(`UPDATE purchase_orders SET status = $2 WHERE id = $1`,
+      [poId, done ? 'abgeschlossen' : 'teilweise_eingegangen']);
+    await c.query('COMMIT');
+  } catch (e) { await c.query('ROLLBACK'); throw e; } finally { c.release(); }
 }
