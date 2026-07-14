@@ -22,7 +22,7 @@ export function WareneingangDetail({ po }: { po: PurchaseOrderDetail }) {
 
   const receive = () => {
     const receipts: GoodsReceipt[] = po.lines
-      .map((l) => ({ lineId: l.id, quantity: parseInt(qty[l.id] ?? '', 10) }))
+      .map((l) => ({ lineId: l.id, quantity: parseInt(qty[l.id] ?? String(l.quantityOrdered - l.quantityReceived), 10) }))
       .filter((r) => Number.isFinite(r.quantity) && r.quantity > 0);
     if (receipts.length === 0) { setError('Mindestens eine Eingangsmenge angeben.'); return; }
     run(async () => { await receiveGoodsAction(po.id, receipts); setQty({}); });
@@ -71,7 +71,7 @@ export function WareneingangDetail({ po }: { po: PurchaseOrderDetail }) {
                   {canReceive && (
                     <td className="text-right">
                       {open > 0
-                        ? <input type="number" min={0} max={open} value={qty[l.id] ?? ''}
+                        ? <input type="number" min={0} max={open} value={qty[l.id] ?? String(open)}
                             onChange={(e) => setQty({ ...qty, [l.id]: e.target.value })}
                             placeholder={String(open)} className={`${input} w-20 text-right`} />
                         : <span className="text-neutral-500">—</span>}
