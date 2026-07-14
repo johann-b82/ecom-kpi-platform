@@ -30,7 +30,7 @@ export function BestandListe({ rows, belowCount }: { rows: StockRow[]; belowCoun
               <td>{r.productName}</td>
               <td className="text-right">
                 {r.belowReorder
-                  ? <span className="rounded bg-accent/15 px-2 py-0.5 font-medium text-accent">{r.available}</span>
+                  ? <span className="rounded bg-danger/15 px-2 py-0.5 font-medium text-danger">{r.available}</span>
                   : r.available}
               </td>
               <td className="text-right text-neutral-500">{r.reserved}</td>
