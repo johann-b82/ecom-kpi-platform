@@ -161,6 +161,37 @@ export const HELP_PAGES: DocPage[] = [
       },
     ],
   },
+  {
+    slug: 'verfuegbarkeit',
+    title: 'Verfügbarkeit',
+    summary: 'Bestände, Reservierungen, Wareneingang und Meldebestand — die Versorgungsseite jeder Bestellung.',
+    group: 'module',
+    sections: [
+      {
+        heading: 'Was macht das Modul?',
+        blocks: [
+          { type: 'p', text: 'Verfügbarkeit zeigt je Artikel, wie viel verfügbar ist (Bestand minus Reservierungen) über alle Lager. Reservierungen entstehen automatisch aus dem Verkauf (Auftrag) und werden beim Versand aufgelöst — hier werden sie nur sichtbar.' },
+        ],
+      },
+      {
+        heading: 'Wichtige Funktionen',
+        blocks: [
+          { type: 'list', items: [
+            'Bestandsübersicht: eine Zeile je Artikel mit verfügbar, reserviert und Meldebestand — unter dem Meldebestand wird der Artikel markiert.',
+            'Varianten-Detail: Bestand je Lager sowie Bestandskorrektur mit Pflicht-Grund (Inventurdifferenz, Bruch/Schwund, Korrektur Fehlbuchung) und Korrektur-Historie.',
+            'Wareneingang: Bestellungen von Entwurf über Bestellt bis Teilweise/Abgeschlossen; gebuchte Mengen erhöhen den Bestand im Standardlager.',
+            'Meldebestand: alle Artikel unter Meldebestand — „Nachbestellung entwerfen" legt eine Bestellung im Status Entwurf beim (vorbelegten) Lieferanten an.',
+          ] },
+        ],
+      },
+      {
+        heading: 'Der Beschaffungs-Kreislauf',
+        blocks: [
+          { type: 'p', text: 'Meldebestand → Entwurf → Bestellung auslösen → Wareneingang buchen → Bestand steigt → der Artikel fällt aus der Meldebestand-Liste. Wareneingang bucht in das Standardlager; ein Lager pro Wareneingang zu wählen ist bewusst noch nicht vorgesehen.' },
+        ],
+      },
+    ],
+  },
 
   // ── Administration (nur Admin) ────────────────────────────────────
   {
