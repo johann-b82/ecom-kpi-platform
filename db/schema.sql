@@ -121,6 +121,13 @@ INSERT INTO group_app_access (group_id, app, permission)
   WHERE g.name = 'Alle Nutzer'
   ON CONFLICT (group_id, app) DO NOTHING;
 
+-- Phase 2: jede bestehende Gruppe mit Katalog-Zugriff erhält denselben Zugriff auf
+-- Verkauf (Phase-2-Grundsatz „jeder sieht alles"). Deckt eigene Gruppen wie
+-- 'Administratoren'/'Nutzer' ab, die nicht über die 'Alle Nutzer'-Vorbelegung laufen.
+INSERT INTO group_app_access (group_id, app, permission)
+  SELECT group_id, 'verkauf', permission FROM group_app_access WHERE app = 'katalog'
+  ON CONFLICT (group_id, app) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS bpm_products (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, cat TEXT, series TEXT, status TEXT,
   year INT, parts INT, uvp DOUBLE PRECISION, price DOUBLE PRECISION, cost DOUBLE PRECISION,
