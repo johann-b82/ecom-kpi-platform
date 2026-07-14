@@ -28,9 +28,11 @@ describe('verfuegbarkeit actions', () => {
     const id = await createDraftPurchaseOrderAction({ supplierId: 's1', lines: [{ variantId: 'v1', quantityOrdered: 5 }] });
     expect(id).toBe('po-1');
     expect(requireAppAccess).toHaveBeenCalledWith('verfuegbarkeit', 'edit');
+    expect(repo.createDraftPurchaseOrder).toHaveBeenCalledWith({ supplierId: 's1', lines: [{ variantId: 'v1', quantityOrdered: 5 }] });
   });
   it('receiveGoodsAction reicht die receipts durch', async () => {
     await receiveGoodsAction('po1', [{ lineId: 'l1', quantity: 3 }]);
+    expect(requireAppAccess).toHaveBeenCalledWith('verfuegbarkeit', 'edit');
     expect(repo.receiveGoods).toHaveBeenCalledWith('po1', [{ lineId: 'l1', quantity: 3 }]);
   });
   it('cancelPurchaseOrderAction ist gated', async () => {
