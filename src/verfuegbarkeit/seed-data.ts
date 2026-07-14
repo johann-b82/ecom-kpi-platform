@@ -31,3 +31,21 @@ export const STOCK: SeedStock[] = [
 export const ADJUSTMENTS: SeedAdjustment[] = [
   { sku: 'SJ-ROT', warehouseId: WH_HAMBURG, delta: -2, reason: 'bruch_schwund', note: 'Transportschaden Palette 7' },
 ];
+
+export interface SeedPurchaseOrder {
+  id: string; number: string; supplierName: string;
+  status: 'entwurf' | 'bestellt' | 'teilweise_eingegangen' | 'abgeschlossen' | 'storniert';
+  expectedAt: string | null;
+  lines: { id: string; sku: string; quantityOrdered: number; quantityReceived: number; unitCost: number }[];
+}
+
+const PO_ROT = '22222222-0000-4000-8000-000000000001';
+export const PURCHASE_ORDERS: SeedPurchaseOrder[] = [
+  {
+    id: PO_ROT, number: 'B-2026-0001', supplierName: 'Guangzhou ToyCraft Ltd.',
+    status: 'teilweise_eingegangen', expectedAt: '2026-07-28',
+    lines: [
+      { id: '22222222-0000-4000-8000-000000000101', sku: 'SJ-ROT', quantityOrdered: 50, quantityReceived: 20, unitCost: 4.20 },
+    ],
+  },
+];
