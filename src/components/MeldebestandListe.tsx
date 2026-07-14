@@ -64,8 +64,8 @@ export function MeldebestandListe({ suggestions, suppliers }:
                     className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50">Entwurf anlegen</button>
                 </div>
               ) : (
-                <button onClick={() => openForm(s)}
-                  className="rounded border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">Nachbestellung entwerfen</button>
+                <button onClick={() => openForm(s)} disabled={pending}
+                  className="rounded border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 disabled:opacity-50">Nachbestellung entwerfen</button>
               )}
               {openId === s.variantId && error && <p className="mt-1 text-sm text-danger">{error}</p>}
             </td>
