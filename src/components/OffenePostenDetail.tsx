@@ -64,6 +64,12 @@ export function OffenePostenDetail({ item }: { item: OpenItemDetail }) {
         </p>
       )}
 
+      {item.purchaseOrderId && (
+        <p className="text-sm text-neutral-600 dark:text-neutral-300">
+          Bestellung: <Link href={`/verfuegbarkeit/wareneingang/${item.purchaseOrderId}`} className="text-brand hover:text-brand-dark">{item.purchaseOrderNumber ?? '—'}</Link>
+        </p>
+      )}
+
       {!settled && (
         <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
           <p className="anno mb-2 text-neutral-500">Zahlung erfassen</p>

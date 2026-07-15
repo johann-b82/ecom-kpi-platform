@@ -4,6 +4,7 @@ import { transitionOrderStatus } from '@/verkauf/repository';
 import type {
   OpenItemRow, OpenItemDetail, PaymentRow, UnassignedPayment,
   OpenItemOption, ContactOption, OpenItemFilter, PaymentInput, KreditorInvoiceInput,
+  PurchaseOrderOption,
 } from './types';
 
 export async function listOpenItems(filter: OpenItemFilter = {}): Promise<OpenItemRow[]> {
@@ -33,12 +34,14 @@ export async function getOpenItem(id: string): Promise<OpenItemDetail | null> {
   const r = await pool.query(
     `SELECT oi.id, oi.direction, oi.contact_id, c.name AS contact_name, oi.reference,
             oi.order_id, so.number AS order_number, so.status AS order_status,
-            oi.purchase_order_id, oi.amount::text AS amount, oi.due_date::text AS due_date, oi.status,
+            oi.purchase_order_id, po.number AS purchase_order_number,
+            oi.amount::text AS amount, oi.due_date::text AS due_date, oi.status,
             COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.open_item_id = oi.id), 0)::text AS paid,
             (oi.status <> 'bezahlt' AND oi.due_date < CURRENT_DATE) AS overdue
        FROM open_items oi
        JOIN contacts c ON c.id = oi.contact_id
        LEFT JOIN sales_orders so ON so.id = oi.order_id
+       LEFT JOIN purchase_orders po ON po.id = oi.purchase_order_id
       WHERE oi.id = $1`, [id]);
   if (r.rows.length === 0) return null;
   const x = r.rows[0];
@@ -49,7 +52,8 @@ export async function getOpenItem(id: string): Promise<OpenItemDetail | null> {
   return {
     id: x.id, direction: x.direction, contactId: x.contact_id, contactName: x.contact_name,
     reference: x.reference, orderId: x.order_id, orderNumber: x.order_number, orderStatus: x.order_status,
-    purchaseOrderId: x.purchase_order_id, amount, dueDate: x.due_date, status: x.status,
+    purchaseOrderId: x.purchase_order_id, purchaseOrderNumber: x.purchase_order_number,
+    amount, dueDate: x.due_date, status: x.status,
     paid, remaining: amount - paid, overdue: x.overdue,
     payments: pays.rows.map((p): PaymentRow => ({
       id: p.id, amount: Number(p.amount), method: p.method, reference: p.external_reference, paidAt: p.paid_at,
@@ -82,6 +86,14 @@ export async function listOpenItemOptions(contactId?: string): Promise<OpenItemO
 export async function listContactOptions(): Promise<ContactOption[]> {
   const r = await pool.query(`SELECT id, name FROM contacts ORDER BY name`);
   return r.rows.map((x) => ({ id: x.id, name: x.name }));
+}
+
+// Bestellungen als Auswahloptionen für die Verknüpfung einer Eingangsrechnung
+// (im Formular clientseitig auf den gewählten Lieferanten gefiltert).
+export async function listPurchaseOrderOptions(): Promise<PurchaseOrderOption[]> {
+  const r = await pool.query(
+    `SELECT id, number, supplier_id, status FROM purchase_orders ORDER BY number DESC`);
+  return r.rows.map((x) => ({ id: x.id, number: x.number, supplierId: x.supplier_id, status: x.status }));
 }
 
 // Interner Settle: berechnet den OP-Status nach einer (Zu-)Buchung neu und treibt

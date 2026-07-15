@@ -13,7 +13,8 @@ export interface PaymentRow {
 export interface OpenItemDetail {
   id: string; direction: OpenItemDirection; contactId: string; contactName: string;
   reference: string | null; orderId: string | null; orderNumber: string | null; orderStatus: string | null;
-  purchaseOrderId: string | null; amount: number; dueDate: string; status: OpenItemStatus;
+  purchaseOrderId: string | null; purchaseOrderNumber: string | null;
+  amount: number; dueDate: string; status: OpenItemStatus;
   paid: number; remaining: number; overdue: boolean; payments: PaymentRow[];
 }
 export interface PaymentInput {
@@ -24,6 +25,8 @@ export interface UnassignedPayment {
 }
 export interface OpenItemOption { id: string; label: string; contactId: string; remaining: number }
 export interface ContactOption { id: string; name: string }
+// Bestellung (purchase_order) als Auswahloption für die Verknüpfung einer Eingangsrechnung.
+export interface PurchaseOrderOption { id: string; number: string; supplierId: string; status: string }
 export interface KreditorInvoiceInput {
   supplierId: string; amount: number; dueDate: string; reference: string; purchaseOrderId?: string | null;
 }

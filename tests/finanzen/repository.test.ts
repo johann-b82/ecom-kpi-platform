@@ -6,6 +6,7 @@ import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, transitionOrderStatus, getOrder } from '@/verkauf/repository';
 import {
   listOpenItems, getOpenItem, listContactOptions, listOpenItemOptions, listUnassignedPayments,
+  listPurchaseOrderOptions,
   recordPayment, assignPayment, recordUnassignedPayment, createKreditorInvoice, exportBookings,
 } from '@/finanzen/repository';
 
@@ -71,6 +72,14 @@ describe('finanzen repository — read', () => {
     const opts = await listContactOptions();
     expect(opts.length).toBeGreaterThan(0);
     expect(opts.find((o) => o.id === MUELLER)).toBeDefined();
+  });
+
+  it('listPurchaseOrderOptions liefert Bestellungen mit supplierId und B-Nummer', async () => {
+    const opts = await listPurchaseOrderOptions();
+    expect(opts.length).toBeGreaterThan(0);
+    const po = opts[0];
+    expect(po.number).toMatch(/^B-\d{4}-\d{4}$/);
+    expect(po.supplierId).toBeTruthy();
   });
 
   it('listOpenItemOptions liefert offene Posten mit remaining, Label und ohne bezahlte Posten', async () => {
@@ -140,6 +149,19 @@ describe('finanzen repository — write', () => {
     await assignPayment(queued.id, openItemId);
     expect((await getOpenItem(openItemId))!.status).toBe('bezahlt');
     expect((await getOrder(orderId))!.status).toBe('bezahlt');
+  });
+
+  it('createKreditorInvoice mit purchaseOrderId → getOpenItem liefert purchaseOrderNumber', async () => {
+    const po = (await listPurchaseOrderOptions())[0];
+    expect(po).toBeDefined();
+    const id = await createKreditorInvoice({
+      supplierId: po.supplierId, amount: 200, dueDate: '2026-09-30', reference: 'TEST-kred-po',
+      purchaseOrderId: po.id,
+    });
+    kreditorItemIds.push(id);
+    const detail = await getOpenItem(id);
+    expect(detail!.purchaseOrderId).toBe(po.id);
+    expect(detail!.purchaseOrderNumber).toBe(po.number);
   });
 });
 
