@@ -20,7 +20,7 @@ export function ConnectionStubs({
             <div className="flex items-center justify-between">
               <p className="font-medium text-neutral-900 dark:text-neutral-100">{c.label}</p>
               <span className={`rounded-full px-2 py-0.5 text-xs ${connected
-                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+                ? 'bg-accent/15 text-accent'
                 : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800'}`}>{c.status}</span>
             </div>
             <p className="anno mt-1 text-neutral-500">{c.provider}</p>

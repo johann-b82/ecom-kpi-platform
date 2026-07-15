@@ -1,6 +1,8 @@
 import { listStatus, getCredential } from '@/lib/credentials';
 import { CONNECTOR_FIELDS, CONNECTORS } from '@/lib/connector-fields';
 import { CredentialsForm, type FieldView } from '@/components/CredentialsForm';
+import { listAllConnections } from '@/lib/integrations';
+import { ConnectionsAdmin } from '@/components/ConnectionsAdmin';
 import { BrandingForm } from '@/components/BrandingForm';
 import { getBranding, getSyncInterval } from '@/lib/settings';
 import { listSyncState } from '@/lib/sync/runner';
@@ -28,6 +30,7 @@ export default async function SetupPage() {
   const status = await listStatus();
   const oauth = await listOAuthStatus();
   const [syncInterval, syncState] = await Promise.all([getSyncInterval(), listSyncState()]);
+  const connections = await listAllConnections();
   const fields: FieldView[] = [];
   for (const connector of CONNECTORS) {
     for (const f of CONNECTOR_FIELDS[connector]) {
@@ -53,6 +56,7 @@ export default async function SetupPage() {
           </p>
           <CredentialsForm fields={fields} oauth={oauth} />
         </div>
+        <ConnectionsAdmin connections={connections} />
         <SyncForm interval={syncInterval} state={syncState} />
       </div>
     </SetupShell>
