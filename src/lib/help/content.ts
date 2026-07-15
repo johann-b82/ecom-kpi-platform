@@ -192,6 +192,38 @@ export const HELP_PAGES: DocPage[] = [
       },
     ],
   },
+  {
+    slug: 'finanzen',
+    title: 'Finanzen',
+    summary: 'Offene Posten, Zahlungsabgleich, Zuordnen-Warteschlange und Buchungsexport.',
+    group: 'module',
+    sections: [
+      {
+        heading: 'Was macht das Modul?',
+        blocks: [
+          { type: 'p', text: 'Finanzen zeigt die offenen Posten beider Richtungen: Debitoren (was Kunden schulden, aus Verkaufsrechnungen) und Kreditoren (was wir Lieferanten schulden). Überfälligkeit wird aus dem Fälligkeitsdatum abgeleitet.' },
+        ],
+      },
+      {
+        heading: 'Wichtige Funktionen',
+        blocks: [
+          { type: 'list', items: [
+            'Zahlung erfassen: gleicht eine Zahlung einen Debitor-Posten voll aus, wird der zugehörige Verkaufsbeleg automatisch auf „bezahlt" gesetzt (bezahlt-Perle im Faden).',
+            'Teilzahlungen setzen den Posten auf „teilweise bezahlt"; der Rest bleibt offen.',
+            'Zuordnen-Warteschlange: nicht zugeordnete Zahlungen (z. B. ohne bekannte Rechnung) erfassen und später einem offenen Posten zuordnen.',
+            'Lieferantenrechnung erfassen: legt einen Kreditor-Posten an (optional mit Bestellbezug).',
+            'Buchungsexport: CSV aller Posten (Semikolon, Komma-Dezimal, UTF-8) für die weitere Verarbeitung.',
+          ] },
+        ],
+      },
+      {
+        heading: 'Beträge & Grenzen',
+        blocks: [
+          { type: 'p', text: 'Alle Beträge sind netto (ohne MwSt) — das Modell führt keine Steuerlogik. Der Export ist ein pragmatischer Buchungs-CSV, kein DATEV-EXTF-konformer Stapel.' },
+        ],
+      },
+    ],
+  },
 
   // ── Administration (nur Admin) ────────────────────────────────────
   {
