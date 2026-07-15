@@ -342,8 +342,9 @@ export const HELP_PAGES: DocPage[] = [
         heading: 'Bedienung',
         blocks: [
           { type: 'list', items: [
-            'Kontakte/Katalog: Einstellungen › Verbindungen.',
-            'Plattform-Zugangsdaten & Sync: Einstellungen (/setup).',
+            'App-Verbindungen (integration_connections): zentral in Einstellungen (/setup) › App-Verbindungen — nur für Administratoren, alle Apps an einer Stelle. „Verbinden (Demo)" setzt den Status (Stub, kein echter API-Aufruf).',
+            'Plattform-Zugangsdaten & Sync: Einstellungen (/setup) › Verbindungen.',
+            'Status-Vokabular: „nicht verbunden" bzw. „verbunden (Demo)".',
           ] },
         ],
       },
