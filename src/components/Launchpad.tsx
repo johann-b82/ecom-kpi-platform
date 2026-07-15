@@ -1,11 +1,13 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import type { AppDef } from '@/lib/apps';
 
-export function Launchpad({ apps, greeting }: { apps: AppDef[]; greeting?: string }) {
+export function Launchpad({ apps, greeting, overview }: { apps: AppDef[]; greeting?: string; overview?: ReactNode }) {
   return (
     <div className="mx-auto max-w-6xl p-6">
       {greeting && <h1 className="mb-1 text-3xl font-bold text-neutral-900 dark:text-neutral-100">{greeting}</h1>}
-      <p className="anno mb-6">Apps — tippen zum Öffnen</p>
+      {overview}
+      <p className="anno mb-6 mt-6">Apps — tippen zum Öffnen</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         {apps.map((a) => (
           <Link
