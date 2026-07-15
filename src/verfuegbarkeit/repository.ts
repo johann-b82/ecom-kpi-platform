@@ -195,6 +195,9 @@ export async function cancelPurchaseOrder(poId: string): Promise<void> {
 // Wareneingang: bucht ins Standardlager (§0.4). Pro Position ein eigener VALUES-Upsert
 // → der Aggregations-Trap greift hier nicht (keine INSERT..SELECT-Mehrfachtreffer).
 export async function receiveGoods(poId: string, receipts: GoodsReceipt[]): Promise<void> {
+  // Kein Eingang (leer / nur 0-Mengen) → No-Op, damit der PO-Status nicht ohne
+  // tatsächlichen Wareneingang auf teilweise_eingegangen kippt.
+  if (!receipts.some((r) => r.quantity > 0)) return;
   const c = await pool.connect();
   try {
     await c.query('BEGIN');

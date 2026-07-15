@@ -13,6 +13,7 @@ export async function adjustStockAction(
   await adjustStock(variantId, warehouseId, delta, reason, note ?? null);
   revalidatePath('/verfuegbarkeit');
   revalidatePath(`/verfuegbarkeit/${variantId}`);
+  revalidatePath('/verfuegbarkeit/meldebestand'); // Korrektur kann Meldebestand-Schwelle überschreiten
 }
 
 export async function createDraftPurchaseOrderAction(input: PurchaseOrderInput): Promise<string> {
