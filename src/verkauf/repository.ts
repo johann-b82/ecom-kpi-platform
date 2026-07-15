@@ -190,6 +190,14 @@ export async function transitionOrderStatus(
         await createDebitorOpenItem(c, orderId);
         break;
       case 'bezahlt':
+        // Lock-Reihenfolge im own-tx-Modus: sales_orders (SELECT … FOR UPDATE oben)
+        // ZUERST, open_items DANACH. Finanzen (recordPayment/assignPayment) lockt
+        // umgekehrt (open_items FOR UPDATE, dann via Client-Modus sales_orders).
+        // Heute unkritisch — 'bezahlt' ist zur Laufzeit nur über Finanzen (Client-Modus,
+        // gemeinsame Transaktion) erreichbar, der own-tx-Pfad nur im Seed. ACHTUNG bei
+        // einer künftigen „auf bezahlt setzen"-Aktion AUSSERHALB Finanzen: dort open_items
+        // vor sales_orders locken (oder transitionOrderStatus im Client-Modus nutzen),
+        // sonst Deadlock-Gefahr durch inverse Lock-Reihenfolge.
         await writeEvent(c, orderId, 'bezahlt', 'finanzen');
         await c.query(`UPDATE open_items SET status = 'bezahlt' WHERE order_id = $1 AND direction = 'debitor'`, [orderId]);
         break;
