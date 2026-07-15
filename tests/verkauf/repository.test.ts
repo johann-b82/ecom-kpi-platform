@@ -7,7 +7,7 @@ import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, getOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
 import {
   listOrderRows, getOrderView, sellableVariants, priceForVariant, availableStock,
-  salesTotals, channelSummary, statusFunnel,
+  salesTotals, channelSummary, statusFunnel, countOpenQuotes,
 } from '@/verkauf/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001'; // Spielwaren Müller, K-0001
@@ -347,5 +347,20 @@ describe('B4 aggregates', () => {
     expect(shopRows.every((r) => r.channel === 'shop')).toBe(true);
     const all = await listOrderRows();
     expect(all.length).toBeGreaterThanOrEqual(shopRows.length);
+  });
+});
+
+describe('countOpenQuotes', () => {
+  it('zählt nur angebot-Belege, nicht überführte', async () => {
+    const before = await countOpenQuotes();
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'b2b_portal', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 1, unitPrice: 11.9 }],
+    });
+    orderIds.push(o.id);
+    expect(o.status).toBe('angebot');
+    expect(await countOpenQuotes()).toBe(before + 1);
+    await transitionOrderStatus(o.id, 'auftrag');
+    expect(await countOpenQuotes()).toBe(before); // nicht mehr angebot
   });
 });

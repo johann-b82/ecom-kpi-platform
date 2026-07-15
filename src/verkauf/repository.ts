@@ -406,3 +406,9 @@ export async function defaultPrices(): Promise<PriceEntry[]> {
     variantId: x.variant_id, priceListId: x.price_list_id, amount: Number(x.amount),
   }));
 }
+
+export async function countOpenQuotes(): Promise<number> {
+  const r = await pool.query<{ n: number }>(
+    `SELECT COUNT(*)::int AS n FROM sales_orders WHERE status = 'angebot'`);
+  return r.rows[0].n;
+}
