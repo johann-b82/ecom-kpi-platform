@@ -17,7 +17,7 @@ export default async function VerkaufDashboardPage({ searchParams }: { searchPar
   return (
     <div className="mx-auto max-w-7xl">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-bold tracking-tight">Verkauf · Dashboard</h2>
+        <h2 className="text-xl font-bold tracking-tight">Verkauf · E-Commerce</h2>
         <Filters range={range} basePath="/verkauf/dashboard" />
       </header>
       <div className="flex gap-4">
