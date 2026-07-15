@@ -133,6 +133,35 @@ describe('verkauf repository — transitionOrderStatus', () => {
   });
 });
 
+describe('transitionOrderStatus — optional client', () => {
+  it('läuft in der Aufrufer-Transaktion: kein eigenes Commit, Rollback macht alles rückgängig', async () => {
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 1, unitPrice: 11.9 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'versendet');
+    await transitionOrderStatus(o.id, 'rechnung_gestellt');
+
+    const c = await pool.connect();
+    try {
+      await c.query('BEGIN');
+      await transitionOrderStatus(o.id, 'bezahlt', c); // im Aufrufer-Client
+      // Innerhalb derselben Transaktion sichtbar:
+      const inTx = await c.query<{ status: string }>('SELECT status FROM sales_orders WHERE id=$1', [o.id]);
+      expect(inTx.rows[0].status).toBe('bezahlt');
+      // Von einer anderen Verbindung (pool) NICHT sichtbar (noch nicht committet):
+      const outside = await pool.query<{ status: string }>('SELECT status FROM sales_orders WHERE id=$1', [o.id]);
+      expect(outside.rows[0].status).toBe('rechnung_gestellt');
+      await c.query('ROLLBACK');
+    } finally { c.release(); }
+
+    // Nach Rollback ist der Beleg unverändert rechnung_gestellt:
+    const after = await getOrder(o.id);
+    expect(after?.status).toBe('rechnung_gestellt');
+  });
+});
+
 describe('verkauf repository — createReturn', () => {
   it('legt einen Gutschriftbeleg an, hängt die retoure-Perle an den Ursprung und bucht Bestand zurück', async () => {
     const vid = await variantId('BK-CLASSIC');

@@ -162,10 +162,13 @@ async function releaseReservation(c: PoolClient, orderId: string): Promise<void>
     [orderId, wh]);
 }
 
-export async function transitionOrderStatus(orderId: string, target: OrderStatus): Promise<SalesOrderDetail> {
-  const c = await pool.connect();
+export async function transitionOrderStatus(
+  orderId: string, target: OrderStatus, client?: PoolClient,
+): Promise<SalesOrderDetail> {
+  const c = client ?? await pool.connect();
+  const ownTx = !client;
   try {
-    await c.query('BEGIN');
+    if (ownTx) await c.query('BEGIN');
     const cur = await c.query<{ status: OrderStatus }>(
       `SELECT status FROM sales_orders WHERE id = $1 FOR UPDATE`, [orderId]);
     if (cur.rows.length === 0) throw new Error(`Beleg ${orderId} nicht gefunden.`);
@@ -195,13 +198,17 @@ export async function transitionOrderStatus(orderId: string, target: OrderStatus
         break;
     }
     await c.query(`UPDATE sales_orders SET status = $2 WHERE id = $1`, [orderId, target]);
-    await c.query('COMMIT');
+    if (ownTx) await c.query('COMMIT');
+    // Hinweis: im Aufrufer-Client-Modus liest getOrder über den pool (separate
+    // Verbindung) den noch nicht committeten Stand nicht — der Rückgabewert ist
+    // nur im self-managed Modus aussagekräftig. Aufrufer im Client-Modus
+    // (recordPayment) ignorieren ihn.
     return (await getOrder(orderId))!;
   } catch (e) {
-    await c.query('ROLLBACK');
+    if (ownTx) await c.query('ROLLBACK');
     throw e;
   } finally {
-    c.release();
+    if (ownTx) c.release();
   }
 }
 
