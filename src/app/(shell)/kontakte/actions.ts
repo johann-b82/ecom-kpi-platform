@@ -2,7 +2,6 @@
 import { revalidatePath } from 'next/cache';
 import { requireAppAccess } from '@/lib/groups';
 import { checkVatId, type ViesResult } from '@/lib/vies';
-import { simulateConnect } from '@/lib/integrations';
 import {
   createContact, updateContact, upsertAddress, deleteAddress, upsertPerson, deletePerson,
 } from '@/kontakte/repository';
@@ -49,8 +48,3 @@ export async function checkVatAction(vatId: string): Promise<ViesResult> {
   return checkVatId(vatId);
 }
 
-export async function simulateConnectAction(id: string): Promise<void> {
-  await requireAppAccess('kontakte', 'edit');
-  await simulateConnect(id);
-  revalidatePath('/kontakte/einstellungen/verbindungen');
-}

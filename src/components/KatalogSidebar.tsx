@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation';
 
 const ITEMS = [
   { slug: '', label: 'Liste' },
-  { slug: 'einstellungen/verbindungen', label: 'Verbindungen' },
 ];
 
 export function KatalogSidebar() {

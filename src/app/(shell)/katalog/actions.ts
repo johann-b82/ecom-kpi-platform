@@ -2,7 +2,6 @@
 import { revalidatePath } from 'next/cache';
 import { requireAppAccess } from '@/lib/groups';
 import { uploadFile } from '@/lib/storage';
-import { simulateConnect } from '@/lib/integrations';
 import {
   createProduct, updateProduct, setLifecycleStatus, setProductImage,
   upsertVariant, deleteVariant, upsertPrice, deletePrice, addDocument, deleteDocument,
@@ -85,8 +84,3 @@ export async function uploadDocumentFileAction(formData: FormData): Promise<{ ur
   return { url };
 }
 
-export async function simulateConnectAction(id: string): Promise<void> {
-  await requireAppAccess('katalog', 'edit');
-  await simulateConnect(id);
-  revalidatePath('/katalog/einstellungen/verbindungen');
-}
