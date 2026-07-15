@@ -11,7 +11,7 @@ vi.mock('@/finanzen/repository', () => ({
 }));
 
 import {
-  recordPaymentAction, assignPaymentAction, createKreditorInvoiceAction,
+  recordPaymentAction, assignPaymentAction, createKreditorInvoiceAction, recordUnassignedPaymentAction,
 } from '@/app/(shell)/finanzen/actions';
 import { requireAppAccess } from '@/lib/groups';
 import * as repo from '@/finanzen/repository';
@@ -28,9 +28,16 @@ describe('finanzen actions', () => {
     const id = await createKreditorInvoiceAction({ supplierId: 's1', amount: 50, dueDate: '2026-09-01', reference: 'R1' });
     expect(id).toBe('oi-1');
     expect(requireAppAccess).toHaveBeenCalledWith('finanzen', 'edit');
+    expect(repo.createKreditorInvoice).toHaveBeenCalledWith({ supplierId: 's1', amount: 50, dueDate: '2026-09-01', reference: 'R1' });
   });
   it('assignPaymentAction reicht die Args durch', async () => {
     await assignPaymentAction('pay-1', 'oi-9');
+    expect(requireAppAccess).toHaveBeenCalledWith('finanzen', 'edit');
     expect(repo.assignPayment).toHaveBeenCalledWith('pay-1', 'oi-9');
+  });
+  it('recordUnassignedPaymentAction gated auf finanzen/edit und ruft Repo mit den Args', async () => {
+    await recordUnassignedPaymentAction({ amount: 25, method: 'ueberweisung' });
+    expect(requireAppAccess).toHaveBeenCalledWith('finanzen', 'edit');
+    expect(repo.recordUnassignedPayment).toHaveBeenCalledWith({ amount: 25, method: 'ueberweisung' });
   });
 });
