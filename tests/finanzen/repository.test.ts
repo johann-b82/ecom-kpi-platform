@@ -6,7 +6,7 @@ import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, transitionOrderStatus, getOrder } from '@/verkauf/repository';
 import {
   listOpenItems, getOpenItem, listContactOptions, listOpenItemOptions, listUnassignedPayments,
-  recordPayment, assignPayment, recordUnassignedPayment, createKreditorInvoice,
+  recordPayment, assignPayment, recordUnassignedPayment, createKreditorInvoice, exportBookings,
 } from '@/finanzen/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001';
@@ -140,5 +140,17 @@ describe('finanzen repository — write', () => {
     await assignPayment(queued.id, openItemId);
     expect((await getOpenItem(openItemId))!.status).toBe('bezahlt');
     expect((await getOrder(orderId))!.status).toBe('bezahlt');
+  });
+});
+
+describe('finanzen repository — export', () => {
+  it('exportBookings liefert CSV mit BOM, Semikolon-Trennung und Komma-Dezimal', async () => {
+    await invoicedOrder(1, 11.9); // sorgt für mind. einen offenen Debitor-Posten
+    const csv = await exportBookings();
+    expect(csv.charCodeAt(0)).toBe(0xFEFF); // BOM
+    const lines = csv.replace(/^﻿/, '').trim().split('\r\n');
+    expect(lines[0]).toBe('Datum;Richtung;Kontakt;Referenz;Betrag;Faellig;Status;Bezahlt;Rest');
+    // mindestens eine Debitor-Zeile mit Komma-Dezimalbetrag
+    expect(lines.slice(1).some((l) => l.includes(';Debitor;') && /;\d+,\d{2};/.test(l))).toBe(true);
   });
 });

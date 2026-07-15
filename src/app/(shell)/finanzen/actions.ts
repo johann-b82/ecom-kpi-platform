@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { requireAppAccess } from '@/lib/groups';
 import {
-  recordPayment, assignPayment, recordUnassignedPayment, createKreditorInvoice, getOpenItem,
+  recordPayment, assignPayment, recordUnassignedPayment, createKreditorInvoice, getOpenItem, exportBookings,
 } from '@/finanzen/repository';
 import type { PaymentInput, KreditorInvoiceInput } from '@/finanzen/types';
 
@@ -43,4 +43,9 @@ export async function createKreditorInvoiceAction(input: KreditorInvoiceInput): 
   const id = await createKreditorInvoice(input);
   revalidatePath('/finanzen');
   return id;
+}
+
+export async function exportBookingsAction(): Promise<string> {
+  await requireAppAccess('finanzen');
+  return exportBookings();
 }

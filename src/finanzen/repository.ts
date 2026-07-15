@@ -155,3 +155,27 @@ export async function createKreditorInvoice(input: KreditorInvoiceInput): Promis
     [input.supplierId, input.reference, input.purchaseOrderId ?? null, input.amount, input.dueDate]);
   return r.rows[0].id;
 }
+
+function csvAmount(n: number): string { return n.toFixed(2).replace('.', ','); }
+function csvField(s: string): string {
+  return /[";\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+export async function exportBookings(): Promise<string> {
+  const r = await pool.query(
+    `SELECT oi.created_at::date::text AS datum, oi.direction, c.name AS contact_name, oi.reference,
+            oi.amount::text AS amount, oi.due_date::text AS due_date, oi.status,
+            COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.open_item_id = oi.id), 0)::text AS paid
+       FROM open_items oi JOIN contacts c ON c.id = oi.contact_id
+      ORDER BY oi.created_at`);
+  const header = 'Datum;Richtung;Kontakt;Referenz;Betrag;Faellig;Status;Bezahlt;Rest';
+  const lines = r.rows.map((x) => {
+    const amount = Number(x.amount), paid = Number(x.paid);
+    const dir = x.direction === 'debitor' ? 'Debitor' : 'Kreditor';
+    return [
+      x.datum, dir, csvField(x.contact_name), csvField(x.reference ?? ''),
+      csvAmount(amount), x.due_date, x.status, csvAmount(paid), csvAmount(amount - paid),
+    ].join(';');
+  });
+  return '﻿' + [header, ...lines].join('\r\n') + '\r\n';
+}
