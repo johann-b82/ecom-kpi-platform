@@ -135,6 +135,11 @@ INSERT INTO group_app_access (group_id, app, permission)
   SELECT group_id, 'verfuegbarkeit', permission FROM group_app_access WHERE app = 'katalog'
   ON CONFLICT (group_id, app) DO NOTHING;
 
+-- Phase 2 / B6: dieselbe „jeder sieht alles"-Regel für Finanzen.
+INSERT INTO group_app_access (group_id, app, permission)
+  SELECT group_id, 'finanzen', permission FROM group_app_access WHERE app = 'katalog'
+  ON CONFLICT (group_id, app) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS bpm_products (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, cat TEXT, series TEXT, status TEXT,
   year INT, parts INT, uvp DOUBLE PRECISION, price DOUBLE PRECISION, cost DOUBLE PRECISION,
