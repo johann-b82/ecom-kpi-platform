@@ -4,7 +4,7 @@ import { seedKontakte } from '../../scripts/seed-kontakte';
 import { seedKatalog } from '../../scripts/seed-katalog';
 import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, transitionOrderStatus } from '@/verkauf/repository';
-import { listOpenItems, getOpenItem, listContactOptions } from '@/finanzen/repository';
+import { listOpenItems, getOpenItem, listContactOptions, listOpenItemOptions } from '@/finanzen/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001';
 const PL_HANDEL = 'a1a1a1a1-0000-4000-8000-000000000001';
@@ -62,5 +62,24 @@ describe('finanzen repository — read', () => {
     const opts = await listContactOptions();
     expect(opts.length).toBeGreaterThan(0);
     expect(opts.find((o) => o.id === MUELLER)).toBeDefined();
+  });
+
+  it('listOpenItemOptions liefert offene Posten mit remaining, Label und ohne bezahlte Posten', async () => {
+    const { openItemId, amount } = await invoicedOrder(2, 11.9);
+    const opts = await listOpenItemOptions(MUELLER);
+    expect(opts.length).toBeGreaterThan(0);
+    const opt = opts.find((o) => o.id === openItemId);
+    expect(opt).toBeDefined();
+    expect(opt!.contactId).toBe(MUELLER);
+    expect(opt!.remaining).toBeCloseTo(amount, 2); // unbezahlt → remaining == amount
+    expect(opt!.label).toEqual(expect.any(String));
+    expect(opt!.label.length).toBeGreaterThan(0);
+
+    const statusById = new Map(
+      (await pool.query<{ id: string; status: string }>('SELECT id, status FROM open_items WHERE id = ANY($1)', [
+        opts.map((o) => o.id),
+      ])).rows.map((r) => [r.id, r.status]),
+    );
+    expect(opts.every((o) => statusById.get(o.id) !== 'bezahlt')).toBe(true);
   });
 });
