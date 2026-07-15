@@ -3,12 +3,16 @@ import { pool } from '@/lib/db';
 import { seedKontakte } from '../../scripts/seed-kontakte';
 import { seedKatalog } from '../../scripts/seed-katalog';
 import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
-import { createOrder, transitionOrderStatus } from '@/verkauf/repository';
-import { listOpenItems, getOpenItem, listContactOptions, listOpenItemOptions } from '@/finanzen/repository';
+import { createOrder, transitionOrderStatus, getOrder } from '@/verkauf/repository';
+import {
+  listOpenItems, getOpenItem, listContactOptions, listOpenItemOptions, listUnassignedPayments,
+  recordPayment, assignPayment, recordUnassignedPayment, createKreditorInvoice,
+} from '@/finanzen/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001';
 const PL_HANDEL = 'a1a1a1a1-0000-4000-8000-000000000001';
 const orderIds: string[] = [];
+const kreditorItemIds: string[] = [];
 
 async function variantId(sku: string): Promise<string> {
   const r = await pool.query<{ id: string }>('SELECT id FROM product_variants WHERE sku = $1', [sku]);
@@ -33,6 +37,11 @@ afterAll(async () => {
     await pool.query('DELETE FROM open_items WHERE order_id = $1', [id]);
     await pool.query('DELETE FROM sales_orders WHERE id = $1', [id]);
   }
+  for (const id of kreditorItemIds) {
+    await pool.query('DELETE FROM payments WHERE open_item_id = $1', [id]);
+    await pool.query('DELETE FROM open_items WHERE id = $1', [id]);
+  }
+  await pool.query(`DELETE FROM payments WHERE open_item_id IS NULL AND external_reference LIKE 'TEST-%'`);
   await pool.end();
 });
 
@@ -81,5 +90,55 @@ describe('finanzen repository — read', () => {
       ])).rows.map((r) => [r.id, r.status]),
     );
     expect(opts.every((o) => statusById.get(o.id) !== 'bezahlt')).toBe(true);
+  });
+});
+
+describe('finanzen repository — write', () => {
+  it('recordPayment: Vollausgleich Debitor treibt Beleg auf bezahlt (Faden-Perle) + schließt OP', async () => {
+    const { orderId, openItemId, amount } = await invoicedOrder(2, 11.9);
+    await recordPayment(openItemId, { amount, method: 'ueberweisung', reference: 'TEST-full' });
+    const detail = await getOpenItem(openItemId);
+    expect(detail!.status).toBe('bezahlt');
+    expect(detail!.remaining).toBeCloseTo(0, 2);
+    const order = await getOrder(orderId);
+    expect(order!.status).toBe('bezahlt');
+    expect(order!.events.some((e) => e.stage === 'bezahlt' && e.sourceApp === 'finanzen')).toBe(true);
+  });
+
+  it('recordPayment: Teilzahlung setzt teilweise_bezahlt, Beleg bleibt rechnung_gestellt', async () => {
+    const { orderId, openItemId, amount } = await invoicedOrder(2, 11.9);
+    await recordPayment(openItemId, { amount: amount / 2, method: 'ueberweisung', reference: 'TEST-part' });
+    const detail = await getOpenItem(openItemId);
+    expect(detail!.status).toBe('teilweise_bezahlt');
+    expect(detail!.remaining).toBeCloseTo(amount / 2, 2);
+    expect((await getOrder(orderId))!.status).toBe('rechnung_gestellt');
+  });
+
+  it('recordPayment auf bereits bezahltem OP wirft', async () => {
+    const { openItemId, amount } = await invoicedOrder(1, 11.9);
+    await recordPayment(openItemId, { amount, method: 'ueberweisung', reference: 'TEST-a' });
+    await expect(recordPayment(openItemId, { amount: 1, method: 'ueberweisung' })).rejects.toThrow(/bezahlt/i);
+  });
+
+  it('createKreditorInvoice legt kreditor-OP an; Vollzahlung schließt ihn ohne Faden', async () => {
+    const id = await createKreditorInvoice({
+      supplierId: MUELLER, amount: 100, dueDate: '2026-08-31', reference: 'TEST-kred',
+    });
+    kreditorItemIds.push(id);
+    let detail = await getOpenItem(id);
+    expect(detail!.direction).toBe('kreditor');
+    expect(detail!.orderId).toBeNull();
+    await recordPayment(id, { amount: 100, method: 'ueberweisung', reference: 'TEST-kredpay' });
+    detail = await getOpenItem(id);
+    expect(detail!.status).toBe('bezahlt');
+  });
+
+  it('assignPayment: nicht zugeordnete Zahlung zuordnen mündet in den Settle-Pfad', async () => {
+    const { orderId, openItemId, amount } = await invoicedOrder(1, 11.9);
+    await recordUnassignedPayment({ amount, method: 'ueberweisung', reference: 'TEST-queue' });
+    const queued = (await listUnassignedPayments()).find((p) => p.reference === 'TEST-queue')!;
+    await assignPayment(queued.id, openItemId);
+    expect((await getOpenItem(openItemId))!.status).toBe('bezahlt');
+    expect((await getOrder(orderId))!.status).toBe('bezahlt');
   });
 });
