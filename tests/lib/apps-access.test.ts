@@ -4,7 +4,7 @@ import { accessibleApps } from '@/lib/groups';
 describe('accessibleApps', () => {
   it('admin sees every app', () => {
     const keys = accessibleApps({ apps: {}, isAdmin: true }).map((a) => a.key);
-    expect(keys).toEqual(['brickpm', 'kontakte', 'katalog', 'verkauf', 'verfuegbarkeit', 'finanzen', 'hilfe']);
+    expect(keys).toEqual(['verfuegbarkeit', 'verkauf', 'finanzen', 'katalog', 'kontakte', 'brickpm', 'hilfe']);
   });
 
   it('non-admin without rights still sees hilfe (baseline app)', () => {

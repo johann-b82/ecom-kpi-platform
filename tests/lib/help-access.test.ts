@@ -5,7 +5,7 @@ import { accessibleApps } from '@/lib/groups';
 describe('hilfe app registration', () => {
   it('is registered in APPS with the expected shape', () => {
     const hilfe = APPS.find((a) => a.key === 'hilfe');
-    expect(hilfe).toEqual({ key: 'hilfe', label: 'Hilfe', abbr: 'HI', href: '/hilfe' });
+    expect(hilfe).toEqual({ key: 'hilfe', label: 'Hilfe', abbr: 'HI', href: '/hilfe', group: 'zentral' });
   });
 
   it('is visible to a non-admin user without any app grants', () => {
