@@ -24,6 +24,7 @@
     "seed-katalog": "tsx scripts/seed-katalog.ts",
     "seed-verfuegbarkeit": "tsx scripts/seed-verfuegbarkeit.ts",
     "seed-verkauf": "tsx scripts/seed-verkauf.ts",
+    "seed-finanzen": "tsx scripts/seed-finanzen.ts",
     "sync-runner": "tsx scripts/sync-runner.ts"
   },
   "dependencies": {
