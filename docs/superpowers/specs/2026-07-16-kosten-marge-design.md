@@ -41,7 +41,9 @@ order_costs                              -- Kosten, die einem einzelnen Beleg zu
   order_id      uuid, fk → sales_orders, on delete cascade
   type          enum(wareneinsatz, marktplatzgebuehr, fulfillment,
                      versand, zahlungsgebuehr, retoure, sonstige)
-  amount        numeric(12,2)            -- immer positiv, Vorzeichen ergibt sich aus type
+  amount        numeric(12,2)            -- vorzeichenbehaftet: Menge×EK bzw. Gebühr;
+                                         -- bei Retoure negativ (Menge<0), damit sich
+                                         -- Gutschriften sauber gegenrechnen
   source        enum(berechnet, api, manuell)
   source_ref    text, null               -- z.B. Amazon Settlement-ID
   created_at    timestamptz default now()
