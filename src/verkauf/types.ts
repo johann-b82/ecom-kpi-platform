@@ -65,6 +65,10 @@ export interface ChannelSummary {
   channel: OrderChannel; revenueNet: number; orders: number; avgOrderValueNet: number;
   wareneinsatz: number; gebuehren: number; werbung: number; db: number; dbProzent: number | null;
 }
+export interface MarginTotals {
+  revenueNet: number; wareneinsatz: number; gebuehren: number; werbung: number;
+  db: number; dbProzent: number | null; adSpend: number; mer: number | null;
+}
 export interface StatusCount { status: OrderStatus; count: number }
 export interface TopProduct { name: string; sku: string; units: number; revenueNet: number }
 export interface RevenuePoint { day: string; revenueNet: number }

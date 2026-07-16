@@ -9,7 +9,7 @@ import {
   type SalesOrder, type SalesOrderDetail, type SalesOrderEvent, type SalesOrderInput, type SalesOrderLine,
   type EventStage, type SourceApp, type OrderStatus, type OrderChannel,
   type OrderRow, type OrderView, type SellableVariant, type CustomerOption, type PriceEntry,
-  type DateRange, type SalesTotals, type ChannelSummary, type StatusCount, type TopProduct, type RevenuePoint,
+  type DateRange, type SalesTotals, type ChannelSummary, type MarginTotals, type StatusCount, type TopProduct, type RevenuePoint,
   type OrderCost,
 } from './types';
 
@@ -500,6 +500,26 @@ export async function channelSummary(range: DateRange): Promise<ChannelSummary[]
       wareneinsatz, gebuehren, werbung, db, dbProzent: revenueNet !== 0 ? db / revenueNet : null,
     };
   });
+}
+
+// Honestes Dashboard-Aggregat: DB/MER sind blended (kanalübergreifend) —
+// ad_spend lässt sich nicht verlässlich Umsatz je Kanal zuordnen (§ Honest-Dashboard-Regel).
+export async function marginTotals(range: DateRange): Promise<MarginTotals> {
+  const channels = await channelSummary(range);
+  const revenueNet = channels.reduce((s, c) => s + c.revenueNet, 0);
+  const wareneinsatz = channels.reduce((s, c) => s + c.wareneinsatz, 0);
+  const gebuehren = channels.reduce((s, c) => s + c.gebuehren, 0);
+  const werbung = channels.reduce((s, c) => s + c.werbung, 0);
+  const db = revenueNet - wareneinsatz - gebuehren - werbung;
+  const adRes = await pool.query<{ spend: number }>(
+    `SELECT COALESCE(SUM(spend), 0)::float8 AS spend FROM ad_spend WHERE date BETWEEN $1 AND $2`,
+    [range.start, range.end]);
+  const adSpend = Number(adRes.rows[0].spend);
+  return {
+    revenueNet, wareneinsatz, gebuehren, werbung, db,
+    dbProzent: revenueNet !== 0 ? db / revenueNet : null,
+    adSpend, mer: adSpend > 0 ? revenueNet / adSpend : null,
+  };
 }
 
 export async function statusFunnel(range: DateRange): Promise<StatusCount[]> {
