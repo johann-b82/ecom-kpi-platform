@@ -75,3 +75,6 @@ LANGUAGE sql STABLE SECURITY INVOKER AS $$
   GROUP BY date ORDER BY date
 $$;
 GRANT EXECUTE ON FUNCTION daily_series(text, date, date) TO authenticated;
+
+ALTER TABLE order_costs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE channel_costs ENABLE ROW LEVEL SECURITY;

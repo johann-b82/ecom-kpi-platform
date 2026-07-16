@@ -445,3 +445,34 @@ CREATE TABLE IF NOT EXISTS payments (
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS segment TEXT NOT NULL DEFAULT 'geschaeft'
   CHECK (segment IN ('geschaeft','privat'));
 CREATE INDEX IF NOT EXISTS idx_contacts_segment ON contacts (segment);
+
+-- ── Kosten & Marge (Phase 3) ──────────────────────────────────────
+-- order_costs: beleggenaue Kosten. amount ist vorzeichenbehaftet
+-- (Menge×EK bzw. Gebühr; bei Retoure negativ). DB = Umsatz − Σ amount.
+CREATE TABLE IF NOT EXISTS order_costs (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id  UUID REFERENCES tenants(id),
+  order_id   UUID NOT NULL REFERENCES sales_orders(id) ON DELETE CASCADE,
+  type       TEXT NOT NULL CHECK (type IN
+               ('wareneinsatz','marktplatzgebuehr','fulfillment','versand','zahlungsgebuehr','retoure','sonstige')),
+  amount     NUMERIC(12,2) NOT NULL,
+  source     TEXT NOT NULL CHECK (source IN ('berechnet','api','manuell')),
+  source_ref TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS order_costs_order_idx ON order_costs (order_id);
+
+-- channel_costs: periodische, nicht-beleggenaue Kosten (Werbung, Lager, Abos)
+-- je Vertriebskanal + Zeitraum.
+CREATE TABLE IF NOT EXISTS channel_costs (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id    UUID REFERENCES tenants(id),
+  channel      TEXT NOT NULL CHECK (channel IN ('shop','b2b_portal','marktplatz','telefon','manuell')),
+  type         TEXT NOT NULL CHECK (type IN ('werbung','lagergebuehr','abo_gebuehr','sonstige')),
+  period_start DATE NOT NULL,
+  period_end   DATE NOT NULL,
+  amount       NUMERIC(12,2) NOT NULL,
+  source       TEXT NOT NULL CHECK (source IN ('api','manuell')),
+  external_ref TEXT
+);
+CREATE INDEX IF NOT EXISTS channel_costs_channel_period_idx ON channel_costs (channel, period_start);
