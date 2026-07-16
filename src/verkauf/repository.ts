@@ -489,6 +489,7 @@ export async function getOrderView(id: string): Promise<OrderView | null> {
        JOIN product_variants v ON v.id = l.variant_id
        JOIN products p ON p.id = v.product_id
       WHERE l.order_id = $1 ORDER BY l.id`, [id]);
+  const costs = await orderCosts(id);
   return {
     ...base,
     contactName: c.rows[0]?.name ?? '',
@@ -496,7 +497,7 @@ export async function getOrderView(id: string): Promise<OrderView | null> {
       id: x.id, variantId: x.variant_id, sku: x.sku, productName: x.product_name,
       quantity: x.quantity, unitPrice: Number(x.unit_price),
     })),
-    events: base.events,
+    events: base.events, costs,
   };
 }
 

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import type { OrderView, OrderStatus } from '@/verkauf/types';
 import { Faden } from './Faden';
 import { transitionOrderStatusAction, createReturnAction } from '@/app/(shell)/verkauf/actions';
+import { contributionMargin } from '@/verkauf/marge';
+import { COST_TYPE_LABEL, COST_SOURCE_LABEL } from '@/verkauf/labels';
 
 const PRIMARY: Partial<Record<OrderStatus, { label: string; run: (id: string) => Promise<unknown> }>> = {
   angebot: { label: 'In Auftrag wandeln', run: (id) => transitionOrderStatusAction(id, 'auftrag') },
@@ -31,6 +33,7 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
   const cancel = () => start(async () => { await transitionOrderStatusAction(order.id, 'storniert'); router.refresh(); });
 
   const total = order.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
+  const { db, dbProzent } = contributionMargin(total, order.costs);
 
   return (
     <div className="space-y-4">
@@ -85,6 +88,40 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
           </tfoot>
         </table>
       </div>
+
+      {order.costs.length > 0 && (
+        <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+          <p className="anno mb-2 text-neutral-500">Deckungsbeitrag</p>
+          <table className="w-full text-sm">
+            <tbody>
+              <tr className="border-b border-neutral-200 dark:border-neutral-800">
+                <td className="py-2">Umsatz netto</td><td /><td className="text-right">{total.toFixed(2)} €</td>
+              </tr>
+              {order.costs.map((c) => (
+                <tr key={c.id}>
+                  <td className="py-1 text-neutral-600 dark:text-neutral-400">− {COST_TYPE_LABEL[c.type]}</td>
+                  <td className="text-neutral-400">
+                    <span className="anno rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
+                      {COST_SOURCE_LABEL[c.source]}
+                    </span>
+                  </td>
+                  <td className="text-right tabular-nums">{(-c.amount).toFixed(2)} €</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-neutral-300 font-semibold dark:border-neutral-700">
+                <td className="py-2">Deckungsbeitrag</td><td />
+                <td className="text-right">
+                  {db.toFixed(2)} €{dbProzent !== null && (
+                    <span className="ml-2 text-neutral-500">({(dbProzent * 100).toFixed(1)} %)</span>
+                  )}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

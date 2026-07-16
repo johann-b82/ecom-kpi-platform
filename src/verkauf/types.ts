@@ -42,7 +42,7 @@ export interface OrderViewLine {
   id: string; variantId: string; sku: string; productName: string; quantity: number; unitPrice: number;
 }
 export interface OrderView extends SalesOrder {
-  contactName: string; lines: OrderViewLine[]; events: SalesOrderEvent[];
+  contactName: string; lines: OrderViewLine[]; events: SalesOrderEvent[]; costs: OrderCost[];
 }
 export interface SellableVariant { variantId: string; sku: string; productName: string; available: number }
 export interface CustomerOption {
