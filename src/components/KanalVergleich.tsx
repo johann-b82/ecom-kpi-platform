@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import type { ChannelSummary } from '@/verkauf/types';
 import { CHANNEL_LABEL } from '@/verkauf/labels';
 import { eur } from '@/verkauf/format';
@@ -37,7 +38,9 @@ export function KanalVergleich({ channels }: { channels: ChannelSummary[] }) {
           <tbody>
             {rows.map((c) => (
               <tr key={c.channel} className="border-t border-neutral-200 dark:border-neutral-800">
-                <td className="px-3 py-2 font-medium text-neutral-900 dark:text-neutral-100">{CHANNEL_LABEL[c.channel]}</td>
+                <td className="px-3 py-2 font-medium">
+                  <Link href={`/verkauf/kanal/${c.channel}`} className="text-neutral-900 hover:text-accent dark:text-neutral-100">{CHANNEL_LABEL[c.channel]}</Link>
+                </td>
                 <td className="px-3 text-right tabular-nums">{eur(c.revenueNet)}</td>
                 <td className="px-3 text-right tabular-nums text-neutral-600 dark:text-neutral-400">{eur(c.wareneinsatz)}</td>
                 <td className="px-3 text-right tabular-nums text-neutral-600 dark:text-neutral-400">{eur(c.gebuehren)}</td>

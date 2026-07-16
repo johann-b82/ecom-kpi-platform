@@ -15,5 +15,6 @@ describe('KanalVergleich', () => {
     ]} />);
     expect(screen.getByText('Werbung')).toBeTruthy();
     expect(screen.getByText('47,7 %')).toBeTruthy();  // 11600/24300
+    expect(screen.getByText('Shop').closest('a')?.getAttribute('href')).toBe('/verkauf/kanal/shop');
   });
 });
