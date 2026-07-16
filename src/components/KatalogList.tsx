@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { ProductListItem } from '@/katalog/types';
 import { LIFECYCLE_STATUSES, type LifecycleStatus } from '@/katalog/lifecycle';
 import { createProductAction } from '@/app/(shell)/katalog/actions';
+import { useClientSort, ClientSortableTh } from '@/components/useClientSort';
 
 export function KatalogList({ products }: { products: ProductListItem[] }) {
   const router = useRouter();
@@ -19,11 +20,17 @@ export function KatalogList({ products }: { products: ProductListItem[] }) {
 
   const input = 'rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100';
 
-  const rows = products.filter((p) => {
+  const filtered = products.filter((p) => {
     if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
     if (status && p.lifecycleStatus !== status) return false;
     return true;
   });
+  const { sorted: rows, sort, onSort } = useClientSort(filtered, {
+    name: (p) => p.name,
+    variants: (p) => p.variantCount,
+    status: (p) => p.lifecycleStatus,
+    ek: (p) => p.minPurchasePrice ?? null,
+  }, { col: 'name', dir: 'asc' });
 
   const create = () => {
     if (!name.trim()) { setError('Name angeben.'); return; }
@@ -85,8 +92,12 @@ export function KatalogList({ products }: { products: ProductListItem[] }) {
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="anno text-left text-neutral-500">
-            <th className="py-2">Bild</th><th>Name</th><th>Varianten</th><th>Status</th><th>EK ab</th>
+          <tr className="text-left text-neutral-500">
+            <th className="anno py-2">Bild</th>
+            <ClientSortableTh col="name" label="Name" sort={sort} onSort={onSort} />
+            <ClientSortableTh col="variants" label="Varianten" sort={sort} onSort={onSort} />
+            <ClientSortableTh col="status" label="Status" sort={sort} onSort={onSort} />
+            <ClientSortableTh col="ek" label="EK ab" sort={sort} onSort={onSort} />
           </tr>
         </thead>
         <tbody>

@@ -6,6 +6,7 @@ import type { OpenItemRow, OpenItemDirection } from '@/finanzen/types';
 import { DIRECTION_LABEL, OI_STATUS_LABEL } from '@/finanzen/labels';
 import { eur } from '@/finanzen/format';
 import { exportBookingsAction } from '@/app/(shell)/finanzen/actions';
+import { useClientSort, ClientSortableTh } from '@/components/useClientSort';
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
@@ -25,6 +26,15 @@ export function OffenePostenListe({ items, debitorOpen, kreditorOpen, overdue }:
 
   const filtered = items.filter((i) =>
     (!dir || i.direction === dir) && (!onlyOpen || i.status !== 'bezahlt'));
+  const { sorted, sort, onSort } = useClientSort(filtered, {
+    direction: (i) => DIRECTION_LABEL[i.direction],
+    contact: (i) => i.contactName,
+    reference: (i) => i.reference,
+    amount: (i) => i.amount,
+    due: (i) => i.dueDate,
+    status: (i) => (i.overdue ? 'ueberfaellig' : i.status),
+    remaining: (i) => i.remaining,
+  }, { col: 'due', dir: 'asc' });
 
   const download = () => start(async () => {
     const csv = await exportBookingsAction();
@@ -65,12 +75,17 @@ export function OffenePostenListe({ items, debitorOpen, kreditorOpen, overdue }:
       </div>
 
       <table className="w-full text-sm">
-        <thead><tr className="anno text-left text-neutral-500">
-          <th className="py-2">Richtung</th><th>Kontakt</th><th>Referenz</th>
-          <th className="text-right">Betrag</th><th>Fällig</th><th>Status</th><th className="text-right">Rest</th>
+        <thead><tr className="text-left text-neutral-500">
+          <ClientSortableTh col="direction" label="Richtung" sort={sort} onSort={onSort} className="py-2" />
+          <ClientSortableTh col="contact" label="Kontakt" sort={sort} onSort={onSort} />
+          <ClientSortableTh col="reference" label="Referenz" sort={sort} onSort={onSort} />
+          <ClientSortableTh col="amount" label="Betrag" sort={sort} onSort={onSort} className="text-right" />
+          <ClientSortableTh col="due" label="Fällig" sort={sort} onSort={onSort} />
+          <ClientSortableTh col="status" label="Status" sort={sort} onSort={onSort} />
+          <ClientSortableTh col="remaining" label="Rest" sort={sort} onSort={onSort} className="text-right" />
         </tr></thead>
         <tbody>
-          {filtered.map((i) => (
+          {sorted.map((i) => (
             <tr key={i.id} className="border-t border-neutral-200 dark:border-neutral-800">
               <td className="py-2">{DIRECTION_LABEL[i.direction]}</td>
               <td>{i.contactName}</td>
@@ -85,7 +100,7 @@ export function OffenePostenListe({ items, debitorOpen, kreditorOpen, overdue }:
               <td className="text-right">{eur(i.remaining)}</td>
             </tr>
           ))}
-          {filtered.length === 0 && (
+          {sorted.length === 0 && (
             <tr><td colSpan={7} className="py-6 text-center text-neutral-500">Keine offenen Posten.</td></tr>
           )}
         </tbody>
