@@ -1,13 +1,34 @@
-import { describe, it, expect, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { pool } from '@/lib/db';
+import { seedKontakte } from '../../scripts/seed-kontakte';
+import { seedKatalog } from '../../scripts/seed-katalog';
+import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
+import { createOrder } from '@/verkauf/repository';
 
-afterAll(async () => { await pool.end(); });
+const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001';
+const PL_HANDEL = 'a1a1a1a1-0000-4000-8000-000000000001';
+let orderId: string;
+
+beforeAll(async () => {
+  await seedKontakte();
+  await seedKatalog();
+  await seedVerfuegbarkeit();
+  const variant = await pool.query<{ id: string }>('SELECT id FROM product_variants WHERE sku = $1', ['SJ-BLAU']);
+  const o = await createOrder({
+    contactId: MUELLER, channel: 'b2b_portal', priceListId: PL_HANDEL,
+    lines: [{ variantId: variant.rows[0].id, quantity: 1, unitPrice: 10 }],
+  });
+  orderId = o.id;
+});
+
+afterAll(async () => {
+  await pool.query('DELETE FROM order_costs WHERE order_id = $1', [orderId]);
+  await pool.query('DELETE FROM sales_orders WHERE id = $1', [orderId]);
+  await pool.end();
+});
 
 describe('kosten schema', () => {
   it('order_costs akzeptiert eine gültige Zeile und liest amount als numeric zurück', async () => {
-    // ein bestehender Beleg aus dem Seed genügt als FK-Ziel
-    const o = await pool.query<{ id: string }>('SELECT id FROM sales_orders LIMIT 1');
-    const orderId = o.rows[0].id;
     const ins = await pool.query(
       `INSERT INTO order_costs (order_id, type, amount, source)
        VALUES ($1,'wareneinsatz',-12.50,'berechnet') RETURNING id, amount::float8 AS amount`,
@@ -17,10 +38,9 @@ describe('kosten schema', () => {
   });
 
   it('order_costs.type lehnt einen unbekannten Wert ab', async () => {
-    const o = await pool.query<{ id: string }>('SELECT id FROM sales_orders LIMIT 1');
     await expect(pool.query(
       `INSERT INTO order_costs (order_id, type, amount, source) VALUES ($1,'quatsch',1,'manuell')`,
-      [o.rows[0].id])).rejects.toThrow();
+      [orderId])).rejects.toThrow();
   });
 
   it('channel_costs akzeptiert eine periodische Werbezeile', async () => {
