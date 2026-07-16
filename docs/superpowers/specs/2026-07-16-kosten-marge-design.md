@@ -197,6 +197,28 @@ TikTok    1.900    2,1×     4.000
   Ads-Kanal.
 - „kombiniert" zeigt die blended Summe; „je Kanal" die Plattform-Zeilen.
 
+### Geltungsbereich des Kanal-Umschalters
+
+Der Umschalter *kombiniert / je Kanal* wirkt **ausschließlich auf KPIs, die
+nativ je Ads-Plattform geliefert werden** — d.h. alles aus `ad_spend`:
+Impressions, Clicks, CPM, Spend, plattform-ROAS\*, conv_value\*. Kein
+Attributionsmodell. Jede Dashboard-KPI trägt intern ein Flag
+`platformSplittable` (aus `ad_spend` = true, sonst false); der Umschalter blendet
+nur die splittbaren KPIs je Plattform auf.
+
+**Alle übrigen KPIs bleiben immer kombiniert** (kein Umschalten), weil es dafür
+keine ehrliche Plattform-Aufteilung gibt:
+
+- GA4 (`source='ga4'`): Sessions, Add-to-Cart, Checkouts, Pageviews — ein
+  site-weiter Stream, `channel` wird heute hart `'default'` gespeichert.
+- WooCommerce / `sales_orders`: echter Umsatz, Bestellungen, AOV, DB, MER, CLV,
+  Repeat-Rate — total, bewusst nicht attribuiert.
+- Klaviyo (`source='klaviyo'`): eigener E-Mail-Kanal, keine Ad-Plattform.
+
+Im „je Kanal"-Modus zeigen nicht-splittbare KPIs weiterhin ihren kombinierten
+Wert (dezent als *gesamt / blended* gekennzeichnet), statt eine erfundene
+Plattform-Spalte zu erzeugen.
+
 ## Oberfläche 3 — Beleg-Detail: DB je Beleg
 
 In `src/components/VerkaufDetail.tsx` unter den Positionen ein Kosten-Block:
@@ -257,3 +279,16 @@ Deckungsbeitrag                  47,80 €  (33,7 %)
   manueller `channel_costs`-Override reicht).
 - Kein DB/Marge je Ads-Kanal (keine Attributionsdaten — bewusst nicht erfunden).
 - Keine Ad-Spend→Beleg-Attribution.
+- Kein Umschalten von GA4-/WooCommerce-/Klaviyo-KPIs je Plattform — diese
+  bleiben immer kombiniert (der Dashboard-Umschalter betrifft nur
+  `ad_spend`-KPIs).
+
+## Möglicher späterer Ausbau (nicht jetzt)
+
+- **GA4 Channel-Grouping:** GA4 könnte Sessions/Conversions nach
+  `sessionDefaultChannelGroup` (Paid Search, Paid Social, Organic, Direct,
+  Email …) aufschlüsseln. Damit wäre ein *top-of-funnel* je Kanalgruppe möglich —
+  aber (a) es ist GA4s eigene Last-Click-Attribution, nicht mit den
+  Ad-Plattformen dedupliziert, und (b) der GA4-Connector erfasst die Dimension
+  heute nicht (`channel='default'`), müsste also erweitert werden. Eigenes
+  Vorhaben, bewusst außerhalb dieses Specs.
