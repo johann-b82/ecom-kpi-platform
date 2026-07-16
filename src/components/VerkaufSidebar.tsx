@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 const ITEMS = [
   { href: '/verkauf', label: 'Übersicht' },
   { href: '/verkauf/dashboard', label: 'E-Commerce' },
-  { href: '/verkauf/belege', label: 'Belege' },
+  { href: '/verkauf/woocommerce', label: 'WooCommerce' },
   { href: '/verkauf/neu', label: 'Neuer Beleg' },
 ];
 

@@ -1,4 +1,12 @@
+import type { Sort } from '@/lib/sort';
+
 export type OrderChannel = 'shop' | 'b2b_portal' | 'marktplatz' | 'telefon' | 'manuell';
+
+// Sortierbare Spalten der Belegliste (client- und server-seitig geteilt).
+export const ORDER_SORT = {
+  allowed: ['number', 'contact', 'channel', 'status', 'placed'] as const,
+  fallback: { col: 'placed', dir: 'desc' } as Sort,
+};
 export type OrderStatus =
   | 'angebot' | 'auftrag' | 'versendet' | 'rechnung_gestellt' | 'bezahlt' | 'retoure' | 'storniert';
 export type EventStage = 'bestellt' | 'kommissioniert' | 'rechnung_gestellt' | 'bezahlt' | 'retoure';
@@ -28,7 +36,7 @@ export interface SalesOrderInput {
 
 export interface OrderRow {
   id: string; number: string; contactId: string; contactName: string;
-  channel: OrderChannel; status: OrderStatus; createdAt: string; stages: EventStage[];
+  channel: OrderChannel; status: OrderStatus; createdAt: string; placedAt: string | null; stages: EventStage[];
 }
 export interface OrderViewLine {
   id: string; variantId: string; sku: string; productName: string; quantity: number; unitPrice: number;
@@ -50,3 +58,5 @@ export interface ChannelSummary {
   channel: OrderChannel; revenueNet: number; orders: number; avgOrderValueNet: number;
 }
 export interface StatusCount { status: OrderStatus; count: number }
+export interface TopProduct { name: string; sku: string; units: number; revenueNet: number }
+export interface RevenuePoint { day: string; revenueNet: number }

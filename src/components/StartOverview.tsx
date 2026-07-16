@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { eur } from '@/finanzen/format';
 
 export interface OverviewSignals {
-  openQuotes?: number;
+  monthRevenue?: number;
   belowReorder?: number;
   openItems?: number;
   overdue?: number;
@@ -10,8 +10,8 @@ export interface OverviewSignals {
 
 export function StartOverview({ signals }: { signals: OverviewSignals }) {
   const tiles: { label: string; value: string; href: string; danger?: boolean; sub?: string }[] = [];
-  if (signals.openQuotes !== undefined)
-    tiles.push({ label: 'Offene Angebote', value: String(signals.openQuotes), href: '/verkauf/belege' });
+  if (signals.monthRevenue !== undefined)
+    tiles.push({ label: 'Umsatz akt. Monat', value: eur(signals.monthRevenue), href: '/verkauf' });
   if (signals.belowReorder !== undefined)
     tiles.push({ label: 'Unter Meldebestand', value: String(signals.belowReorder),
       href: '/verfuegbarkeit/meldebestand', danger: signals.belowReorder > 0 });

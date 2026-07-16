@@ -1,5 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+
+afterEach(cleanup);
 
 const push = vi.fn();
 
@@ -14,5 +16,12 @@ describe('Filters', () => {
     render(<Filters />);
     fireEvent.click(screen.getByRole('button', { name: '7 Tage' }));
     expect(push).toHaveBeenCalledWith('/dashboard?days=7');
+  });
+  it('bietet Jahr und Komplett an', async () => {
+    const { Filters } = await import('@/components/Filters');
+    render(<Filters />);
+    expect(screen.getByRole('button', { name: 'Jahr' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Komplett' }));
+    expect(push).toHaveBeenCalledWith('/dashboard?days=all');
   });
 });

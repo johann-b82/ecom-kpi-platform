@@ -43,4 +43,13 @@ describe('careKpis', () => {
   it('NPS = Ø der vorhandenen Scores', () => {
     expect(by('nps').value).toBeCloseTo(50); // (40 + 60) / 2
   });
+
+  it('nimmt CLV und Repeat Rate aus WooCommerce-Facts, wenn übergeben', () => {
+    const facts = { revenue: 0, purchases: 0, aov: null, clv: 420, repeatRate: 0.33 };
+    const byF = (k: string) => careKpis(data, range, facts).find((x) => x.key === k)!;
+    expect(byF('clv').value).toBeCloseTo(420);        // Woo statt Analytics-Kunden
+    expect(byF('repeat_rate').value).toBeCloseTo(0.33);
+    // Retention/NPS bleiben aus ihren Quellen
+    expect(byF('nps').value).toBeCloseTo(50);
+  });
 });

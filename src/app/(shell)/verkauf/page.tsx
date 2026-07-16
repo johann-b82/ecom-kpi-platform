@@ -1,5 +1,5 @@
 import { salesTotals, channelSummary, statusFunnel } from '@/verkauf/repository';
-import { addDays } from '@/lib/dates';
+import { resolveRange } from '@/lib/range';
 import { Filters } from '@/components/Filters';
 import { ChartCard } from '@/components/charts/ChartCard';
 import { KanalVergleich } from '@/components/KanalVergleich';
@@ -19,9 +19,8 @@ function StatTile({ label, value, anno }: { label: string; value: string; anno?:
 }
 
 export default async function VerkaufUebersichtPage({ searchParams }: { searchParams: { days?: string } }) {
-  const days = [7, 30, 90].includes(Number(searchParams.days)) ? Number(searchParams.days) : 30;
   const end = new Date().toISOString().slice(0, 10);
-  const range = { start: addDays(end, -(days - 1)), end };
+  const { range } = resolveRange(searchParams.days, end);
   const [totals, channels, funnel] = await Promise.all([
     salesTotals(range), channelSummary(range), statusFunnel(range),
   ]);

@@ -1,6 +1,7 @@
 import { loadDataset } from '@/kpi/repository';
-import { computeKpis } from '@/kpi/index';
-import { addDays } from '@/lib/dates';
+import { computeKpis, previousRange } from '@/kpi/index';
+import { resolveRange } from '@/lib/range';
+import { ecomSalesFacts } from '@/verkauf/repository';
 import { PhaseColumn } from '@/components/PhaseColumn';
 import { Filters } from '@/components/Filters';
 import { createClient } from '@/lib/supabase/server';
@@ -8,11 +9,17 @@ import { createClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 
 export default async function VerkaufDashboardPage({ searchParams }: { searchParams: { days?: string } }) {
-  const days = [7, 30, 90].includes(Number(searchParams.days)) ? Number(searchParams.days) : 30;
   const end = new Date().toISOString().slice(0, 10);
-  const range = { start: addDays(end, -(days - 1)), end };
+  const { range } = resolveRange(searchParams.days, end);
   const supabase = createClient();
-  const phases = computeKpis(await loadDataset(supabase), range);
+  // Sales/Order-Zahlen (Umsatz, Käufe, Warenkorbwert, CLV) kommen aus den echten
+  // WooCommerce-Belegen; Traffic-KPIs (Sessions/Checkouts) weiter aus GA4.
+  const [dataset, factsCurrent, factsPrevious] = await Promise.all([
+    loadDataset(supabase),
+    ecomSalesFacts(range),
+    ecomSalesFacts(previousRange(range)),
+  ]);
+  const phases = computeKpis(dataset, range, { current: factsCurrent, previous: factsPrevious });
 
   return (
     <div className="mx-auto max-w-7xl">

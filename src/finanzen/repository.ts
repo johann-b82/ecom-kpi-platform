@@ -83,8 +83,10 @@ export async function listOpenItemOptions(contactId?: string): Promise<OpenItemO
   }));
 }
 
+// Nur Lieferanten (Vorlieferanten) — Eingangsrechnungen werden nur diesen zugeordnet,
+// nicht den (zahlreichen) B2C-Kundenkontakten.
 export async function listContactOptions(): Promise<ContactOption[]> {
-  const r = await pool.query(`SELECT id, name FROM contacts ORDER BY name`);
+  const r = await pool.query(`SELECT id, name FROM contacts WHERE is_supplier = true ORDER BY name`);
   return r.rows.map((x) => ({ id: x.id, name: x.name }));
 }
 

@@ -1,11 +1,14 @@
 import { pool } from '@/lib/db';
 import type { PoolClient } from 'pg';
+import type { SalesFacts } from '@/lib/types';
+import { parseSort } from '@/lib/sort';
 import { nextOrderNumber } from './number';
-import type {
-  SalesOrder, SalesOrderDetail, SalesOrderEvent, SalesOrderInput, SalesOrderLine,
-  EventStage, SourceApp, OrderStatus, OrderChannel,
-  OrderRow, OrderView, SellableVariant, CustomerOption, PriceEntry,
-  DateRange, SalesTotals, ChannelSummary, StatusCount,
+import {
+  ORDER_SORT,
+  type SalesOrder, type SalesOrderDetail, type SalesOrderEvent, type SalesOrderInput, type SalesOrderLine,
+  type EventStage, type SourceApp, type OrderStatus, type OrderChannel,
+  type OrderRow, type OrderView, type SellableVariant, type CustomerOption, type PriceEntry,
+  type DateRange, type SalesTotals, type ChannelSummary, type StatusCount, type TopProduct, type RevenuePoint,
 } from './types';
 
 const ORDER_COLS = `id, tenant_id, number, contact_id, channel, status, price_list_id,
@@ -271,39 +274,157 @@ export async function createReturn(originalOrderId: string): Promise<SalesOrderD
 export async function listOrderRows(channel?: OrderChannel): Promise<OrderRow[]> {
   const r = await pool.query(
     `SELECT o.id, o.number, o.contact_id, c.name AS contact_name, o.channel, o.status,
-            o.created_at::text AS created_at,
+            o.created_at::text AS created_at, o.placed_at::text AS placed_at,
             COALESCE(array_agg(e.stage ORDER BY e.occurred_at) FILTER (WHERE e.stage IS NOT NULL), '{}') AS stages
        FROM sales_orders o
        JOIN contacts c ON c.id = o.contact_id
        LEFT JOIN sales_order_events e ON e.order_id = o.id
       WHERE ($1::text IS NULL OR o.channel = $1)
       GROUP BY o.id, c.name
-      ORDER BY o.created_at DESC`, [channel ?? null]);
+      ORDER BY COALESCE(o.placed_at, o.created_at) DESC`, [channel ?? null]);
   return r.rows.map((x: any) => ({
     id: x.id, number: x.number, contactId: x.contact_id, contactName: x.contact_name,
-    channel: x.channel, status: x.status, createdAt: x.created_at, stages: x.stages,
+    channel: x.channel, status: x.status, createdAt: x.created_at, placedAt: x.placed_at, stages: x.stages,
   }));
 }
 
-export async function salesTotals(range: DateRange): Promise<SalesTotals> {
+// eCom-Dashboard: Top-Produkte nach Umsatz aus echten Belegen (sales_orders).
+export async function topProducts(range: DateRange, limit = 10, channel?: OrderChannel): Promise<TopProduct[]> {
+  const r = await pool.query(
+    `SELECT p.name, pv.sku,
+            SUM(l.quantity)::int AS units,
+            COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue
+       FROM sales_order_lines l
+       JOIN sales_orders o ON o.id = l.order_id
+       JOIN product_variants pv ON pv.id = l.variant_id
+       JOIN products p ON p.id = pv.product_id
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND o.status NOT IN ('angebot','storniert')
+        AND ($4::text IS NULL OR o.channel = $4)
+      GROUP BY p.name, pv.sku
+      ORDER BY revenue DESC
+      LIMIT $3`, [range.start, range.end, limit, channel ?? null]);
+  return r.rows.map((x: any) => ({ name: x.name, sku: x.sku, units: x.units, revenueNet: Number(x.revenue) }));
+}
+
+// eCom-Dashboard: Umsatzverlauf je Tag aus echten Belegen.
+export async function revenueByDay(range: DateRange, channel?: OrderChannel): Promise<RevenuePoint[]> {
+  const r = await pool.query(
+    `SELECT COALESCE(o.placed_at, o.created_at)::date::text AS day,
+            COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue
+       FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND o.status NOT IN ('angebot','storniert')
+        AND ($3::text IS NULL OR o.channel = $3)
+      GROUP BY day ORDER BY day`, [range.start, range.end, channel ?? null]);
+  return r.rows.map((x: any) => ({ day: x.day, revenueNet: Number(x.revenue) }));
+}
+
+// Server-side paginated + searchable belege list — the store has 10k+ orders,
+// so the list must not load every row into the client.
+const ORDER_SORT_SQL: Record<string, string> = {
+  number: 'o.number', contact: 'lower(c.name)', channel: 'o.channel',
+  status: 'o.status', placed: 'COALESCE(o.placed_at, o.created_at)',
+};
+
+export async function listOrderRowsPaged(
+  opts: { channel?: OrderChannel; search?: string; sort?: string; limit?: number; offset?: number } = {},
+): Promise<{ rows: OrderRow[]; total: number }> {
+  const { channel, search, sort, limit = 50, offset = 0 } = opts;
+  const s = parseSort(sort, ORDER_SORT.allowed, ORDER_SORT.fallback);
+  const orderBy = `${ORDER_SORT_SQL[s.col]} ${s.dir === 'desc' ? 'DESC' : 'ASC'}, o.number DESC`;
+  const params = [channel ?? null, search ? `%${search}%` : null];
+  const where = `WHERE ($1::text IS NULL OR o.channel = $1)
+      AND ($2::text IS NULL OR o.number ILIKE $2 OR c.name ILIKE $2)`;
+  const countRes = await pool.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM sales_orders o JOIN contacts c ON c.id = o.contact_id ${where}`, params);
+  const r = await pool.query(
+    `SELECT o.id, o.number, o.contact_id, c.name AS contact_name, o.channel, o.status,
+            o.created_at::text AS created_at, o.placed_at::text AS placed_at,
+            COALESCE(array_agg(e.stage ORDER BY e.occurred_at) FILTER (WHERE e.stage IS NOT NULL), '{}') AS stages
+       FROM sales_orders o
+       JOIN contacts c ON c.id = o.contact_id
+       LEFT JOIN sales_order_events e ON e.order_id = o.id
+       ${where}
+      GROUP BY o.id, c.name
+      ORDER BY ${orderBy}
+      LIMIT $3 OFFSET $4`, [...params, limit, offset]);
+  const rows = r.rows.map((x: any) => ({
+    id: x.id, number: x.number, contactId: x.contact_id, contactName: x.contact_name,
+    channel: x.channel, status: x.status, createdAt: x.created_at, placedAt: x.placed_at, stages: x.stages,
+  }));
+  return { rows, total: countRes.rows[0].n };
+}
+
+export async function salesTotals(range: DateRange, channel?: OrderChannel): Promise<SalesTotals> {
   const rev = await pool.query(
     `SELECT COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue,
             COUNT(DISTINCT o.id)::int AS orders
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')`,
-    [range.start, range.end]);
+        AND o.status NOT IN ('angebot','storniert')
+        AND ($3::text IS NULL OR o.channel = $3)`,
+    [range.start, range.end, channel ?? null]);
   const off = await pool.query(
     `SELECT COUNT(*)::int AS open_offers FROM sales_orders o
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status = 'angebot'`,
-    [range.start, range.end]);
+        AND o.status = 'angebot'
+        AND ($3::text IS NULL OR o.channel = $3)`,
+    [range.start, range.end, channel ?? null]);
   const revenueNet = Number(rev.rows[0].revenue);
   const orders = rev.rows[0].orders;
   return {
     revenueNet, orders,
     avgOrderValueNet: orders > 0 ? revenueNet / orders : 0,
     openOffers: off.rows[0].open_offers,
+  };
+}
+
+// E-Commerce-Dashboard (SEE-THINK-DO-CARE): reale Verkaufs-/Bestellzahlen aus
+// den Belegen (WooCommerce, channel='shop') statt aus GA4. CLV/Repeat-Rate
+// werden über die Lifetime-Belege der im Zeitraum aktiven Kunden gemittelt.
+export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = 'shop'): Promise<SalesFacts> {
+  const totals = await pool.query(
+    `SELECT COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue,
+            COUNT(DISTINCT o.id)::int AS purchases
+       FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND o.status NOT IN ('angebot','storniert')
+        AND ($3::text IS NULL OR o.channel = $3)`,
+    [range.start, range.end, channel]);
+  const life = await pool.query(
+    `WITH active AS (
+        SELECT DISTINCT o.contact_id
+          FROM sales_orders o
+         WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+           AND o.status NOT IN ('angebot','storniert')
+           AND ($3::text IS NULL OR o.channel = $3)
+      ),
+      life AS (
+        SELECT o.contact_id,
+               COUNT(DISTINCT o.id) AS orders_count,
+               COALESCE(SUM(l.quantity * l.unit_price), 0) AS revenue
+          FROM sales_orders o
+          JOIN active a ON a.contact_id = o.contact_id
+          LEFT JOIN sales_order_lines l ON l.order_id = o.id
+         WHERE o.status NOT IN ('angebot','storniert')
+           AND ($3::text IS NULL OR o.channel = $3)
+         GROUP BY o.contact_id
+      )
+      SELECT COUNT(*)::int AS customers,
+             COALESCE(AVG(revenue), 0)::float8 AS clv,
+             COALESCE(AVG((orders_count >= 2)::int::float8), 0)::float8 AS repeat_rate
+        FROM life`,
+    [range.start, range.end, channel]);
+  const revenue = Number(totals.rows[0].revenue);
+  const purchases = totals.rows[0].purchases;
+  const customers = life.rows[0].customers;
+  return {
+    revenue,
+    purchases,
+    aov: purchases > 0 ? revenue / purchases : null,
+    clv: customers > 0 ? Number(life.rows[0].clv) : null,
+    repeatRate: customers > 0 ? Number(life.rows[0].repeat_rate) : null,
   };
 }
 

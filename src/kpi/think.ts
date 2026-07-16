@@ -1,8 +1,9 @@
-import type { CanonicalDataset, DateRange } from '@/lib/types';
+import type { CanonicalDataset, DateRange, SalesFacts } from '@/lib/types';
 import type { Kpi } from './types';
 import { inRange, metricSum, metricPresent, ratio, kpi } from './helpers';
 
-export function thinkKpis(data: CanonicalDataset, range: DateRange): Kpi[] {
+// THINK nutzt keine Bestellzahlen; `_facts` nur für die einheitliche Phasen-Signatur.
+export function thinkKpis(data: CanonicalDataset, range: DateRange, _facts?: SalesFacts): Kpi[] {
   const dm = data.dailyMetrics;
   const sessions = metricSum(dm, 'sessions', range);
   const subs = data.subscribers.filter((s) => inRange(s.date, range));

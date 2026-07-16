@@ -14,7 +14,7 @@ export function KanalVergleich({ channels }: { channels: ChannelSummary[] }) {
         {ORDER.map((ch) => {
           const c = by.get(ch);
           return (
-            <Link key={ch} href={`/verkauf/belege?channel=${ch}`}
+            <Link key={ch} href={`/verkauf/kanal/${ch}`}
               className="rounded-lg border border-neutral-200 bg-white p-4 transition hover:border-accent dark:border-neutral-800 dark:bg-neutral-900">
               <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{CHANNEL_LABEL[ch]}</p>
               <p className="mt-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">{eur(c?.revenueNet ?? 0)}</p>
