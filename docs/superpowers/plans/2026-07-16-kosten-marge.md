@@ -253,29 +253,31 @@ export interface OrderCost {
 
 In `src/verkauf/repository.ts` den `type OrderCost` in den Typ-Import (Zeile 8-12) aufnehmen, z.B. am Ende von Zeile 11: `..., type OrderCost,`.
 
+Einen privaten Helper neben `reserveStock` (nach Zeile 79) einfügen — beide Aufrufer nutzen ihn, keine Duplikation:
+
+```ts
+// EK vorzeichenbehaftet einfrieren (Menge×EK; bei Retoure negative Menge ⇒
+// negativer Wareneinsatz). purchase_price ist nullable → ohne EK keine Zeile.
+async function freezeWareneinsatz(c: PoolClient, orderId: string): Promise<void> {
+  await c.query(
+    `INSERT INTO order_costs (order_id, type, amount, source)
+       SELECT $1, 'wareneinsatz', l.quantity * pv.purchase_price, 'berechnet'
+         FROM sales_order_lines l JOIN product_variants pv ON pv.id = l.variant_id
+        WHERE l.order_id = $1 AND pv.purchase_price IS NOT NULL`,
+    [orderId]);
+}
+```
+
 In `createOrder`, direkt **nach** der `for`-Schleife (nach Zeile 100, vor `if (startsAsAuftrag)`):
 
 ```ts
-    // EK zeitgleich mit dem VK einfrieren (vorzeichenbehaftet: Menge×EK).
-    // purchase_price ist nullable → ohne EK keine Zeile.
-    await c.query(
-      `INSERT INTO order_costs (order_id, type, amount, source)
-         SELECT $1, 'wareneinsatz', l.quantity * pv.purchase_price, 'berechnet'
-           FROM sales_order_lines l JOIN product_variants pv ON pv.id = l.variant_id
-          WHERE l.order_id = $1 AND pv.purchase_price IS NOT NULL`,
-      [orderId]);
+    await freezeWareneinsatz(c, orderId);   // EK zeitgleich mit dem VK einfrieren
 ```
 
-In `createReturn`, direkt **nach** dem Insert der gespiegelten Zeilen (nach Zeile 248, vor `writeEvent`), denselben Block mit `creditId`:
+In `createReturn`, direkt **nach** dem Insert der gespiegelten Zeilen (nach Zeile 248, vor `writeEvent`):
 
 ```ts
-    // EK der Gutschrift spiegeln — negative Menge ⇒ negativer Wareneinsatz.
-    await c.query(
-      `INSERT INTO order_costs (order_id, type, amount, source)
-         SELECT $1, 'wareneinsatz', l.quantity * pv.purchase_price, 'berechnet'
-           FROM sales_order_lines l JOIN product_variants pv ON pv.id = l.variant_id
-          WHERE l.order_id = $1 AND pv.purchase_price IS NOT NULL`,
-      [creditId]);
+    await freezeWareneinsatz(c, creditId);  // Gutschrift ⇒ negativer Wareneinsatz
 ```
 
 Am Dateiende von `src/verkauf/repository.ts` `orderCosts()` ergänzen:
