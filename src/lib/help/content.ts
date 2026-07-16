@@ -159,6 +159,14 @@ export const HELP_PAGES: DocPage[] = [
           ] },
         ],
       },
+      {
+        heading: 'Kosten & Deckungsbeitrag',
+        blocks: [
+          { type: 'p', text: 'Jeder Beleg trägt seine zurechenbaren Kosten. Der Wareneinsatz (EK × Menge) wird beim Anlegen des Belegs eingefroren — spätere EK-Änderungen lassen die alte Marge unberührt.' },
+          { type: 'p', text: 'Deckungsbeitrag je Beleg = Umsatz netto − alle Kostenzeilen. Im Kanal-Vergleich kommen periodische Werbekosten hinzu: DB je Kanal = Umsatz − Wareneinsatz − Gebühren − Werbung.' },
+          { type: 'note', text: 'Werbung wird ehrlich als eigene Spalte gezeigt, nicht in der Marge versteckt. Web-Ads (Google/Meta/TikTok) zählen automatisch auf den Shop, Amazon-Ads auf den Marktplatz; zusätzliche Werbekosten lassen sich manuell je Kanal buchen.' },
+        ],
+      },
     ],
   },
   {
@@ -316,6 +324,17 @@ export const HELP_PAGES: DocPage[] = [
           { type: 'p', text: 'Der Beleg ist eine Tabelle mit Status: sales_orders (Angebot/Auftrag/Rechnung/Gutschrift). sales_order_lines hält die Positionen, sales_order_events den Faden (eine Zeile pro Perle). Gutschriften sind sales_orders-Zeilen mit status=retoure, negativen Mengen und related_order_id auf den Ursprung.' },
           { type: 'p', text: 'Verfügbarkeit: warehouses (inkl. Konsignation, is_default), stock_levels je Lager (quantity_on_hand/quantity_reserved), stock_adjustments mit Pflicht-Grund, purchase_orders/purchase_order_lines für den Einkauf.' },
           { type: 'p', text: 'Finanzen: open_items führt Debitoren und Kreditoren in einer Tabelle (direction-Flag); payments bucht Zahlungen, open_item_id ist nullable (nicht zugeordnete Zahlung landet in der Zuordnen-Warteschlange).' },
+        ],
+      },
+      {
+        heading: 'Kosten (order_costs, channel_costs)',
+        blocks: [
+          { type: 'p', text: 'order_costs hält beleggenaue Kosten (Wareneinsatz, Marktplatz-, Fulfillment-, Versand-, Zahlungsgebühr, Retoure, Sonstige). amount ist vorzeichenbehaftet — bei Retouren negativ.' },
+          { type: 'p', text: 'channel_costs hält periodische, nicht-beleggenaue Kosten (Werbung, Lagergebühr, Abo) je Vertriebskanal und Zeitraum.' },
+          { type: 'table', head: ['Tabelle', 'Zurechnung', 'Quelle'], rows: [
+            ['order_costs', 'je Beleg', 'berechnet (EK) / API / manuell'],
+            ['channel_costs', 'je Kanal + Zeitraum', 'API / manuell'],
+          ] },
         ],
       },
     ],
