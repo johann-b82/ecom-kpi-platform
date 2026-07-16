@@ -3,6 +3,7 @@ import type { PoolClient } from 'pg';
 import type { SalesFacts } from '@/lib/types';
 import { parseSort } from '@/lib/sort';
 import { nextOrderNumber } from './number';
+import { mapAdPlatformToChannel } from './ad-channel-map';
 import {
   ORDER_SORT,
   type SalesOrder, type SalesOrderDetail, type SalesOrderEvent, type SalesOrderInput, type SalesOrderLine,
@@ -449,21 +450,55 @@ export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = '
 }
 
 export async function channelSummary(range: DateRange): Promise<ChannelSummary[]> {
-  const r = await pool.query(
+  const rev = await pool.query(
     `SELECT o.channel, COUNT(DISTINCT o.id)::int AS orders,
             COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
         AND o.status NOT IN ('angebot','storniert')
-      GROUP BY o.channel`,
-    [range.start, range.end]);
-  const by = new Map<string, any>(r.rows.map((x: any) => [x.channel, x]));
+      GROUP BY o.channel`, [range.start, range.end]);
+  const costs = await pool.query(
+    `SELECT o.channel,
+            COALESCE(SUM(oc.amount) FILTER (WHERE oc.type = 'wareneinsatz'), 0)::float8 AS wareneinsatz,
+            COALESCE(SUM(oc.amount) FILTER (WHERE oc.type <> 'wareneinsatz'), 0)::float8 AS gebuehren
+       FROM sales_orders o JOIN order_costs oc ON oc.order_id = o.id
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND o.status NOT IN ('angebot','storniert')
+      GROUP BY o.channel`, [range.start, range.end]);
+  const adRows = await pool.query(
+    `SELECT platform, COALESCE(SUM(spend), 0)::float8 AS spend
+       FROM ad_spend WHERE date BETWEEN $1 AND $2 GROUP BY platform`, [range.start, range.end]);
+  const ccRows = await pool.query(
+    `SELECT channel, COALESCE(SUM(amount), 0)::float8 AS amount
+       FROM channel_costs WHERE type = 'werbung' AND period_start BETWEEN $1 AND $2
+      GROUP BY channel`, [range.start, range.end]);
+
+  const revBy = new Map<string, any>(rev.rows.map((x: any) => [x.channel, x]));
+  const costBy = new Map<string, any>(costs.rows.map((x: any) => [x.channel, x]));
+  const werbungBy = new Map<OrderChannel, number>();
+  for (const r of adRows.rows as any[]) {
+    const ch = mapAdPlatformToChannel(r.platform);           // unbekannte Plattform → nicht zugeordnet
+    if (!ch) continue;
+    werbungBy.set(ch, (werbungBy.get(ch) ?? 0) + Number(r.spend));
+  }
+  for (const r of ccRows.rows as any[]) {
+    werbungBy.set(r.channel, (werbungBy.get(r.channel) ?? 0) + Number(r.amount));
+  }
+
   const CH: OrderChannel[] = ['shop', 'b2b_portal', 'marktplatz', 'telefon', 'manuell'];
   return CH.map((channel) => {
-    const row = by.get(channel);
-    const orders = row ? row.orders : 0;
-    const revenueNet = row ? Number(row.revenue) : 0;
-    return { channel, orders, revenueNet, avgOrderValueNet: orders > 0 ? revenueNet / orders : 0 };
+    const rrow = revBy.get(channel);
+    const crow = costBy.get(channel);
+    const orders = rrow ? rrow.orders : 0;
+    const revenueNet = rrow ? Number(rrow.revenue) : 0;
+    const wareneinsatz = crow ? Number(crow.wareneinsatz) : 0;
+    const gebuehren = crow ? Number(crow.gebuehren) : 0;
+    const werbung = werbungBy.get(channel) ?? 0;
+    const db = revenueNet - wareneinsatz - gebuehren - werbung;
+    return {
+      channel, orders, revenueNet, avgOrderValueNet: orders > 0 ? revenueNet / orders : 0,
+      wareneinsatz, gebuehren, werbung, db, dbProzent: revenueNet !== 0 ? db / revenueNet : null,
+    };
   });
 }
 

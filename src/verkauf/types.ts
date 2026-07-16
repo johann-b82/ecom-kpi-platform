@@ -63,6 +63,7 @@ export interface SalesTotals {
 }
 export interface ChannelSummary {
   channel: OrderChannel; revenueNet: number; orders: number; avgOrderValueNet: number;
+  wareneinsatz: number; gebuehren: number; werbung: number; db: number; dbProzent: number | null;
 }
 export interface StatusCount { status: OrderStatus; count: number }
 export interface TopProduct { name: string; sku: string; units: number; revenueNet: number }
