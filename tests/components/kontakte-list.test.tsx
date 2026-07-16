@@ -1,30 +1,48 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
+const push = vi.fn();
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+  usePathname: () => '/kontakte',
+  useSearchParams: () => new URLSearchParams('segment=geschaeft'),
+}));
 
-afterEach(cleanup);
+afterEach(() => { cleanup(); push.mockClear(); });
 
 const rows = [
-  { id: 'a', number: 'K-0001', name: 'Spielwaren Müller GmbH', isCustomer: true, isSupplier: false, status: 'aktiv' },
-  { id: 'b', number: 'K-0002', name: 'Guangzhou ToyCraft Ltd.', isCustomer: false, isSupplier: true, status: 'aktiv' },
+  { id: 'a', number: 'K-0001', name: 'Spielwaren Müller GmbH', isCustomer: true, isSupplier: false, segment: 'geschaeft', city: 'Köln', status: 'aktiv' },
+  { id: 'b', number: 'K-0002', name: 'Guangzhou ToyCraft Ltd.', isCustomer: false, isSupplier: true, segment: 'geschaeft', city: 'Guangzhou', status: 'aktiv' },
 ];
 
-describe('KontakteList', () => {
-  it('filters to suppliers only', async () => {
-    const { KontakteList } = await import('@/components/KontakteList');
-    render(<KontakteList contacts={rows as never} />);
+async function renderList() {
+  const { KontakteList } = await import('@/components/KontakteList');
+  render(<KontakteList rows={rows as never} total={2} page={1} pageSize={50}
+    search="" role="" segment="geschaeft" />);
+}
+
+describe('KontakteList (server-seitig)', () => {
+  it('zeigt Zeilen mit Segment und Ort', async () => {
+    await renderList();
     expect(screen.getByText('Spielwaren Müller GmbH')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Lieferant' }));
-    expect(screen.queryByText('Spielwaren Müller GmbH')).toBeNull();
-    expect(screen.getByText('Guangzhou ToyCraft Ltd.')).toBeTruthy();
+    expect(screen.getByText('Köln')).toBeTruthy();
+    expect(screen.getAllByText('Geschäft').length).toBeGreaterThan(0);
   });
 
-  it('searches by name', async () => {
-    const { KontakteList } = await import('@/components/KontakteList');
-    render(<KontakteList contacts={rows as never} />);
-    fireEvent.change(screen.getByPlaceholderText('Suchen …'), { target: { value: 'guang' } });
-    expect(screen.queryByText('Spielwaren Müller GmbH')).toBeNull();
-    expect(screen.getByText('Guangzhou ToyCraft Ltd.')).toBeTruthy();
+  it('Rolle-Filter ist als URL-Link verdrahtet (server-seitig)', async () => {
+    await renderList();
+    expect(screen.getByRole('link', { name: 'Lieferant' }).getAttribute('href')).toContain('role=lieferant');
+  });
+
+  it('Privat-Segment ist als Filter verlinkt', async () => {
+    await renderList();
+    expect(screen.getByRole('link', { name: 'Privat' }).getAttribute('href')).toContain('segment=privat');
+  });
+
+  it('Suche pusht die Query', async () => {
+    await renderList();
+    fireEvent.change(screen.getByPlaceholderText('Name oder Nummer …'), { target: { value: 'guang' } });
+    fireEvent.keyDown(screen.getByPlaceholderText('Name oder Nummer …'), { key: 'Enter' });
+    expect(push).toHaveBeenCalledWith(expect.stringContaining('q=guang'));
   });
 });

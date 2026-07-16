@@ -1,15 +1,24 @@
 import { pool } from '@/lib/db';
 import { nextContactNumber } from './number';
-import type { Contact, ContactAddress, ContactDetail, ContactInput, ContactPerson } from './types';
+import { parseSort } from '@/lib/sort';
+import {
+  CONTACT_SORT,
+  type Contact, type ContactAddress, type ContactDetail, type ContactInput,
+  type ContactPerson, type ContactRow, type ContactSegment,
+} from './types';
 
-const CONTACT_COLS = `id, tenant_id, number, name, legal_form, is_customer, is_supplier,
+const CONTACT_COLS = `id, tenant_id, number, name, legal_form, is_customer, is_supplier, segment,
   vat_id, tax_country, payment_terms, price_list_id, currency, language, status, notes,
   created_at::text AS created_at`;
+
+const CONTACT_SORT_SQL: Record<string, string> = {
+  number: 't.number', name: 'lower(t.name)', segment: 't.segment', city: 'lower(t.city)', status: 't.status',
+};
 
 function mapContact(x: any): Contact {
   return {
     id: x.id, tenantId: x.tenant_id, number: x.number, name: x.name,
-    legalForm: x.legal_form, isCustomer: x.is_customer, isSupplier: x.is_supplier,
+    legalForm: x.legal_form, isCustomer: x.is_customer, isSupplier: x.is_supplier, segment: x.segment,
     vatId: x.vat_id, taxCountry: x.tax_country, paymentTerms: x.payment_terms,
     priceListId: x.price_list_id, currency: x.currency, language: x.language,
     status: x.status, notes: x.notes, createdAt: x.created_at,
@@ -28,6 +37,49 @@ function mapPerson(x: any): ContactPerson {
 export async function listContacts(): Promise<Contact[]> {
   const r = await pool.query(`SELECT ${CONTACT_COLS} FROM contacts ORDER BY number`);
   return r.rows.map(mapContact);
+}
+
+// Server-seitige Kontakt-Liste: Suche + Rolle + Segment + Sortierung + Pagination.
+// B2C bringt >12k Kontakte — die Liste darf nicht alle Zeilen in den Client laden.
+export async function listContactsPaged(
+  opts: {
+    search?: string; role?: 'kunde' | 'lieferant'; segment?: ContactSegment | 'alle';
+    sort?: string; limit?: number; offset?: number;
+  } = {},
+): Promise<{ rows: ContactRow[]; total: number }> {
+  const { search, role, segment = 'geschaeft', sort, limit = 50, offset = 0 } = opts;
+  const s = parseSort(sort, CONTACT_SORT.allowed, CONTACT_SORT.fallback);
+  const orderBy = `${CONTACT_SORT_SQL[s.col]} ${s.dir === 'desc' ? 'DESC' : 'ASC'}, t.number ASC`;
+
+  const params: any[] = [
+    search ? `%${search}%` : null,
+    role === 'kunde' ? true : null,
+    role === 'lieferant' ? true : null,
+    segment === 'alle' ? null : segment,
+  ];
+  const where = `WHERE ($1::text IS NULL OR c.name ILIKE $1 OR c.number ILIKE $1)
+      AND ($2::boolean IS NULL OR c.is_customer = true)
+      AND ($3::boolean IS NULL OR c.is_supplier = true)
+      AND ($4::text IS NULL OR c.segment = $4)`;
+  const city = `(SELECT a.city FROM contact_addresses a
+                  WHERE a.contact_id = c.id ORDER BY a.is_default DESC NULLS LAST LIMIT 1)`;
+
+  const countRes = await pool.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM contacts c ${where}`, params);
+  const r = await pool.query(
+    `SELECT t.* FROM (
+        SELECT c.id, c.number, c.name, c.is_customer, c.is_supplier, c.segment, c.status,
+               ${city} AS city
+          FROM contacts c
+          ${where}
+     ) t
+     ORDER BY ${orderBy}
+     LIMIT $5 OFFSET $6`, [...params, limit, offset]);
+  const rows: ContactRow[] = r.rows.map((x: any) => ({
+    id: x.id, number: x.number, name: x.name, isCustomer: x.is_customer,
+    isSupplier: x.is_supplier, segment: x.segment, city: x.city, status: x.status,
+  }));
+  return { rows, total: countRes.rows[0].n };
 }
 
 export async function getContact(id: string): Promise<ContactDetail | null> {

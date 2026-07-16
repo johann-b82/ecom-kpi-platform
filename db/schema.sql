@@ -213,6 +213,10 @@ CREATE TABLE IF NOT EXISTS external_references (
   last_synced_at TIMESTAMPTZ,
   raw_payload    JSONB
 );
+-- Idempotency key for connector syncs: the same (source, external id, entity type)
+-- maps to exactly one mirrored entity, so re-running a sync upserts instead of duplicating.
+CREATE UNIQUE INDEX IF NOT EXISTS external_references_source_key
+  ON external_references (source_system, external_id, entity_type);
 
 CREATE TABLE IF NOT EXISTS integration_connections (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -434,3 +438,10 @@ CREATE TABLE IF NOT EXISTS payments (
   method             TEXT NOT NULL CHECK (method IN ('ueberweisung','lastschrift','kreditkarte','paypal','sonstige')),
   external_reference TEXT
 );
+
+-- B2C-Segmentierung (Phase 3): Geschäfts- vs. Privatkunde. Default 'geschaeft'
+-- (bestehende/manuelle Kontakte gelten als Geschäftskunden); WooCommerce-Import
+-- markiert anhand des Billing-Firmennamens.
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS segment TEXT NOT NULL DEFAULT 'geschaeft'
+  CHECK (segment IN ('geschaeft','privat'));
+CREATE INDEX IF NOT EXISTS idx_contacts_segment ON contacts (segment);
