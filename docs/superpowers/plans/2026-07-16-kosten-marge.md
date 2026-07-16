@@ -274,10 +274,14 @@ In `createOrder`, direkt **nach** der `for`-Schleife (nach Zeile 100, vor `if (s
     await freezeWareneinsatz(c, orderId);   // EK zeitgleich mit dem VK einfrieren
 ```
 
-In `createReturn`, direkt **nach** dem Insert der gespiegelten Zeilen (nach Zeile 248, vor `writeEvent`):
+In `createReturn`, direkt **nach** dem Insert der gespiegelten Zeilen (nach Zeile 248, vor `writeEvent`), den **eingefrorenen Original-Wareneinsatz negiert spiegeln** (nicht den Live-EK neu ableiten — sonst driftet die Marge bei nachträglicher EK-Änderung):
 
 ```ts
-    await freezeWareneinsatz(c, creditId);  // Gutschrift ⇒ negativer Wareneinsatz
+    await c.query(
+      `INSERT INTO order_costs (order_id, type, amount, source)
+         SELECT $1, 'wareneinsatz', -amount, 'berechnet'
+           FROM order_costs WHERE order_id = $2 AND type = 'wareneinsatz'`,
+      [creditId, originalOrderId]);
 ```
 
 Am Dateiende von `src/verkauf/repository.ts` `orderCosts()` ergänzen:
