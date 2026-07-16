@@ -5,7 +5,7 @@ import type { ChannelSummary } from '@/verkauf/types';
 
 const row = (channel: ChannelSummary['channel'], o: Partial<ChannelSummary>): ChannelSummary => ({
   channel, revenueNet: 0, orders: 0, avgOrderValueNet: 0,
-  wareneinsatz: 0, gebuehren: 0, werbung: 0, db: 0, dbProzent: null, ...o,
+  wareneinsatz: 0, gebuehren: 0, werbung: 0, db: 0, dbProzent: null, ekUnvollstaendig: false, ...o,
 });
 
 describe('KanalVergleich', () => {

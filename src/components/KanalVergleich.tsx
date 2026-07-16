@@ -42,7 +42,12 @@ export function KanalVergleich({ channels }: { channels: ChannelSummary[] }) {
                   <Link href={`/verkauf/kanal/${c.channel}`} className="text-neutral-900 hover:text-accent dark:text-neutral-100">{CHANNEL_LABEL[c.channel]}</Link>
                 </td>
                 <td className="px-3 text-right tabular-nums">{eur(c.revenueNet)}</td>
-                <td className="px-3 text-right tabular-nums text-neutral-600 dark:text-neutral-400">{eur(c.wareneinsatz)}</td>
+                <td className="px-3 text-right tabular-nums text-neutral-600 dark:text-neutral-400">
+                  {eur(c.wareneinsatz)}
+                  {c.ekUnvollstaendig && (
+                    <div className="anno text-neutral-400 dark:text-neutral-500">EK unvollständig</div>
+                  )}
+                </td>
                 <td className="px-3 text-right tabular-nums text-neutral-600 dark:text-neutral-400">{eur(c.gebuehren)}</td>
                 <td className="px-3 text-right tabular-nums text-neutral-600 dark:text-neutral-400">{eur(c.werbung)}</td>
                 <td className="px-3 text-right tabular-nums font-semibold">{eur(c.db)}</td>

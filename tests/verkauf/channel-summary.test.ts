@@ -62,4 +62,43 @@ describe('channelSummary Kosten', () => {
     const after = (await channelSummary(range)).find((c) => c.channel === 'telefon')!;
     expect(after.werbung - before.werbung).toBeCloseTo(300, 2);
   });
+
+  it('markiert einen Kanal als ekUnvollstaendig, wenn eine gezählte Bestellung eine Variante ohne EK enthält', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const range: DateRange = { start: addDays(today, -1), end: today };
+    const other = await pool.query<{ sku: string; purchase_price: string }>(
+      `SELECT sku, purchase_price FROM product_variants WHERE sku <> 'SJ-BLAU' AND purchase_price IS NOT NULL LIMIT 1`);
+    const noEkSku = other.rows[0].sku;
+    const originalPrice = other.rows[0].purchase_price;
+    await pool.query('UPDATE product_variants SET purchase_price = NULL WHERE sku = $1', [noEkSku]);
+    try {
+      // marktplatz hat aus dem ersten Test bereits eine Bestellung mit vollständigem EK
+      // (SJ-BLAU) → vor dieser neuen Bestellung muss der Kanal noch als vollständig gelten.
+      const complete = (await channelSummary(range)).find((c) => c.channel === 'marktplatz')!;
+      expect(complete.ekUnvollstaendig).toBe(false);
+
+      const o = await createOrder({
+        contactId: MUELLER, channel: 'marktplatz', priceListId: PL_HANDEL,
+        lines: [{ variantId: await variantId(noEkSku), quantity: 1, unitPrice: 20 }],
+      });
+      orderIds.push(o.id);
+      const after = (await channelSummary(range)).find((c) => c.channel === 'marktplatz')!;
+      expect(after.ekUnvollstaendig).toBe(true);
+    } finally {
+      await pool.query('UPDATE product_variants SET purchase_price = $2 WHERE sku = $1', [noEkSku, originalPrice]);
+    }
+  });
+
+  it('zählt eine channel_costs(werbung)-Periode, die den Zeitraum überlappt, auch wenn sie davor beginnt', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const range: DateRange = { start: addDays(today, -1), end: today };
+    const before = (await channelSummary(range)).find((c) => c.channel === 'b2b_portal')!;
+    const cc = await pool.query<{ id: string }>(
+      `INSERT INTO channel_costs (channel, type, period_start, period_end, amount, source)
+       VALUES ('b2b_portal','werbung',$1,$2,150,'manuell') RETURNING id`,
+      [addDays(range.start, -10), range.end]);
+    ccIds.push(cc.rows[0].id);
+    const after = (await channelSummary(range)).find((c) => c.channel === 'b2b_portal')!;
+    expect(after.werbung - before.werbung).toBeCloseTo(150, 2);
+  });
 });

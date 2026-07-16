@@ -470,11 +470,20 @@ export async function channelSummary(range: DateRange): Promise<ChannelSummary[]
        FROM ad_spend WHERE date BETWEEN $1 AND $2 GROUP BY platform`, [range.start, range.end]);
   const ccRows = await pool.query(
     `SELECT channel, COALESCE(SUM(amount), 0)::float8 AS amount
-       FROM channel_costs WHERE type = 'werbung' AND period_start BETWEEN $1 AND $2
+       FROM channel_costs WHERE type = 'werbung' AND period_start <= $2 AND period_end >= $1
       GROUP BY channel`, [range.start, range.end]);
+  const ekRows = await pool.query(
+    `SELECT o.channel, bool_or(pv.purchase_price IS NULL) AS ek_unvollstaendig
+       FROM sales_orders o
+       JOIN sales_order_lines l ON l.order_id = o.id
+       JOIN product_variants pv ON pv.id = l.variant_id
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND o.status NOT IN ('angebot','storniert')
+      GROUP BY o.channel`, [range.start, range.end]);
 
   const revBy = new Map<string, any>(rev.rows.map((x: any) => [x.channel, x]));
   const costBy = new Map<string, any>(costs.rows.map((x: any) => [x.channel, x]));
+  const ekBy = new Map<string, boolean>(ekRows.rows.map((x: any) => [x.channel, x.ek_unvollstaendig]));
   const werbungBy = new Map<OrderChannel, number>();
   for (const r of adRows.rows as any[]) {
     const ch = mapAdPlatformToChannel(r.platform);           // unbekannte Plattform → nicht zugeordnet
@@ -498,6 +507,7 @@ export async function channelSummary(range: DateRange): Promise<ChannelSummary[]
     return {
       channel, orders, revenueNet, avgOrderValueNet: orders > 0 ? revenueNet / orders : 0,
       wareneinsatz, gebuehren, werbung, db, dbProzent: revenueNet !== 0 ? db / revenueNet : null,
+      ekUnvollstaendig: ekBy.get(channel) ?? false,
     };
   });
 }
@@ -545,6 +555,10 @@ export async function getOrderView(id: string): Promise<OrderView | null> {
        JOIN products p ON p.id = v.product_id
       WHERE l.order_id = $1 ORDER BY l.id`, [id]);
   const costs = await orderCosts(id);
+  const ek = await pool.query(
+    `SELECT bool_or(pv.purchase_price IS NULL) AS ek_unvollstaendig
+       FROM sales_order_lines l JOIN product_variants pv ON pv.id = l.variant_id
+      WHERE l.order_id = $1`, [id]);
   return {
     ...base,
     contactName: c.rows[0]?.name ?? '',
@@ -553,6 +567,7 @@ export async function getOrderView(id: string): Promise<OrderView | null> {
       quantity: x.quantity, unitPrice: Number(x.unit_price),
     })),
     events: base.events, costs,
+    ekUnvollstaendig: ek.rows[0]?.ek_unvollstaendig ?? false,
   };
 }
 

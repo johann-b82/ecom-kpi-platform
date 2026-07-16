@@ -43,6 +43,7 @@ export interface OrderViewLine {
 }
 export interface OrderView extends SalesOrder {
   contactName: string; lines: OrderViewLine[]; events: SalesOrderEvent[]; costs: OrderCost[];
+  ekUnvollstaendig: boolean;
 }
 export interface SellableVariant { variantId: string; sku: string; productName: string; available: number }
 export interface CustomerOption {
@@ -64,6 +65,7 @@ export interface SalesTotals {
 export interface ChannelSummary {
   channel: OrderChannel; revenueNet: number; orders: number; avgOrderValueNet: number;
   wareneinsatz: number; gebuehren: number; werbung: number; db: number; dbProzent: number | null;
+  ekUnvollstaendig: boolean;
 }
 export interface MarginTotals {
   revenueNet: number; wareneinsatz: number; gebuehren: number; werbung: number;

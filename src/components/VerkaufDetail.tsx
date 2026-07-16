@@ -92,6 +92,11 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
       {order.costs.length > 0 && (
         <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
           <p className="anno mb-2 text-neutral-500">Deckungsbeitrag</p>
+          {order.ekUnvollstaendig && (
+            <p className="anno mb-2 text-neutral-400 dark:text-neutral-500">
+              Wareneinsatz unvollständig — nicht alle Varianten haben einen EK
+            </p>
+          )}
           <table className="w-full text-sm">
             <tbody>
               <tr className="border-b border-neutral-200 dark:border-neutral-800">
