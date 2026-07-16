@@ -52,7 +52,7 @@ describe('EK-Einfrieren', () => {
     expect(await orderCosts(o.id)).toHaveLength(0);
   });
 
-  it('spiegelt den EK bei createReturn negativ', async () => {
+  it('spiegelt bei createReturn den EINGEFRORENEN Original-EK negativ (kein Drift bei EK-Änderung)', async () => {
     await setEk('SJ-BLAU', 5);
     const o = await createOrder({
       contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
@@ -63,8 +63,12 @@ describe('EK-Einfrieren', () => {
     await transitionOrderStatus(o.id, 'versendet');
     await transitionOrderStatus(o.id, 'rechnung_gestellt');
     await transitionOrderStatus(o.id, 'bezahlt');
+    // EK ändert sich NACH der Bestellung, VOR der Retoure — die Gutschrift muss
+    // trotzdem den ursprünglichen eingefrorenen EK (4×5) spiegeln, nicht 4×99.
+    await setEk('SJ-BLAU', 99);
     const credit = await createReturn(o.id);
     const we = (await orderCosts(credit.id)).filter((c) => c.type === 'wareneinsatz');
-    expect(we[0].amount).toBe(-20);       // -4 × 5
+    expect(we[0].amount).toBe(-20);       // -4 × 5 (Original-EK), nicht -4 × 99
+    await setEk('SJ-BLAU', 5);
   });
 });

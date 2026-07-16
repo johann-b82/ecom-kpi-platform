@@ -259,7 +259,13 @@ export async function createReturn(originalOrderId: string): Promise<SalesOrderD
       `INSERT INTO sales_order_lines (order_id, variant_id, quantity, unit_price)
          SELECT $2, variant_id, -quantity, unit_price FROM sales_order_lines WHERE order_id = $1`,
       [originalOrderId, creditId]);
-    await freezeWareneinsatz(c, creditId);  // Gutschrift ⇒ negativer Wareneinsatz
+    // Gutschrift spiegelt den EINGEFRORENEN Wareneinsatz des Originals negiert —
+    // NICHT den aktuellen EK (sonst driftet die Marge bei nachträglicher EK-Änderung).
+    await c.query(
+      `INSERT INTO order_costs (order_id, type, amount, source)
+         SELECT $1, 'wareneinsatz', -amount, 'berechnet'
+           FROM order_costs WHERE order_id = $2 AND type = 'wareneinsatz'`,
+      [creditId, originalOrderId]);
 
     // Retoure-Perle am URSPRUNGSBELEG
     await writeEvent(c, originalOrderId, 'retoure', 'verkauf');
