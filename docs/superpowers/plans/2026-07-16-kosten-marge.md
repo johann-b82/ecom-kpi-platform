@@ -537,16 +537,18 @@ describe('channelSummary Kosten', () => {
   it('berechnet Wareneinsatz und DB je Kanal aus order_costs', async () => {
     const today = new Date().toISOString().slice(0, 10);
     const range: DateRange = { start: addDays(today, -1), end: today };
-    const before = (await channelSummary(range)).find((c) => c.channel === 'b2b_portal')!;
+    // marktplatz startet als 'auftrag' (wird von channelSummary gezählt; b2b_portal
+    // startet als 'angebot' und wird herausgefiltert) und kein Seed-ad_spend mappt
+    // auf marktplatz → Werbung-Delta 0, db-Delta = Umsatz − Wareneinsatz.
+    const before = (await channelSummary(range)).find((c) => c.channel === 'marktplatz')!;
     const o = await createOrder({
-      contactId: MUELLER, channel: 'b2b_portal', priceListId: PL_HANDEL,
+      contactId: MUELLER, channel: 'marktplatz', priceListId: PL_HANDEL,
       lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 10, unitPrice: 20 }],
     });
     orderIds.push(o.id);
-    const after = (await channelSummary(range)).find((c) => c.channel === 'b2b_portal')!;
+    const after = (await channelSummary(range)).find((c) => c.channel === 'marktplatz')!;
     expect(after.revenueNet - before.revenueNet).toBeCloseTo(200, 2);   // 10×20
     expect(after.wareneinsatz - before.wareneinsatz).toBeCloseTo(50, 2); // 10×5
-    // DB-Zuwachs = Umsatz − Wareneinsatz (b2b hat keine Werbung/Gebühren im Test)
     expect(after.db - before.db).toBeCloseTo(150, 2);
   });
 
