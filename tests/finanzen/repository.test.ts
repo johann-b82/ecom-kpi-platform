@@ -11,6 +11,7 @@ import {
 } from '@/finanzen/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001';
+const GUANGZHOU = 'c1c1c1c1-0000-4000-8000-000000000005'; // reiner Lieferant (is_supplier=true, is_customer=false)
 const PL_HANDEL = 'a1a1a1a1-0000-4000-8000-000000000001';
 const orderIds: string[] = [];
 const kreditorItemIds: string[] = [];
@@ -68,10 +69,11 @@ describe('finanzen repository — read', () => {
     expect(detail!.payments).toHaveLength(0);
   });
 
-  it('listContactOptions liefert Kontakte', async () => {
+  it('listContactOptions liefert nur Lieferanten (für Eingangsrechnung/Kreditor)', async () => {
     const opts = await listContactOptions();
     expect(opts.length).toBeGreaterThan(0);
-    expect(opts.find((o) => o.id === MUELLER)).toBeDefined();
+    expect(opts.find((o) => o.id === GUANGZHOU)).toBeDefined();
+    expect(opts.find((o) => o.id === MUELLER)).toBeUndefined(); // MUELLER ist reiner Kunde
   });
 
   it('listPurchaseOrderOptions liefert Bestellungen mit supplierId und B-Nummer', async () => {
