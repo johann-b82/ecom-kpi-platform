@@ -14,6 +14,13 @@ function kpi(key: string, label: string, value: number | null, unit: Kpi['unit']
   return { key, label, phase: 'do', value, unit, available: value !== null, deltaPct };
 }
 
+const PLATFORM_LABELS: Record<string, string> = {
+  google_ads: 'Google', meta_ads: 'Meta', tiktok_ads: 'TikTok',
+};
+function platformLabel(platform: string): string {
+  return PLATFORM_LABELS[platform] ?? platform;
+}
+
 export function MarketingMargin(
   { current, previous, efficiency }: { current: MarginTotals; previous: MarginTotals; efficiency: PlatformEfficiency[] },
 ) {
@@ -54,7 +61,7 @@ export function MarketingMargin(
             <tbody>
               {rows.map((r) => (
                 <tr key={r.platform} className="border-t border-neutral-200 dark:border-neutral-800">
-                  <td className="py-1">{r.platform}</td>
+                  <td className="py-1">{platformLabel(r.platform)}</td>
                   <td className="text-right tabular-nums">{eur(r.spend)}</td>
                   <td className="text-right tabular-nums">{r.roas === null ? '—' : `${r.roas.toFixed(1)}×`}</td>
                   <td className="text-right tabular-nums">{eur(r.convValue)}</td>
@@ -63,7 +70,7 @@ export function MarketingMargin(
             </tbody>
           </table>
         </div>
-        <p className="anno mt-2 text-xs text-neutral-400">
+        <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">
           * von der Werbeplattform berichtet — überlappend, nicht dedupliziert. Kein Umsatz je Ads-Kanal attribuiert.
         </p>
       </div>
