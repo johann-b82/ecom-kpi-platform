@@ -1,10 +1,12 @@
 import { pool } from '@/lib/db';
 import type { PoolClient } from 'pg';
+import { parseSort } from '@/lib/sort';
 import { nextPurchaseOrderNumber } from './number';
-import type {
-  StockRow, VariantStockDetail, WarehouseStock, StockAdjustmentRow, WarehouseOption,
-  PurchaseOrderRow, PurchaseOrderDetail, PurchaseOrderLine, PurchaseOrderStatus,
-  ReorderSuggestion, SupplierOption, AdjustmentReason, PurchaseOrderInput, GoodsReceipt,
+import {
+  STOCK_SORT,
+  type StockRow, type VariantStockDetail, type WarehouseStock, type StockAdjustmentRow, type WarehouseOption,
+  type PurchaseOrderRow, type PurchaseOrderDetail, type PurchaseOrderLine, type PurchaseOrderStatus,
+  type ReorderSuggestion, type SupplierOption, type AdjustmentReason, type PurchaseOrderInput, type GoodsReceipt,
 } from './types';
 
 export async function listStock(): Promise<StockRow[]> {
@@ -25,6 +27,43 @@ export async function listStock(): Promise<StockRow[]> {
       reorderPoint: x.reorder_point, belowReorder: x.reorder_point > 0 && available < x.reorder_point,
     };
   });
+}
+
+const STOCK_SORT_SQL: Record<string, string> = {
+  sku: 't.sku', product: 'lower(t.product_name)', available: 't.available',
+  reserved: 't.reserved', reorder: 't.reorder_point',
+};
+
+// Server-seitige Bestandsliste: Suche + Filter (unter Meldebestand) + Sortierung
+// + Pagination. Der WooCommerce-Katalog bringt >2500 Varianten.
+export async function listStockPaged(
+  opts: { search?: string; filter?: 'all' | 'below'; sort?: string; limit?: number; offset?: number } = {},
+): Promise<{ rows: StockRow[]; total: number }> {
+  const { search, filter = 'all', sort, limit = 50, offset = 0 } = opts;
+  const s = parseSort(sort, STOCK_SORT.allowed, STOCK_SORT.fallback);
+  const orderBy = `${STOCK_SORT_SQL[s.col]} ${s.dir === 'desc' ? 'DESC' : 'ASC'}, t.sku ASC`;
+  const params: any[] = [search ? `%${search}%` : null, filter === 'below'];
+  const inner = `
+    SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point,
+           COALESCE(SUM(s.quantity_on_hand),0)::int AS on_hand,
+           COALESCE(SUM(s.quantity_reserved),0)::int AS reserved,
+           (COALESCE(SUM(s.quantity_on_hand),0) - COALESCE(SUM(s.quantity_reserved),0))::int AS available
+      FROM product_variants v
+      JOIN products p ON p.id = v.product_id
+      LEFT JOIN stock_levels s ON s.variant_id = v.id
+     WHERE ($1::text IS NULL OR v.sku ILIKE $1 OR p.name ILIKE $1)
+     GROUP BY v.id, v.sku, p.name, v.reorder_point`;
+  const filtered = `SELECT t.* FROM (${inner}) t
+     WHERE ($2::boolean = false OR (t.reorder_point > 0 AND t.available < t.reorder_point))`;
+  const countRes = await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM (${filtered}) f`, params);
+  const r = await pool.query(
+    `SELECT * FROM (${filtered}) t ORDER BY ${orderBy} LIMIT $3 OFFSET $4`, [...params, limit, offset]);
+  const rows: StockRow[] = r.rows.map((x: any) => ({
+    variantId: x.variant_id, sku: x.sku, productName: x.product_name,
+    onHand: x.on_hand, reserved: x.reserved, available: x.available,
+    reorderPoint: x.reorder_point, belowReorder: x.reorder_point > 0 && x.available < x.reorder_point,
+  }));
+  return { rows, total: countRes.rows[0].n };
 }
 
 export async function getVariantStock(variantId: string): Promise<VariantStockDetail | null> {

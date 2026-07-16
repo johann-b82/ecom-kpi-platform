@@ -8,6 +8,12 @@ export interface StockRow {
   onHand: number; reserved: number; available: number;
   reorderPoint: number; belowReorder: boolean;
 }
+
+// Sortierbare Spalten der Bestandsliste (client- und server-seitig geteilt).
+export const STOCK_SORT = {
+  allowed: ['sku', 'product', 'available', 'reserved', 'reorder'] as const,
+  fallback: { col: 'sku', dir: 'asc' } as import('@/lib/sort').Sort,
+};
 export interface WarehouseStock { warehouseId: string; warehouseName: string; onHand: number; reserved: number }
 export interface StockAdjustmentRow {
   id: string; warehouseId: string; delta: number; reason: AdjustmentReason; note: string | null; createdAt: string;
