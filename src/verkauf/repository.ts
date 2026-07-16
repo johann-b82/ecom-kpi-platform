@@ -9,6 +9,7 @@ import {
   type EventStage, type SourceApp, type OrderStatus, type OrderChannel,
   type OrderRow, type OrderView, type SellableVariant, type CustomerOption, type PriceEntry,
   type DateRange, type SalesTotals, type ChannelSummary, type StatusCount, type TopProduct, type RevenuePoint,
+  type OrderCost,
 } from './types';
 
 const ORDER_COLS = `id, tenant_id, number, contact_id, channel, status, price_list_id,
@@ -78,6 +79,17 @@ async function reserveStock(c: PoolClient, orderId: string): Promise<void> {
     [orderId, wh]);
 }
 
+// EK vorzeichenbehaftet einfrieren (Menge×EK; bei Retoure negative Menge ⇒
+// negativer Wareneinsatz). purchase_price ist nullable → ohne EK keine Zeile.
+async function freezeWareneinsatz(c: PoolClient, orderId: string): Promise<void> {
+  await c.query(
+    `INSERT INTO order_costs (order_id, type, amount, source)
+       SELECT $1, 'wareneinsatz', l.quantity * pv.purchase_price, 'berechnet'
+         FROM sales_order_lines l JOIN product_variants pv ON pv.id = l.variant_id
+        WHERE l.order_id = $1 AND pv.purchase_price IS NOT NULL`,
+    [orderId]);
+}
+
 export async function createOrder(input: SalesOrderInput): Promise<SalesOrderDetail> {
   const startsAsAuftrag = input.channel === 'shop' || input.channel === 'marktplatz';
   const status = startsAsAuftrag ? 'auftrag' : 'angebot';
@@ -98,6 +110,7 @@ export async function createOrder(input: SalesOrderInput): Promise<SalesOrderDet
         `INSERT INTO sales_order_lines (order_id, variant_id, quantity, unit_price) VALUES ($1,$2,$3,$4)`,
         [orderId, l.variantId, l.quantity, l.unitPrice]);
     }
+    await freezeWareneinsatz(c, orderId);   // EK zeitgleich mit dem VK einfrieren
     if (startsAsAuftrag) {
       await writeEvent(c, orderId, 'bestellt', 'verkauf', true);
       await reserveStock(c, orderId);
@@ -246,6 +259,7 @@ export async function createReturn(originalOrderId: string): Promise<SalesOrderD
       `INSERT INTO sales_order_lines (order_id, variant_id, quantity, unit_price)
          SELECT $2, variant_id, -quantity, unit_price FROM sales_order_lines WHERE order_id = $1`,
       [originalOrderId, creditId]);
+    await freezeWareneinsatz(c, creditId);  // Gutschrift ⇒ negativer Wareneinsatz
 
     // Retoure-Perle am URSPRUNGSBELEG
     await writeEvent(c, originalOrderId, 'retoure', 'verkauf');
@@ -532,4 +546,14 @@ export async function countOpenQuotes(): Promise<number> {
   const r = await pool.query<{ n: number }>(
     `SELECT COUNT(*)::int AS n FROM sales_orders WHERE status = 'angebot'`);
   return r.rows[0].n;
+}
+
+export async function orderCosts(orderId: string): Promise<OrderCost[]> {
+  const r = await pool.query(
+    `SELECT id, order_id, type, amount, source, source_ref
+       FROM order_costs WHERE order_id = $1 ORDER BY created_at, id`, [orderId]);
+  return r.rows.map((x: any) => ({
+    id: x.id, orderId: x.order_id, type: x.type,
+    amount: Number(x.amount), source: x.source, sourceRef: x.source_ref,
+  }));
 }

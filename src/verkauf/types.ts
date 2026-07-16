@@ -50,6 +50,13 @@ export interface CustomerOption {
 }
 export interface PriceEntry { variantId: string; priceListId: string; amount: number }
 
+export type CostType =
+  | 'wareneinsatz' | 'marktplatzgebuehr' | 'fulfillment' | 'versand' | 'zahlungsgebuehr' | 'retoure' | 'sonstige';
+export type CostSource = 'berechnet' | 'api' | 'manuell';
+export interface OrderCost {
+  id: string; orderId: string; type: CostType; amount: number; source: CostSource; sourceRef: string | null;
+}
+
 export interface DateRange { start: string; end: string } // ISO YYYY-MM-DD, inklusiv
 export interface SalesTotals {
   revenueNet: number; orders: number; avgOrderValueNet: number; openOffers: number;
