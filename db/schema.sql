@@ -394,6 +394,19 @@ CREATE TABLE IF NOT EXISTS stock_adjustments (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Täglicher Bestands-Snapshot je Variante/Lager. Append-only, ein Satz pro Tag;
+-- Quelle für den Bestandsverlauf (WooCommerce liefert keine Historie).
+CREATE TABLE IF NOT EXISTS stock_snapshots (
+  variant_id        UUID NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
+  warehouse_id      UUID NOT NULL REFERENCES warehouses(id),
+  snapshot_date     DATE NOT NULL DEFAULT CURRENT_DATE,
+  quantity_on_hand  INT  NOT NULL,
+  quantity_reserved INT  NOT NULL DEFAULT 0,
+  PRIMARY KEY (variant_id, warehouse_id, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS stock_snapshots_variant_date_idx
+  ON stock_snapshots (variant_id, snapshot_date);
+
 CREATE TABLE IF NOT EXISTS purchase_orders (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id   UUID REFERENCES tenants(id),
