@@ -367,6 +367,13 @@ export const HELP_PAGES: DocPage[] = [
           ] },
         ],
       },
+      {
+        heading: 'Demo-Ads-Daten',
+        blocks: [
+          { type: 'p', text: 'Unter Einstellungen (/setup) können Administratoren Demo-Ads-Daten für Google/Meta/TikTok an- und ausschalten. Damit lassen sich die Ads-Kennzahlen im E-Commerce-Dashboard (Marketing-Effizienz, MER, ROAS, CPM) testen, bevor die echten Werbekonten verbunden sind.' },
+          { type: 'note', text: 'Kein echter API-Aufruf. Ausschalten entfernt nur die Demo-Zeilen; echte Connector-Daten bleiben unberührt.' },
+        ],
+      },
     ],
   },
   {
