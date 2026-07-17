@@ -4,7 +4,7 @@ import { KategorieDetail } from '@/components/KategorieDetail';
 export const dynamic = 'force-dynamic';
 
 export default async function KategoriePage({ params }: { params: { category: string } }) {
-  const category = decodeURIComponent(params.category);
+  const category = params.category;
   const [stock, sales, variants] = await Promise.all([
     stockSeriesByCategory(category, 365),
     salesSeriesByCategory(category, 365),

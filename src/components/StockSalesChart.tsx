@@ -31,7 +31,7 @@ export function StockSalesChart({ stock, sales }: { stock: SeriesPoint[]; sales:
       <div className="mt-3 h-72">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e7e2d9" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={MUTED} strokeOpacity={0.25} vertical={false} />
             <XAxis dataKey="date" tick={TICK} minTickGap={24} />
             <YAxis tick={TICK} width={48} tickFormatter={(n) => num(Number(n))} />
             <Tooltip formatter={(v, n) => [num(Number(v)), n as string]} labelStyle={TOOLTIP_LABEL_STYLE} />
