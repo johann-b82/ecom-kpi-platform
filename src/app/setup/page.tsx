@@ -4,7 +4,7 @@ import { CredentialsForm, type FieldView } from '@/components/CredentialsForm';
 import { listAllConnections } from '@/lib/integrations';
 import { ConnectionsAdmin } from '@/components/ConnectionsAdmin';
 import { BrandingForm } from '@/components/BrandingForm';
-import { getBranding, getSyncInterval } from '@/lib/settings';
+import { getBranding, getSyncInterval, getDemoAdsEnabled } from '@/lib/settings';
 import { listSyncState } from '@/lib/sync/runner';
 import { SyncForm } from '@/components/SyncForm';
 import { UsersForm } from '@/components/UsersForm';
@@ -15,6 +15,7 @@ import { SetupShell } from '@/components/SetupShell';
 import { getUserAccess, listGroups } from '@/lib/groups';
 import { GroupsForm } from '@/components/GroupsForm';
 import { AdminOnlyTag } from '@/components/AdminOnlyTag';
+import { DemoAdsForm } from '@/components/DemoAdsForm';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +32,7 @@ export default async function SetupPage() {
   const oauth = await listOAuthStatus();
   const [syncInterval, syncState] = await Promise.all([getSyncInterval(), listSyncState()]);
   const connections = await listAllConnections();
+  const demoAds = await getDemoAdsEnabled();
   const fields: FieldView[] = [];
   for (const connector of CONNECTORS) {
     for (const f of CONNECTOR_FIELDS[connector]) {
@@ -58,6 +60,7 @@ export default async function SetupPage() {
         </div>
         <ConnectionsAdmin connections={connections} />
         <SyncForm interval={syncInterval} state={syncState} />
+        <DemoAdsForm enabled={demoAds} />
       </div>
     </SetupShell>
   );
