@@ -33,10 +33,14 @@ ALTER TABLE ad_spend ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT f
   aggregieren weiterhin ALLE Zeilen im Zeitraum — `is_demo` ist nur ein
   Lösch-/Herkunfts-Marker, keine Filterspalte in den Reads.
 
-Hinweis (dokumentiert, kein Code): Demo ist für die Vor-Live-Phase gedacht. Ein
-echter Sync macht ohnehin „DELETE WHERE platform=… + INSERT" und ersetzt Demo-Zeilen
-derselben Plattform. Demo gleichzeitig mit echten Daten derselben Plattform zu
-aktivieren würde doppelt zählen — dafür ist der Schalter nicht gedacht.
+Hinweis (dokumentiert): `ad_spend`-PK ist `(date, platform)` — Demo und echt können
+nicht dieselbe (Datum, Plattform)-Zeile belegen. **Ausschalten** ist immer sicher
+(`DELETE WHERE is_demo = true`). **Einschalten** ist für die Vor-Live-Phase gedacht:
+liegen für dieselbe (Datum, Plattform) bereits echte Zeilen (`is_demo=false`) im
+180-Tage-Fenster, schlägt der Demo-INSERT am PK an (Transaktion rollt zurück, keine
+Datenänderung) — der Schalter ist nicht dafür gedacht, neben echten Daten aktiviert
+zu werden. Ein echter Connector-Sync (DELETE WHERE platform=… + INSERT) räumt
+Demo-Zeilen derselben Plattform ohnehin automatisch weg.
 
 ## Zustand: `app_settings`
 
