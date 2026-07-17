@@ -32,6 +32,9 @@ einer reinen Bestandsliste zu einem **Dashboard** ausgebaut.
 1. **Bestandsverlauf:** ab jetzt **snapshotten** (nicht rückwirkend rekonstruieren).
    Kurve startet heute und wächst vorwärts; exakt statt näherungsweise.
 2. **Prognose:** **Verbrauchsrate + Reichweite** (kein Trend-/Saisonmodell).
+   Ø-Verbrauch aus **90-Tage-Fenster**. **Alert-Schwelle: 90 Tage Reichweite** —
+   Nachbestellung erfolgt aus Übersee, die lange Vorlaufzeit erfordert frühe
+   Warnung und ein entsprechend langes Verbrauchsfenster.
 3. **Verortung:** Dashboard **unter `/verfügbarkeit`** — Kategorie-Übersicht mit
    Reorder-Alerts als Einstieg, Artikel-Detail als Drilldown; Bestandsliste bleibt
    erreichbar.
@@ -82,8 +85,8 @@ existiert). Kein neuer Cron-Prozess.
 - **`forecast.ts`**
   - `forecast(variantId, window)` →
     `{ avgDailyConsumption, reichweiteTage, leerAmDatum, reorderPoint, bestellvorschlag }`.
-  - `avgDailyConsumption` = Verkaufsmenge im Fenster / Fenstertage (Default 28 Tage,
-    Fallback 84 Tage-Logik aus `reorder.ts`).
+  - `avgDailyConsumption` = Verkaufsmenge im 90-Tage-Fenster / 90 (Fenster passend
+    zur Übersee-Vorlaufzeit; nutzt die Rechenlogik aus `reorder.ts`).
   - `reichweiteTage` = aktueller Bestand / `avgDailyConsumption` (∞ wenn Verbrauch 0).
   - `leerAmDatum` = heute + `reichweiteTage`.
   - `bestellvorschlag` gesetzt, wenn Bestand ≤ `reorder_point`; Menge über
@@ -96,7 +99,7 @@ existiert). Kein neuer Cron-Prozess.
 ### 2a. Dashboard-Einstieg (`src/app/(shell)/verfuegbarkeit/page.tsx`)
 
 - **KPI-Zeile** (`KpiCard`): Gesamtbestand, Artikel unter Meldebestand,
-  Artikel mit Reichweite < Schwelle.
+  Artikel mit Reichweite < 90 Tagen (Übersee-Vorlaufzeit).
 - **Kategorie-Übersicht** (Tabelle/Kacheln je `products.category`): Bestand,
   Reorder-Alert-Zähler, kürzeste Reichweite → Klick → Kategorie-Ansicht.
 - Bestehende Bestandsliste (`BestandListe`) bleibt erreichbar unter
