@@ -47,3 +47,10 @@ export interface ReorderSuggestion {
   defaultSupplierId: string | null; defaultSupplierName: string | null; suggestedQty: number;
 }
 export interface SupplierOption { id: string; name: string }
+
+// ── Bestandsverlauf / Prognose ──
+export interface SeriesPoint { date: string; value: number }
+export interface VariantForecastInput {
+  variantId: string; sku: string; productName: string;
+  onHand: number; reorderPoint: number; unitsInWindow: number;
+}
