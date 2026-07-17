@@ -11,6 +11,15 @@ export type CatalogMapping = {
   price: number | null;
 };
 
+/** Primäre Kategorie eines Woo-Produkts (erste in categories[]) oder null. */
+export function primaryWooCategory(raw: Record<string, unknown>): string | null {
+  const cats = raw.categories;
+  if (!Array.isArray(cats) || cats.length === 0) return null;
+  const first = cats[0] as { name?: unknown };
+  const name = typeof first?.name === 'string' ? first.name.trim() : '';
+  return name || null;
+}
+
 export function mapProduct(woo: MirrorProduct): CatalogMapping | { skip: 'no-sku' } {
   if (!woo.sku) return { skip: 'no-sku' };
   const n = Number(woo.price);
@@ -115,6 +124,7 @@ export async function importWooCommerceProducts(
 
     const externalId = String(raw.id);
     const payload = JSON.stringify(raw);
+    const category = primaryWooCategory(raw);
     const c = await pool.connect();
     try {
       await c.query('BEGIN');
@@ -145,6 +155,11 @@ export async function importWooCommerceProducts(
           result.created++;
         }
       }
+
+      await c.query(
+        `UPDATE products SET category = COALESCE(category, $2)
+           WHERE id = (SELECT product_id FROM product_variants WHERE id = $1)`,
+        [variantId, category]);
 
       await c.query(
         `INSERT INTO external_references (entity_type, entity_id, source_system, external_id, last_synced_at, raw_payload)
