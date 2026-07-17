@@ -1,6 +1,6 @@
 import { pool } from '@/lib/db';
 import { CONSUMPTION_WINDOW_DAYS } from './forecast';
-import type { SeriesPoint, VariantForecastInput } from './types';
+import type { SeriesPoint, VariantForecastInput, CategoryRollupRow } from './types';
 
 const SALES_FILTER = `o.status NOT IN ('angebot','storniert')`;
 
@@ -69,4 +69,41 @@ export async function getVariantForecastInput(variantId: string): Promise<Varian
     onHand: Number(h.on_hand), reorderPoint: Number(h.reorder_point ?? 0),
     unitsInWindow: Number(units.rows[0].units),
   };
+}
+
+export async function categoryRollup(): Promise<CategoryRollupRow[]> {
+  const r = await pool.query(
+    `WITH sold AS (
+       SELECT l.variant_id, SUM(l.quantity)::int AS units
+         FROM sales_order_lines l JOIN sales_orders o ON o.id = l.order_id
+        WHERE COALESCE(o.placed_at, o.created_at)::date >= CURRENT_DATE - 90
+          AND o.status NOT IN ('angebot','storniert')
+        GROUP BY l.variant_id
+     ),
+     stock AS (
+       SELECT variant_id, SUM(quantity_on_hand)::int AS on_hand
+         FROM stock_levels GROUP BY variant_id
+     )
+     SELECT COALESCE(p.category, 'Ohne Kategorie') AS category,
+            COUNT(*)::int AS variant_count,
+            COALESCE(SUM(st.on_hand), 0)::int AS gesamtbestand,
+            COUNT(*) FILTER (WHERE v.reorder_point > 0
+                              AND COALESCE(st.on_hand, 0) < v.reorder_point)::int AS unter_meldebestand,
+            COUNT(*) FILTER (WHERE COALESCE(sd.units, 0) > 0
+                              AND COALESCE(st.on_hand, 0) < sd.units)::int AS kritisch
+       FROM product_variants v
+       JOIN products p ON p.id = v.product_id
+       LEFT JOIN stock st ON st.variant_id = v.id
+       LEFT JOIN sold sd ON sd.variant_id = v.id
+      GROUP BY COALESCE(p.category, 'Ohne Kategorie')
+      ORDER BY category`);
+  return r.rows.map((x: {
+    category: string; variant_count: number; gesamtbestand: number;
+    unter_meldebestand: number; kritisch: number;
+  }) => ({
+    category: x.category, variantCount: Number(x.variant_count),
+    gesamtbestand: Number(x.gesamtbestand),
+    anzahlUnterMeldebestand: Number(x.unter_meldebestand),
+    anzahlKritisch: Number(x.kritisch),
+  }));
 }
