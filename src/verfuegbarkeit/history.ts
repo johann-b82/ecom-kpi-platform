@@ -1,6 +1,6 @@
 import { pool } from '@/lib/db';
 import { CONSUMPTION_WINDOW_DAYS } from './forecast';
-import type { SeriesPoint, VariantForecastInput, CategoryRollupRow } from './types';
+import type { SeriesPoint, VariantForecastInput, CategoryRollupRow, CategoryVariantRow } from './types';
 
 const SALES_FILTER = `o.status NOT IN ('angebot','storniert')`;
 
@@ -105,6 +105,22 @@ export async function categoryRollup(): Promise<CategoryRollupRow[]> {
     gesamtbestand: Number(x.gesamtbestand),
     anzahlUnterMeldebestand: Number(x.unter_meldebestand),
     anzahlKritisch: Number(x.kritisch),
+  }));
+}
+
+export async function listCategoryVariants(category: string): Promise<CategoryVariantRow[]> {
+  const r = await pool.query(
+    `SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point,
+            COALESCE((SELECT SUM(quantity_on_hand) FROM stock_levels WHERE variant_id = v.id), 0)::int AS on_hand
+       FROM product_variants v JOIN products p ON p.id = v.product_id
+      WHERE COALESCE(p.category, 'Ohne Kategorie') = $1
+      ORDER BY p.name, v.sku`, [category]);
+  return r.rows.map((x: {
+    variant_id: string; sku: string; product_name: string; reorder_point: number; on_hand: number;
+  }) => ({
+    variantId: x.variant_id, sku: x.sku, productName: x.product_name,
+    onHand: Number(x.on_hand), reorderPoint: Number(x.reorder_point ?? 0),
+    belowReorder: Number(x.reorder_point ?? 0) > 0 && Number(x.on_hand) < Number(x.reorder_point),
   }));
 }
 

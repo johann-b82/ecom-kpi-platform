@@ -58,3 +58,7 @@ export interface CategoryRollupRow {
   category: string; variantCount: number; gesamtbestand: number;
   anzahlUnterMeldebestand: number; anzahlKritisch: number;
 }
+export interface CategoryVariantRow {
+  variantId: string; sku: string; productName: string;
+  onHand: number; reorderPoint: number; belowReorder: boolean;
+}
