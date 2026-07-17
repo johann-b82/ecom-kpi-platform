@@ -134,7 +134,10 @@ import { pool } from '@/lib/db';
 import { enableDemoAds, disableDemoAds } from '@/lib/demo-ads';
 import { getDemoAdsEnabled } from '@/lib/settings';
 
-const END = '2026-07-17';
+// Fenster WEIT in der Vergangenheit: darf das von `npm run seed` befüllte
+// Aktuell-180-Tage-ad_spend-Fenster (is_demo=false) nicht überlappen, sonst
+// PK-Konflikt (date,platform). So bleibt der Test CI-sicher + nicht-destruktiv.
+const END = '2020-06-01';
 
 afterAll(async () => {
   await pool.query(`DELETE FROM ad_spend WHERE is_demo = true`);
