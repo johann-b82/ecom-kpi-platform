@@ -31,7 +31,7 @@ export async function stockSeriesByCategory(category: string, days: number): Pro
        FROM stock_snapshots s
        JOIN product_variants v ON v.id = s.variant_id
        JOIN products p ON p.id = v.product_id
-      WHERE p.category = $1 AND s.snapshot_date >= CURRENT_DATE - $2::int
+      WHERE COALESCE(p.category, 'Ohne Kategorie') = $1 AND s.snapshot_date >= CURRENT_DATE - $2::int
       GROUP BY s.snapshot_date ORDER BY s.snapshot_date`, [category, days]);
   return r.rows.map((x: { date: string; value: number }) => ({ date: x.date, value: Number(x.value) }));
 }
@@ -43,7 +43,7 @@ export async function salesSeriesByCategory(category: string, days: number): Pro
        JOIN sales_orders o ON o.id = l.order_id
        JOIN product_variants v ON v.id = l.variant_id
        JOIN products p ON p.id = v.product_id
-      WHERE p.category = $1
+      WHERE COALESCE(p.category, 'Ohne Kategorie') = $1
         AND COALESCE(o.placed_at, o.created_at)::date >= CURRENT_DATE - $2::int
         AND ${SALES_FILTER}
       GROUP BY date ORDER BY date`, [category, days]);
