@@ -1354,7 +1354,99 @@ git commit -m "docs(hilfe): Bestandsverlauf, Prognose & stock_snapshots dokument
 
 ---
 
-### Task 12: Gesamtverifikation & Branch-Abschluss
+### Task 12: Kategorie aus WooCommerce importieren (`products.category`)
+
+**Kontext:** Reines Backend, unabhängig von Tasks 6/8/10 (die behandeln fehlende Kategorie als „Ohne Kategorie" und funktionieren auch ohne diesen Task). Ziel: WooCommerce-Produkte tragen künftig ihre primäre Kategorie, damit die Kategorie-Dimension des Dashboards echte Werte zeigt. Umsetzung von Spec-Abschnitt 1d.
+
+**Files:**
+- Modify: `src/woocommerce/catalog-import.ts` (Helper + `importWooCommerceProducts`)
+- Test: `tests/woocommerce/catalog-category.test.ts` (Create)
+
+**Interfaces:**
+- Consumes: bestehende `importWooCommerceProducts(pool, rawProducts, priceListId)`.
+- Produces: `primaryWooCategory(raw: Record<string, unknown>): string | null` — erste Woo-Kategorie (`categories[0].name`) oder `null`.
+
+**Regeln (Spec 1d):** Primär-Kategorie = `categories[0].name`; leer/fehlt → `NULL`. Manuell gepflegten `products.category`-Wert **nicht** überschreiben (nur `NULL` füllen) — via `COALESCE(category, $neu)`.
+
+- [ ] **Step 1: Failing test für `primaryWooCategory`**
+
+```typescript
+// tests/woocommerce/catalog-category.test.ts
+import { describe, it, expect } from 'vitest';
+import { primaryWooCategory } from '../../src/woocommerce/catalog-import';
+
+describe('primaryWooCategory', () => {
+  it('nimmt die erste Woo-Kategorie', () => {
+    expect(primaryWooCategory({ categories: [{ id: 1, name: 'Spielzeug' }, { id: 2, name: 'Sale' }] }))
+      .toBe('Spielzeug');
+  });
+  it('liefert null bei leerer/fehlender Kategorie', () => {
+    expect(primaryWooCategory({ categories: [] })).toBeNull();
+    expect(primaryWooCategory({})).toBeNull();
+    expect(primaryWooCategory({ categories: [{ id: 1, name: '  ' }] })).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 2: Test rot verifizieren**
+
+Run: `npx vitest run tests/woocommerce/catalog-category.test.ts`
+Expected: FAIL („primaryWooCategory is not exported / not a function").
+
+- [ ] **Step 3: Helper + Import-Mapping implementieren**
+
+In `src/woocommerce/catalog-import.ts` den Helper ergänzen (nahe `mapProduct`):
+
+```typescript
+/** Primäre Kategorie eines Woo-Produkts (erste in categories[]) oder null. */
+export function primaryWooCategory(raw: Record<string, unknown>): string | null {
+  const cats = raw.categories;
+  if (!Array.isArray(cats) || cats.length === 0) return null;
+  const first = cats[0] as { name?: unknown };
+  const name = typeof first?.name === 'string' ? first.name.trim() : '';
+  return name || null;
+}
+```
+
+In `importWooCommerceProducts`, direkt nach `const payload = JSON.stringify(raw);` die Kategorie bestimmen:
+
+```typescript
+      const category = primaryWooCategory(raw);
+```
+
+Und **nach** dem `if/else`, das `variantId` setzt, aber **vor** dem `INSERT INTO external_references`, die Kategorie kollisionssicher füllen (überschreibt manuell gepflegte Werte nicht):
+
+```typescript
+      await c.query(
+        `UPDATE products SET category = COALESCE(category, $2)
+           WHERE id = (SELECT product_id FROM product_variants WHERE id = $1)`,
+        [variantId, category]);
+```
+
+- [ ] **Step 4: Test grün verifizieren**
+
+Run: `npx vitest run tests/woocommerce/catalog-category.test.ts`
+Expected: PASS (beide Fälle).
+
+- [ ] **Step 5: „Nicht überschreiben"-Regel gegen die Test-DB prüfen**
+
+Kurzer Integrationsbeleg (Test-DB `bryx_kosten_test`, nach `set -a; source .env; set +a` + DATABASE_URL-Override): ein Produkt mit manuell gesetzter `category` behält diese nach einem `importWooCommerceProducts`-Lauf mit abweichender Woo-Kategorie; ein Produkt mit `category = NULL` wird gefüllt. Als `node -e`/`tsx`-Skript oder Vitest-DB-Test ausführbar; Ergebnis im Report festhalten. (Falls lokal keine DB erreichbar: auf dem VPS.)
+
+- [ ] **Step 6: Typecheck**
+
+Run: `set -a; source .env; set +a; npx tsc --noEmit`
+Expected: keine Fehler.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add src/woocommerce/catalog-import.ts tests/woocommerce/catalog-category.test.ts
+git commit -m "feat(verfuegbarkeit): products.category aus WooCommerce befüllen (nicht überschreiben)"
+```
+
+---
+
+### Task 13: Gesamtverifikation & Branch-Abschluss
 
 **Files:** keine (Verifikation)
 
@@ -1368,13 +1460,15 @@ Expected: grün, abgesehen von den bekannten, erwarteten Ausfällen (`tests/db/r
 Run: `npx tsc --noEmit && npm run lint`
 Expected: keine Fehler.
 
-- [ ] **Step 3: Deploy auf dem VPS**
+- [ ] **Step 3: Deploy auf dem VPS + Daten befüllen**
 
-Auf dem VPS deployen (bestehender Deploy-Weg des Projekts). Dann `npm run snapshot:stock` einmal manuell ausführen, damit mindestens ein Snapshot existiert.
+Auf dem VPS deployen (bestehender Deploy-Weg des Projekts). Dann:
+1. `npm run import:woocommerce-catalog` — befüllt `products.category` (Task 12) für die Kategorie-Dimension.
+2. `npm run snapshot:stock` — zieht Live-Bestand + schreibt mindestens einen Snapshot, damit die Bestandskurve Daten hat.
 
 - [ ] **Step 4: End-to-End im Browser (VPS)**
 
-Durchklicken und beobachten: `/verfuegbarkeit` (KPIs + Kategorien) → Kategorie → Artikel-Detail (beide Kurven + Prognose) → `/verfuegbarkeit/liste` (Liste unverändert). Reichweite-/Bestellvorschlag-Werte auf Plausibilität prüfen. Dark-Mode auf jeder Seite.
+Durchklicken und beobachten: `/verfuegbarkeit` (KPIs + Kategorien mit echten Kategorienamen) → Kategorie → Artikel-Detail (beide Kurven + Prognose) → `/verfuegbarkeit/liste` (Liste unverändert). Reichweite-/Bestellvorschlag-Werte auf Plausibilität prüfen. Dark-Mode auf jeder Seite.
 
 - [ ] **Step 5: Branch abschließen**
 
@@ -1390,6 +1484,7 @@ Finishing-a-development-branch-Skill nutzen (PR gegen `main`, kein Direkt-Push).
 - **Dashboard unter /verfügbarkeit (nicht nur Liste):** Tasks 7 (Liste → /liste), 8 (Übersicht), 10 (Kategorie). ✓
 - **Artikel- + Kategorie-Ebene:** Tasks 9 + 10. ✓
 - **ERP-Designsystem, Dark-Mode, Recharts-Primitive:** in allen UI-Tasks referenziert. ✓
+- **Kategorie-Befüllung aus WooCommerce (Spec 1d, `products.category`):** Task 12 (`primaryWooCategory` + COALESCE-Fill, manuelle Werte geschützt). ✓
 - **Hilfe-Doku (Datenmodell + Modul):** Task 11. ✓
 - **VPS-Deploy, kein lokaler Lauf; Vitest lokal:** Global Constraints + Verifikationsschritte. ✓
 - **YAGNI-Ausschlüsse (keine Rekonstruktion, kein Trendmodell, keine Multi-Lager-Prognose):** eingehalten — Prognose nutzt Gesamt-`onHand` je Variante. ✓
