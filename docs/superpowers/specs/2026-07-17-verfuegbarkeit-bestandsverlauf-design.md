@@ -94,6 +94,35 @@ existiert). Kein neuer Cron-Prozess.
 - **Kategorie-Rollup** fürs Dashboard: je Kategorie
   `{ gesamtbestand, anzahlUnterMeldebestand, kuerzesteReichweiteTage }`.
 
+### 1d. Kategorie-Befüllung aus WooCommerce (Voraussetzung fürs Rollup)
+
+**Befund:** `products.category` (TEXT) wird heute **nur** von Seed-Daten
+(`src/katalog/seed-data.ts`) und manuell über das Katalog-UI
+(`src/components/KatalogDetail.tsx` → `src/katalog/repository.ts`) geschrieben.
+Der WooCommerce-Katalog-Import (`src/woocommerce/catalog-import.ts`) setzt das
+Feld **nicht** — aus Woo importierte Produkte haben `category = NULL`. Ohne
+Befüllung bleibt das Kategorie-Rollup (1c) und die gesamte Kategorie-Dimension
+des Dashboards (2a, 2c) für reale Produkte leer.
+
+**Kein neuer API-Call nötig:** Der Kategorie-Name steckt bereits im vollen
+`products`-Payload, den `fetchProductsRaw` (`src/woocommerce/mirror.ts`) ohne
+`_fields` zieht (Woo-Feld `categories[]`).
+
+**Entscheidungen:**
+
+1. **Import-Mapping:** In `importWooCommerceProducts` beim Anlegen/Aktualisieren
+   der `products`-Zeile `category` aus dem Woo-Payload setzen.
+2. **Primär-Kategorie-Regel:** Woo erlaubt **mehrere** Kategorien je Produkt, das
+   ERP-Datenmodell trägt bewusst **eine** (TEXT). Regel: `categories[0].name`
+   (erste von Woo gelieferte = primäre Kategorie). Fällt `categories` leer/fehlt →
+   `NULL` (Produkt erscheint im Dashboard unter „Ohne Kategorie").
+3. **Manuellen Wert nicht überschreiben:** Wenn `products.category` bereits gesetzt
+   ist (manuell im Katalog gepflegt), beim Re-Import **nicht** überschreiben —
+   nur `NULL`-Werte aus Woo befüllen. Manuelle Pflege hat Vorrang.
+4. **Backfill bestehender Import-Produkte:** Bereits importierte Produkte mit
+   `category = NULL` werden beim nächsten regulären Katalog-Import automatisch
+   nachgezogen (Regel 3 greift). Kein separates Backfill-Skript.
+
 ## Block 2 — UI, Doku & Tests
 
 ### 2a. Dashboard-Einstieg (`src/app/(shell)/verfuegbarkeit/page.tsx`)
@@ -134,6 +163,9 @@ Bestehende `BestandDetail` erweitern:
   - Snapshot-Idempotenz: zweimal am selben Tag → eine Zeile.
   - Reihen-Queries: Bestand/Verkauf je Variante und je Kategorie.
   - Kategorie-Rollup.
+  - Kategorie-Mapping (1d): Woo `categories[0].name` → `products.category`;
+    leeres `categories` → `NULL`; bereits gesetzte (manuelle) `category` wird beim
+    Re-Import nicht überschrieben.
 - **UI-Verifikation:** Deploy auf dem **VPS** (`root@194.164.204.249`,
   https://budp.lumeapps.de — Projektregel: kein lokaler Lauf) und Dashboard-,
   Detail- und Kategorie-Seiten selbst im Browser durchklicken vor Übergabe.
