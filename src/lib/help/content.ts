@@ -92,7 +92,7 @@ export const HELP_PAGES: DocPage[] = [
             'Liste aller Kontakte mit Kennzeichnung Kunde/Lieferant.',
             'Detailansicht mit Rechnungs-/Lieferadressen und Ansprechpartnern.',
             'Steuer- und Zahlungsdaten (USt-IdNr., Zahlungsziel, Preisliste, Währung).',
-            'Externe Anbindungen: zentral unter Einstellungen (/setup) › App-Verbindungen — nur für Administratoren.',
+            'Externe Anbindungen: zentral unter Einstellungen (/setup) › Verbindungen — nur für Administratoren.',
           ] },
         ],
       },
@@ -118,7 +118,7 @@ export const HELP_PAGES: DocPage[] = [
             'Varianten mit SKU, GTIN, Einkaufspreis und Nachbestellpunkt.',
             'Preise je Preisliste inkl. Staffeln (Mindestmenge).',
             'Bundles und Produktdokumente.',
-            'Externe Anbindungen: zentral unter Einstellungen (/setup) › App-Verbindungen — nur für Administratoren.',
+            'Externe Anbindungen: zentral unter Einstellungen (/setup) › Verbindungen — nur für Administratoren.',
           ] },
         ],
       },
@@ -353,7 +353,6 @@ export const HELP_PAGES: DocPage[] = [
           { type: 'list', items: [
             'Zugangsdaten (connector_credentials): API-Keys/Secrets, verschlüsselt.',
             'OAuth (oauth_connections): Token-basierte Anbindung je Provider.',
-            'Verbindungen je App (integration_connections): Status und letzter Sync.',
           ] },
         ],
       },
@@ -361,9 +360,7 @@ export const HELP_PAGES: DocPage[] = [
         heading: 'Bedienung',
         blocks: [
           { type: 'list', items: [
-            'App-Verbindungen (integration_connections): zentral in Einstellungen (/setup) › App-Verbindungen — nur für Administratoren, alle Apps an einer Stelle. „Verbinden (Demo)" setzt den Status (Stub, kein echter API-Aufruf).',
-            'Plattform-Zugangsdaten & Sync: Einstellungen (/setup) › Verbindungen.',
-            'Status-Vokabular: „nicht verbunden" bzw. „verbunden (Demo)".',
+            'Plattform-Zugangsdaten & Sync: Einstellungen (/setup) › Verbindungen — nur für Administratoren.',
           ] },
         ],
       },
