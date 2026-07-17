@@ -37,21 +37,39 @@ export async function collectStockFromMirror(mirror: MirrorLike): Promise<{ sku:
   return out;
 }
 
+/** Dedupliziert nach SKU (last-write-wins) — verhindert den Aggregations-Trap
+ *  ("ON CONFLICT DO UPDATE command cannot affect row a second time") bei
+ *  INSERT..SELECT-Batches mit doppelten SKUs (z.B. über offset-paginierte
+ *  WooCommerce-Seiten hinweg). Pur, testbar ohne DB. */
+export function dedupeBySku(rows: { sku: string; qty: number }[]): { sku: string; qty: number }[] {
+  const bySku = new Map<string, number>();
+  for (const r of rows) bySku.set(r.sku, r.qty); // last wins
+  return [...bySku].map(([sku, qty]) => ({ sku, qty }));
+}
+
+async function defaultWarehouseId(client: Pool | PoolClient): Promise<string> {
+  const r = await client.query<{ id: string }>('SELECT id FROM warehouses WHERE is_default LIMIT 1');
+  if (r.rows.length === 0) throw new Error('Kein Standardlager (is_default) definiert.');
+  return r.rows[0].id;
+}
+
 /** Upsert der gesammelten Mengen ins Standardlager (match per SKU → variant_id).
  *  Unbekannte SKUs werden ignoriert. Gibt die Zahl geschriebener Zeilen zurück. */
 export async function applyStockLevels(
   client: Pool | PoolClient, rows: { sku: string; qty: number }[],
 ): Promise<number> {
-  if (rows.length === 0) return 0;
-  const skus = rows.map((r) => r.sku);
-  const qtys = rows.map((r) => r.qty);
+  const deduped = dedupeBySku(rows);
+  if (deduped.length === 0) return 0;
+  const warehouseId = await defaultWarehouseId(client);
+  const skus = deduped.map((r) => r.sku);
+  const qtys = deduped.map((r) => r.qty);
   const res = await client.query(
     `INSERT INTO stock_levels (variant_id, warehouse_id, quantity_on_hand)
-     SELECT v.id, (SELECT id FROM warehouses WHERE is_default LIMIT 1), s.qty
+     SELECT v.id, $3::uuid, s.qty
        FROM unnest($1::text[], $2::int[]) AS s(sku, qty)
        JOIN product_variants v ON v.sku = s.sku
      ON CONFLICT (variant_id, warehouse_id)
        DO UPDATE SET quantity_on_hand = EXCLUDED.quantity_on_hand`,
-    [skus, qtys]);
+    [skus, qtys, warehouseId]);
   return res.rowCount ?? 0;
 }

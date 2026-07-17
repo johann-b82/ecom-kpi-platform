@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { collectStockFromMirror } from '../../src/woocommerce/stock-refresh';
+import { collectStockFromMirror, dedupeBySku } from '../../src/woocommerce/stock-refresh';
 
 function page(items: Record<string, unknown>[], totalPages = 1) {
   return { items, totalPages, total: items.length, page: 1 };
@@ -33,5 +33,17 @@ describe('collectStockFromMirror', () => {
     };
     const rows = await collectStockFromMirror(fake as never);
     expect(rows).toEqual([{ sku: 'E', qty: 7 }]);
+  });
+});
+
+describe('dedupeBySku', () => {
+  it('lässt eindeutige SKUs unverändert', () => {
+    const rows = [{ sku: 'A', qty: 5 }, { sku: 'B', qty: 3 }];
+    expect(dedupeBySku(rows)).toEqual(rows);
+  });
+
+  it('behält bei doppelter SKU den letzten Wert (last-write-wins)', () => {
+    const rows = [{ sku: 'A', qty: 5 }, { sku: 'B', qty: 3 }, { sku: 'A', qty: 9 }];
+    expect(dedupeBySku(rows)).toEqual([{ sku: 'A', qty: 9 }, { sku: 'B', qty: 3 }]);
   });
 });
