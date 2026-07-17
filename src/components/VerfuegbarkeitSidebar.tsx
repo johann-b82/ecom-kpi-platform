@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const ITEMS = [
-  { href: '/verfuegbarkeit', label: 'Bestand' },
+  { href: '/verfuegbarkeit', label: 'Übersicht' },
+  { href: '/verfuegbarkeit/liste', label: 'Bestandsliste' },
   { href: '/verfuegbarkeit/wareneingang', label: 'Wareneingang' },
   { href: '/verfuegbarkeit/meldebestand', label: 'Meldebestand' },
 ];
@@ -16,7 +17,7 @@ export function VerfuegbarkeitSidebar() {
       <ul className="space-y-1">
         {ITEMS.map((it) => {
           const active = it.href === '/verfuegbarkeit'
-            ? pathname === '/verfuegbarkeit' || (pathname.startsWith('/verfuegbarkeit/') && !pathname.startsWith('/verfuegbarkeit/wareneingang') && !pathname.startsWith('/verfuegbarkeit/meldebestand'))
+            ? pathname === '/verfuegbarkeit'
             : pathname === it.href || pathname.startsWith(it.href + '/');
           return (
             <li key={it.href}>
