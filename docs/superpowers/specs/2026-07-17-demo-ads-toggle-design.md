@@ -33,14 +33,14 @@ ALTER TABLE ad_spend ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT f
   aggregieren weiterhin ALLE Zeilen im Zeitraum — `is_demo` ist nur ein
   Lösch-/Herkunfts-Marker, keine Filterspalte in den Reads.
 
-Hinweis (dokumentiert): `ad_spend`-PK ist `(date, platform)` — Demo und echt können
-nicht dieselbe (Datum, Plattform)-Zeile belegen. **Ausschalten** ist immer sicher
-(`DELETE WHERE is_demo = true`). **Einschalten** ist für die Vor-Live-Phase gedacht:
-liegen für dieselbe (Datum, Plattform) bereits echte Zeilen (`is_demo=false`) im
-180-Tage-Fenster, schlägt der Demo-INSERT am PK an (Transaktion rollt zurück, keine
-Datenänderung) — der Schalter ist nicht dafür gedacht, neben echten Daten aktiviert
-zu werden. Ein echter Connector-Sync (DELETE WHERE platform=… + INSERT) räumt
-Demo-Zeilen derselben Plattform ohnehin automatisch weg.
+Hinweis (dokumentiert): `ad_spend`-PK ist `(date, platform)`. **Ausschalten** ist
+immer sicher (`DELETE WHERE is_demo = true` — nie echte Zeilen). **Einschalten**
+überschreibt dank `ON CONFLICT (date, platform) DO NOTHING` keine echten Zeilen:
+liegt für eine (Datum, Plattform) bereits eine echte Zeile (`is_demo=false`), bleibt
+sie erhalten und die Demo-Zeile für genau diese Kombination wird übersprungen
+(Demo füllt nur die freien Kombinationen). Kein PK-Crash, kein Datenverlust. Ein
+echter Connector-Sync (DELETE WHERE platform=… + INSERT) räumt Demo-Zeilen derselben
+Plattform ohnehin automatisch weg.
 
 ## Zustand: `app_settings`
 
@@ -59,7 +59,9 @@ Persistiert über den Key `demo_ads_enabled` ('true'/'false'). Neue Helfer in
   - `const { adSpend } = generateSeedData(range)` aus `src/connectors/seed/generator.ts`.
   - In einer Transaktion, je Plattform: `DELETE FROM ad_spend WHERE platform = $1 AND
     is_demo = true` (idempotentes Re-Enable), dann INSERT der Demo-Zeilen mit
-    `is_demo = true` (chunked, analog `insertAdSpend` in den Connectoren).
+    `is_demo = true` (chunked) und **`ON CONFLICT (date, platform) DO NOTHING`** —
+    vorhandene echte Zeilen (`is_demo=false`) bleiben unangetastet, Demo füllt nur
+    die freien (Datum, Plattform); kein PK-Crash.
   - `await setDemoAdsEnabled(true)`.
 - `disableDemoAds(): Promise<void>`
   - `DELETE FROM ad_spend WHERE is_demo = true`.

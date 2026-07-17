@@ -218,7 +218,8 @@ export async function enableDemoAds(endDate: string = new Date().toISOString().s
       });
       await client.query(
         `INSERT INTO ad_spend(date, platform, spend, impressions, clicks, conversions, conv_value, is_demo)
-         VALUES ${tuples.join(',')}`,
+         VALUES ${tuples.join(',')}
+         ON CONFLICT (date, platform) DO NOTHING`,
         values,
       );
     }
