@@ -476,3 +476,6 @@ CREATE TABLE IF NOT EXISTS channel_costs (
   external_ref TEXT
 );
 CREATE INDEX IF NOT EXISTS channel_costs_channel_period_idx ON channel_costs (channel, period_start);
+
+-- Demo-Ads-Toggle (Phase 3): trennt Demo-ad_spend von echten Connector-Daten.
+ALTER TABLE ad_spend ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
