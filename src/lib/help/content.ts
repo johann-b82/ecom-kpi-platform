@@ -198,6 +198,18 @@ export const HELP_PAGES: DocPage[] = [
           { type: 'p', text: 'Meldebestand → Entwurf → Bestellung auslösen → Wareneingang buchen → Bestand steigt → der Artikel fällt aus der Meldebestand-Liste. Wareneingang bucht in das Standardlager; ein Lager pro Wareneingang zu wählen ist bewusst noch nicht vorgesehen.' },
         ],
       },
+      {
+        heading: 'Bestandsverlauf & Nachliefer-Prognose',
+        blocks: [
+          { type: 'p', text: 'Die Übersicht zeigt drei KPIs — Gesamtbestand, Anzahl Artikel unter Meldebestand, Anzahl Artikel mit Reichweite unter 90 Tagen — sowie eine Kategorie-Tabelle mit denselben Kennzahlen je Kategorie.' },
+          { type: 'list', items: [
+            'Artikel-Detail: Bestands- und Verkaufskurve übereinander sowie eine Nachliefer-Prognose mit Ø-Verbrauch über 90 Tage, Reichweite in Tagen, voraussichtlichem Leerdatum und Bestellvorschlag.',
+            'Der Bestellvorschlag erscheint ab einer Reichweite unter 90 Tagen — dem Wiederbeschaffungshorizont für Bestellungen aus Übersee.',
+            'Kategorie-Detail: dieselbe Kurve, über alle Artikel der Kategorie aggregiert.',
+          ] },
+          { type: 'note', text: 'Die Bestandskurve zeigt Daten erst ab dem ersten Snapshot — für Zeiträume davor bleibt sie leer.' },
+        ],
+      },
     ],
   },
   {
@@ -323,6 +335,7 @@ export const HELP_PAGES: DocPage[] = [
         blocks: [
           { type: 'p', text: 'Der Beleg ist eine Tabelle mit Status: sales_orders (Angebot/Auftrag/Rechnung/Gutschrift). sales_order_lines hält die Positionen, sales_order_events den Faden (eine Zeile pro Perle). Gutschriften sind sales_orders-Zeilen mit status=retoure, negativen Mengen und related_order_id auf den Ursprung.' },
           { type: 'p', text: 'Verfügbarkeit: warehouses (inkl. Konsignation, is_default), stock_levels je Lager (quantity_on_hand/quantity_reserved), stock_adjustments mit Pflicht-Grund, purchase_orders/purchase_order_lines für den Einkauf.' },
+          { type: 'p', text: 'stock_snapshots ist der tägliche Bestands-Snapshot je Variante/Lager (snapshot_date, quantity_on_hand, quantity_reserved) — append-only und Quelle für den Bestandsverlauf, da WooCommerce keine Bestandshistorie liefert. Befüllt vom täglichen Job npm run snapshot:stock.' },
           { type: 'p', text: 'Finanzen: open_items führt Debitoren und Kreditoren in einer Tabelle (direction-Flag); payments bucht Zahlungen, open_item_id ist nullable (nicht zugeordnete Zahlung landet in der Zuordnen-Warteschlange).' },
         ],
       },
