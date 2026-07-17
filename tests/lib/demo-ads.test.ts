@@ -3,7 +3,7 @@ import { pool } from '@/lib/db';
 import { enableDemoAds, disableDemoAds } from '@/lib/demo-ads';
 import { getDemoAdsEnabled } from '@/lib/settings';
 
-const END = '2026-07-17';
+const END = '2020-06-01'; // weit in der Vergangenheit — kollidiert nicht mit dem geseedeten Aktuell-180-Tage-Fenster
 
 afterAll(async () => {
   await pool.query(`DELETE FROM ad_spend WHERE is_demo = true`);
