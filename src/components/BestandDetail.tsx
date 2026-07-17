@@ -2,13 +2,19 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import type { VariantStockDetail, WarehouseOption, AdjustmentReason } from '@/verfuegbarkeit/types';
+import type { VariantStockDetail, WarehouseOption, AdjustmentReason, SeriesPoint } from '@/verfuegbarkeit/types';
 import { REASON_LABEL } from '@/verfuegbarkeit/labels';
 import { adjustStockAction } from '@/app/(shell)/verfuegbarkeit/actions';
+import { StockSalesChart } from '@/components/StockSalesChart';
+import { ForecastTile } from '@/components/ForecastTile';
+import type { Forecast } from '@/verfuegbarkeit/forecast';
 
 const REASONS: AdjustmentReason[] = ['inventurdifferenz', 'bruch_schwund', 'korrektur_fehlbuchung'];
 
-export function BestandDetail({ detail, warehouses }: { detail: VariantStockDetail; warehouses: WarehouseOption[] }) {
+export function BestandDetail({ detail, warehouses, stock, sales, forecast }: {
+  detail: VariantStockDetail; warehouses: WarehouseOption[];
+  stock: SeriesPoint[]; sales: SeriesPoint[]; forecast: Forecast | null;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [warehouseId, setWarehouseId] = useState(warehouses[0]?.id ?? '');
@@ -34,10 +40,15 @@ export function BestandDetail({ detail, warehouses }: { detail: VariantStockDeta
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
-        <Link href="/verfuegbarkeit" className="text-brand hover:text-brand-dark">← Bestand</Link>
+        <Link href="/verfuegbarkeit/liste" className="text-brand hover:text-brand-dark">← Bestandsliste</Link>
         <h2 className="text-xl font-bold tracking-tight">{detail.sku}</h2>
         <span className="text-neutral-500">{detail.productName}</span>
         <span className="anno ml-auto text-neutral-500">Meldebestand {detail.reorderPoint > 0 ? detail.reorderPoint : '—'}</span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2"><StockSalesChart stock={stock} sales={sales} /></div>
+        <ForecastTile forecast={forecast} />
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
