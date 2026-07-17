@@ -107,3 +107,14 @@ export async function categoryRollup(): Promise<CategoryRollupRow[]> {
     anzahlKritisch: Number(x.kritisch),
   }));
 }
+
+export async function dashboardKpis(): Promise<{
+  gesamtbestand: number; unterMeldebestand: number; kritisch: number;
+}> {
+  const rows = await categoryRollup();
+  return rows.reduce((a, r) => ({
+    gesamtbestand: a.gesamtbestand + r.gesamtbestand,
+    unterMeldebestand: a.unterMeldebestand + r.anzahlUnterMeldebestand,
+    kritisch: a.kritisch + r.anzahlKritisch,
+  }), { gesamtbestand: 0, unterMeldebestand: 0, kritisch: 0 });
+}
