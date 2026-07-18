@@ -1,9 +1,22 @@
 'use client';
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useShellNav } from '@/components/ShellNav';
 
 export function ModuleSidebar({ children }: { children: ReactNode }) {
   const { open, close } = useShellNav();
+  const [belowLg, setBelowLg] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 1023px)');
+    setBelowLg(mql.matches);
+    const onChange = (e: MediaQueryListEvent) => setBelowLg(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+
+  const offscreen = belowLg && !open;
+
   return (
     <>
       {/* Backdrop: nur <lg, nur wenn offen */}
@@ -27,6 +40,8 @@ export function ModuleSidebar({ children }: { children: ReactNode }) {
           'lg:static lg:z-auto lg:w-56 lg:translate-x-0 lg:translate-y-0 lg:border-r lg:border-neutral-200 lg:shadow-none dark:lg:border-neutral-800',
         ].join(' ')}
         onClick={(e) => { if ((e.target as HTMLElement).closest('a')) close(); }}
+        aria-hidden={offscreen || undefined}
+        {...(offscreen ? ({ inert: '' } as any) : {})}
       >
         {children}
       </aside>

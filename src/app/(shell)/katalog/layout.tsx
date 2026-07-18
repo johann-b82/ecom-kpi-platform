@@ -14,7 +14,7 @@ export default async function KatalogLayout({ children }: { children: ReactNode 
   return (
     <div className="flex flex-1 overflow-hidden">
       <ModuleSidebar><KatalogSidebar /></ModuleSidebar>
-      <main className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6">{children}</main>
+      <main className="flex-1 overflow-y-auto p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6">{children}</main>
     </div>
   );
 }
