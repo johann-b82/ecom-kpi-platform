@@ -19,7 +19,7 @@ export default async function BelegePage({ searchParams }: { searchParams: { cha
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold tracking-tight">Verkauf · Belege</h2>
+      <h2 className="text-xl font-bold tracking-tight">Verkauf · Sales</h2>
       <VerkaufList
         rows={rows} total={total} page={page} pageSize={PAGE_SIZE}
         channel={channel ?? ''} search={search ?? ''}

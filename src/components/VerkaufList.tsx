@@ -68,7 +68,7 @@ export function VerkaufList({ rows, total, page, pageSize, channel, search }:
             </tr>
           ))}
           {rows.length === 0 && (
-            <tr><td colSpan={6} className="py-6 text-center text-neutral-500">Keine Belege.</td></tr>
+            <tr><td colSpan={6} className="py-6 text-center text-neutral-500">Keine Sales.</td></tr>
           )}
         </tbody>
       </table>
@@ -76,7 +76,7 @@ export function VerkaufList({ rows, total, page, pageSize, channel, search }:
         {page > 1
           ? <Link href={href({ channel, search, page: page - 1, sort })} className="rounded bg-neutral-100 px-3 py-1 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200">← Zurück</Link>
           : <span className="rounded px-3 py-1 text-neutral-400 dark:text-neutral-600">← Zurück</span>}
-        <span>{total.toLocaleString('de-DE')} Belege · Seite {page.toLocaleString('de-DE')} von {totalPages.toLocaleString('de-DE')}</span>
+        <span>{total.toLocaleString('de-DE')} Sales · Seite {page.toLocaleString('de-DE')} von {totalPages.toLocaleString('de-DE')}</span>
         {page < totalPages
           ? <Link href={href({ channel, search, page: page + 1, sort })} className="rounded bg-neutral-100 px-3 py-1 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200">Weiter →</Link>
           : <span className="rounded px-3 py-1 text-neutral-400 dark:text-neutral-600">Weiter →</span>}
