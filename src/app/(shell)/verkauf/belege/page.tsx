@@ -15,8 +15,9 @@ export default async function BelegePage({ searchParams }:
   const status = STATUSES.includes(searchParams.status as OrderStatus)
     ? (searchParams.status as OrderStatus) : undefined;
   const search = searchParams.q?.trim() || undefined;
-  const from = searchParams.from || undefined;
-  const to = searchParams.to || undefined;
+  const ISO = /^\d{4}-\d{2}-\d{2}$/;
+  const from = searchParams.from && ISO.test(searchParams.from) ? searchParams.from : undefined;
+  const to = searchParams.to && ISO.test(searchParams.to) ? searchParams.to : undefined;
   const page = Math.max(1, Number.parseInt(searchParams.page ?? '1', 10) || 1);
 
   const { rows, total } = await listOrderRowsPaged({
