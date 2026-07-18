@@ -190,7 +190,7 @@ export const HELP_PAGES: DocPage[] = [
             'Bestandsübersicht: eine Zeile je Artikel mit verfügbar, reserviert und Meldebestand — unter dem Meldebestand wird der Artikel markiert.',
             'Varianten-Detail: Bestand je Lager sowie Bestandskorrektur mit Pflicht-Grund (Inventurdifferenz, Bruch/Schwund, Korrektur Fehlbuchung) und Korrektur-Historie.',
             'Wareneingang: Bestellungen von Entwurf über Bestellt bis Teilweise/Abgeschlossen; gebuchte Mengen erhöhen den Bestand im Standardlager.',
-            'Meldebestand: alle Artikel unter Meldebestand — „Nachbestellung entwerfen" legt eine Bestellung im Status Entwurf beim (vorbelegten) Lieferanten an.',
+            'Meldebestand: alle Artikel mit Reichweite unter 90 Tagen (Bestand kleiner als der Absatz der letzten 90 Tage) — „Nachbestellung entwerfen" legt eine Bestellung im Status Entwurf beim (vorbelegten) Lieferanten an; die Vorschlagsmenge deckt den 90-Tage-Bedarf.',
           ] },
         ],
       },
@@ -203,7 +203,7 @@ export const HELP_PAGES: DocPage[] = [
       {
         heading: 'Bestandsverlauf & Nachliefer-Prognose',
         blocks: [
-          { type: 'p', text: 'Die Übersicht zeigt drei KPIs — Gesamtbestand (anklickbar: Verlaufskurve für den gewählten Zeitraum), Anzahl Artikel unter Meldebestand und Anzahl Artikel mit Reichweite unter 90 Tagen — sowie eine sortier- und filterbare Kategorie-Tabelle mit denselben Kennzahlen je Kategorie. Ein Zeitraum-Selektor (Standard + von-bis) steuert die Kurve.' },
+          { type: 'p', text: 'Die Übersicht zeigt drei KPIs — Gesamtbestand (anklickbar: Verlaufskurve für den gewählten Zeitraum), Warenwert im Lager (Bestand × Einkaufspreis, ebenfalls mit Verlauf) und Anzahl Artikel mit Reichweite unter 90 Tagen (ein Klick führt zum Meldebestand) — sowie eine sortier- und filterbare Kategorie-Tabelle. Ein Zeitraum-Selektor (Standard + von-bis) steuert die Kurven.' },
           { type: 'list', items: [
             'Artikel-Detail: Bestands- und Verkaufskurve übereinander sowie eine Nachliefer-Prognose mit Ø-Verbrauch über 90 Tage, Reichweite in Tagen, voraussichtlichem Leerdatum und Bestellvorschlag.',
             'Der Bestellvorschlag erscheint ab einer Reichweite unter 90 Tagen — dem Wiederbeschaffungshorizont für Bestellungen aus Übersee.',
