@@ -53,20 +53,22 @@ export function BestandDetail({ detail, warehouses, stock, sales, forecast }: {
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
         <p className="anno mb-2 text-neutral-500">Bestand je Lager</p>
-        <table className="w-full text-sm">
-          <thead><tr className="anno text-left text-neutral-500">
-            <th className="py-1">Lager</th><th className="text-right">Bestand</th><th className="text-right">Reserviert</th>
-          </tr></thead>
-          <tbody>
-            {detail.perWarehouse.map((w) => (
-              <tr key={w.warehouseId} className="border-t border-neutral-200 dark:border-neutral-800">
-                <td className="py-1">{w.warehouseName}</td>
-                <td className="text-right">{w.onHand}</td>
-                <td className="text-right text-neutral-500">{w.reserved}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="anno text-left text-neutral-500">
+              <th className="py-1">Lager</th><th className="text-right">Bestand</th><th className="text-right">Reserviert</th>
+            </tr></thead>
+            <tbody>
+              {detail.perWarehouse.map((w) => (
+                <tr key={w.warehouseId} className="border-t border-neutral-200 dark:border-neutral-800">
+                  <td className="py-1">{w.warehouseName}</td>
+                  <td className="text-right">{w.onHand}</td>
+                  <td className="text-right text-neutral-500">{w.reserved}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
@@ -91,18 +93,20 @@ export function BestandDetail({ detail, warehouses, stock, sales, forecast }: {
         {detail.adjustments.length === 0
           ? <p className="text-sm text-neutral-500">Keine Korrekturen.</p>
           : (
-            <table className="w-full text-sm">
-              <tbody>
-                {detail.adjustments.map((a) => (
-                  <tr key={a.id} className="border-t border-neutral-200 dark:border-neutral-800">
-                    <td className="py-1 text-neutral-500">{a.createdAt.slice(0, 10)}</td>
-                    <td className={a.delta < 0 ? 'text-danger' : ''}>{a.delta > 0 ? `+${a.delta}` : a.delta}</td>
-                    <td>{REASON_LABEL[a.reason]}</td>
-                    <td className="text-neutral-500">{a.note ?? ''}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <tbody>
+                  {detail.adjustments.map((a) => (
+                    <tr key={a.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                      <td className="py-1 text-neutral-500">{a.createdAt.slice(0, 10)}</td>
+                      <td className={a.delta < 0 ? 'text-danger' : ''}>{a.delta > 0 ? `+${a.delta}` : a.delta}</td>
+                      <td>{REASON_LABEL[a.reason]}</td>
+                      <td className="text-neutral-500">{a.note ?? ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
       </div>
     </div>

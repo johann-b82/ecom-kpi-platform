@@ -52,33 +52,35 @@ export function Warteschlange({ payments, options }: { payments: UnassignedPayme
         </div>
       </div>
 
-      <table className="w-full text-sm">
-        <thead><tr className="anno text-left text-neutral-500">
-          <th className="py-2">Datum</th><th className="text-right">Betrag</th><th>Methode</th><th>Verwendungszweck</th><th>Zuordnen</th>
-        </tr></thead>
-        <tbody>
-          {payments.map((p) => (
-            <tr key={p.id} className="border-t border-neutral-200 dark:border-neutral-800">
-              <td className="py-2 text-neutral-500">{p.paidAt.slice(0, 10)}</td>
-              <td className="text-right">{eur(p.amount)}</td>
-              <td>{METHOD_LABEL[p.method]}</td>
-              <td className="text-neutral-500">{p.reference ?? ''}</td>
-              <td>
-                <div className="flex items-center gap-2">
-                  <select value={assign[p.id] ?? ''} onChange={(e) => setAssign({ ...assign, [p.id]: e.target.value })} className={input}>
-                    <option value="">— Posten wählen —</option>
-                    {options.map((o) => <option key={o.id} value={o.id}>{o.label} · Rest {eur(o.remaining)}</option>)}
-                  </select>
-                  <button onClick={() => doAssign(p.id)} disabled={pending} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50">Zuordnen</button>
-                </div>
-              </td>
-            </tr>
-          ))}
-          {payments.length === 0 && (
-            <tr><td colSpan={5} className="py-6 text-center text-neutral-500">Keine offenen Zahlungen in der Warteschlange.</td></tr>
-          )}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead><tr className="anno text-left text-neutral-500">
+            <th className="py-2">Datum</th><th className="text-right">Betrag</th><th>Methode</th><th>Verwendungszweck</th><th>Zuordnen</th>
+          </tr></thead>
+          <tbody>
+            {payments.map((p) => (
+              <tr key={p.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                <td className="py-2 text-neutral-500">{p.paidAt.slice(0, 10)}</td>
+                <td className="text-right">{eur(p.amount)}</td>
+                <td>{METHOD_LABEL[p.method]}</td>
+                <td className="text-neutral-500">{p.reference ?? ''}</td>
+                <td>
+                  <div className="flex items-center gap-2">
+                    <select value={assign[p.id] ?? ''} onChange={(e) => setAssign({ ...assign, [p.id]: e.target.value })} className={input}>
+                      <option value="">— Posten wählen —</option>
+                      {options.map((o) => <option key={o.id} value={o.id}>{o.label} · Rest {eur(o.remaining)}</option>)}
+                    </select>
+                    <button onClick={() => doAssign(p.id)} disabled={pending} className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover disabled:opacity-50">Zuordnen</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {payments.length === 0 && (
+              <tr><td colSpan={5} className="py-6 text-center text-neutral-500">Keine offenen Zahlungen in der Warteschlange.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
       {error && <p className="text-sm text-danger">{error}</p>}
     </div>
   );

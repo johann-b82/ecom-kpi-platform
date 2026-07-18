@@ -37,22 +37,24 @@ function RevenueChart({ points }: { points: RevenuePoint[] }) {
 function TopProducts({ items }: { items: TopProduct[] }) {
   return (
     <ChartCard title="Top-Produkte · nach Umsatz">
-      <table className="w-full text-sm">
-        <thead><tr className="anno text-left text-neutral-500">
-          <th className="py-1">Produkt</th><th>SKU</th><th className="text-right">Stück</th><th className="text-right">Umsatz</th>
-        </tr></thead>
-        <tbody>
-          {items.map((p) => (
-            <tr key={p.sku} className="border-t border-neutral-200 dark:border-neutral-800">
-              <td className="py-1.5">{p.name}</td>
-              <td className="font-mono text-xs text-neutral-500">{p.sku}</td>
-              <td className="text-right tabular-nums">{p.units}</td>
-              <td className="text-right tabular-nums">{eur(p.revenueNet)}</td>
-            </tr>
-          ))}
-          {items.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-neutral-500">Keine Daten.</td></tr>}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead><tr className="anno text-left text-neutral-500">
+            <th className="py-1">Produkt</th><th>SKU</th><th className="text-right">Stück</th><th className="text-right">Umsatz</th>
+          </tr></thead>
+          <tbody>
+            {items.map((p) => (
+              <tr key={p.sku} className="border-t border-neutral-200 dark:border-neutral-800">
+                <td className="py-1.5">{p.name}</td>
+                <td className="font-mono text-xs text-neutral-500">{p.sku}</td>
+                <td className="text-right tabular-nums">{p.units}</td>
+                <td className="text-right tabular-nums">{eur(p.revenueNet)}</td>
+              </tr>
+            ))}
+            {items.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-neutral-500">Keine Daten.</td></tr>}
+          </tbody>
+        </table>
+      </div>
     </ChartCard>
   );
 }

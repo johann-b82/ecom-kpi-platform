@@ -179,35 +179,37 @@ export function KatalogDetail({
       {/* Block 3: Preise */}
       <div className={SECTION}>
         <p className={`${ANNO} mb-2`}>Preise</p>
-        <table className="w-full text-sm">
-          <thead><tr className="anno text-left text-neutral-500">
-            <th className="py-1">Variante</th><th>Preisliste</th><th>ab Menge</th><th>Betrag</th><th></th>
-          </tr></thead>
-          <tbody>
-            {product.prices.map((pr) => (
-              <tr key={pr.id} className="border-t border-neutral-200 dark:border-neutral-800">
-                <td className="py-1">{skuOf(pr.variantId)}</td>
-                <td>{plName(pr.priceListId)}</td>
-                <td>{pr.minQty}</td>
-                <td>
-                  <input className={`${INPUT} w-24`} defaultValue={pr.amount ?? ''} disabled={pending}
-                    onBlur={(e) => e.target.value !== (pr.amount ?? '') && start(async () => {
-                      await savePriceAction(
-                        { variantId: pr.variantId, priceListId: pr.priceListId, minQty: pr.minQty,
-                          amount: (e.target.value || null) as never, validFrom: pr.validFrom },
-                        product.id);
-                      router.refresh();
-                    })} />
-                </td>
-                <td>
-                  <button className="text-sm text-neutral-500 hover:text-brand" disabled={pending}
-                    onClick={() => start(async () => { await removePriceAction(pr.id, product.id); router.refresh(); })}>Entfernen</button>
-                </td>
-              </tr>
-            ))}
-            {product.prices.length === 0 && <tr><td colSpan={5} className="py-1 text-neutral-500">Keine Preise.</td></tr>}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="anno text-left text-neutral-500">
+              <th className="py-1">Variante</th><th>Preisliste</th><th>ab Menge</th><th>Betrag</th><th></th>
+            </tr></thead>
+            <tbody>
+              {product.prices.map((pr) => (
+                <tr key={pr.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                  <td className="py-1">{skuOf(pr.variantId)}</td>
+                  <td>{plName(pr.priceListId)}</td>
+                  <td>{pr.minQty}</td>
+                  <td>
+                    <input className={`${INPUT} w-24`} defaultValue={pr.amount ?? ''} disabled={pending}
+                      onBlur={(e) => e.target.value !== (pr.amount ?? '') && start(async () => {
+                        await savePriceAction(
+                          { variantId: pr.variantId, priceListId: pr.priceListId, minQty: pr.minQty,
+                            amount: (e.target.value || null) as never, validFrom: pr.validFrom },
+                          product.id);
+                        router.refresh();
+                      })} />
+                  </td>
+                  <td>
+                    <button className="text-sm text-neutral-500 hover:text-brand" disabled={pending}
+                      onClick={() => start(async () => { await removePriceAction(pr.id, product.id); router.refresh(); })}>Entfernen</button>
+                  </td>
+                </tr>
+              ))}
+              {product.prices.length === 0 && <tr><td colSpan={5} className="py-1 text-neutral-500">Keine Preise.</td></tr>}
+            </tbody>
+          </table>
+        </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <select className={INPUT} value={np.variantId} onChange={(e) => setNp((s) => ({ ...s, variantId: e.target.value }))}>
             <option value="">Variante …</option>

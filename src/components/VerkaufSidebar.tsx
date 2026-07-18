@@ -20,7 +20,7 @@ export function VerkaufSidebar() {
             : pathname === it.href || pathname.startsWith(it.href + '/');
           return (
             <li key={it.href}>
-              <Link href={it.href} className={`block rounded-md px-3 py-1.5 text-sm ${active
+              <Link href={it.href} className={`flex min-h-11 items-center rounded-md px-3 py-1.5 text-sm md:min-h-0 ${active
                 ? 'bg-accent font-medium text-white'
                 : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}>
                 {it.label}

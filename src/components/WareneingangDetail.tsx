@@ -53,35 +53,37 @@ export function WareneingangDetail({ po }: { po: PurchaseOrderDetail }) {
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-        <table className="w-full text-sm">
-          <thead><tr className="anno text-left text-neutral-500">
-            <th className="py-2">SKU</th><th>Artikel</th>
-            <th className="text-right">Bestellt</th><th className="text-right">Eingegangen</th>
-            {canReceive && <th className="text-right">Wareneingang</th>}
-          </tr></thead>
-          <tbody>
-            {po.lines.map((l) => {
-              const open = l.quantityOrdered - l.quantityReceived;
-              return (
-                <tr key={l.id} className="border-t border-neutral-200 dark:border-neutral-800">
-                  <td className="py-2">{l.sku}</td>
-                  <td>{l.productName}</td>
-                  <td className="text-right">{l.quantityOrdered}</td>
-                  <td className="text-right text-neutral-500">{l.quantityReceived}</td>
-                  {canReceive && (
-                    <td className="text-right">
-                      {open > 0
-                        ? <input type="number" min={0} max={open} value={qty[l.id] ?? String(open)}
-                            onChange={(e) => setQty({ ...qty, [l.id]: e.target.value })}
-                            placeholder={String(open)} className={`${input} w-20 text-right`} />
-                        : <span className="text-neutral-500">—</span>}
-                    </td>
-                  )}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="anno text-left text-neutral-500">
+              <th className="py-2">SKU</th><th>Artikel</th>
+              <th className="text-right">Bestellt</th><th className="text-right">Eingegangen</th>
+              {canReceive && <th className="text-right">Wareneingang</th>}
+            </tr></thead>
+            <tbody>
+              {po.lines.map((l) => {
+                const open = l.quantityOrdered - l.quantityReceived;
+                return (
+                  <tr key={l.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                    <td className="py-2">{l.sku}</td>
+                    <td>{l.productName}</td>
+                    <td className="text-right">{l.quantityOrdered}</td>
+                    <td className="text-right text-neutral-500">{l.quantityReceived}</td>
+                    {canReceive && (
+                      <td className="text-right">
+                        {open > 0
+                          ? <input type="number" min={0} max={open} value={qty[l.id] ?? String(open)}
+                              onChange={(e) => setQty({ ...qty, [l.id]: e.target.value })}
+                              placeholder={String(open)} className={`${input} w-20 text-right`} />
+                          : <span className="text-neutral-500">—</span>}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
         {canReceive && (
           <div className="mt-3 flex items-center gap-3">
             <button onClick={receive} disabled={pending}

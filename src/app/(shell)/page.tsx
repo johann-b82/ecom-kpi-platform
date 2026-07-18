@@ -29,7 +29,7 @@ export default async function LaunchpadPage() {
   const hasOverview = signals.monthRevenue !== undefined || signals.reichweite90 !== undefined || signals.openItems !== undefined;
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
       <Launchpad
         apps={accessibleApps(access)}
         greeting="Willkommen zurück."

@@ -19,7 +19,7 @@ export function KontakteSidebar() {
             <li key={href}>
               <Link
                 href={href}
-                className={`block rounded-md px-3 py-1.5 text-sm ${active
+                className={`flex min-h-11 items-center rounded-md px-3 py-1.5 text-sm md:min-h-0 ${active
                   ? 'bg-accent font-medium text-white'
                   : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'}`}
               >
