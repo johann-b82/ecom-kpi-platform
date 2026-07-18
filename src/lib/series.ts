@@ -31,3 +31,15 @@ export function bucketSum(points: SeriesPoint[], bucket: Bucket): SeriesPoint[] 
     .map(([date, value]) => ({ date, value }))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
+
+export function bucketLast(points: SeriesPoint[], bucket: Bucket): SeriesPoint[] {
+  const acc = new Map<string, { date: string; value: number }>();
+  for (const p of points) {
+    const k = bucketKey(p.date, bucket);
+    const cur = acc.get(k);
+    if (!cur || p.date > cur.date) acc.set(k, { date: p.date, value: p.value });
+  }
+  return [...acc.entries()]
+    .map(([key, v]) => ({ date: key, value: v.value }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
