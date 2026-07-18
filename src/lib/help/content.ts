@@ -140,7 +140,7 @@ export const HELP_PAGES: DocPage[] = [
         heading: 'Wichtige Funktionen',
         blocks: [
           { type: 'list', items: [
-            'Belegliste über alle Kanäle mit Kurz-Spur je Zeile.',
+            'Sales-Liste (Belege) über alle Kanäle mit Kurz-Spur je Zeile, sortierbar und filterbar nach Kanal, Status, Datum (von-bis) und Freitext.',
             'Beleg-Detail mit vollständigem, klickbarem Faden (Perlen zeigen Zeitpunkt und Auslöser).',
             'Genau eine primäre Aktion je Status (z. B. In Auftrag wandeln, Rechnung stellen, Retoure anlegen).',
             'Beleg manuell anlegen: Kunde wählen, Positionen erfassen — Preis und Bestand werden vorbelegt.',
@@ -156,6 +156,8 @@ export const HELP_PAGES: DocPage[] = [
             'Status-Funnel: Anzahl Belege je Status von Angebot bis bezahlt.',
             'Umsatz zählt Belege ab Auftrag; Angebote sind Pipeline (eigene Kennzahl), Retouren mindern den Umsatz netto.',
             'Die Shop-/Marketing-KPIs (GA4, Shop, Ads) liegen unter Verkauf → Dashboard.',
+            'Zeitraum: Standardzeiträume (7/30/90/365/Komplett) plus benutzerdefinierter von-bis-Bereich (zwei Datumsfelder → Anwenden).',
+            'KPI-Kacheln Umsatz, Sales und Ø Belegwert sind anklickbar — darunter klappt die jeweilige Verlaufskurve für den gewählten Zeitraum auf (eine gleichzeitig).',
           ] },
         ],
       },
@@ -201,7 +203,7 @@ export const HELP_PAGES: DocPage[] = [
       {
         heading: 'Bestandsverlauf & Nachliefer-Prognose',
         blocks: [
-          { type: 'p', text: 'Die Übersicht zeigt drei KPIs — Gesamtbestand, Anzahl Artikel unter Meldebestand, Anzahl Artikel mit Reichweite unter 90 Tagen — sowie eine Kategorie-Tabelle mit denselben Kennzahlen je Kategorie.' },
+          { type: 'p', text: 'Die Übersicht zeigt drei KPIs — Gesamtbestand (anklickbar: Verlaufskurve für den gewählten Zeitraum), Anzahl Artikel unter Meldebestand und Anzahl Artikel mit Reichweite unter 90 Tagen — sowie eine sortier- und filterbare Kategorie-Tabelle mit denselben Kennzahlen je Kategorie. Ein Zeitraum-Selektor (Standard + von-bis) steuert die Kurve.' },
           { type: 'list', items: [
             'Artikel-Detail: Bestands- und Verkaufskurve übereinander sowie eine Nachliefer-Prognose mit Ø-Verbrauch über 90 Tage, Reichweite in Tagen, voraussichtlichem Leerdatum und Bestellvorschlag.',
             'Der Bestellvorschlag erscheint ab einer Reichweite unter 90 Tagen — dem Wiederbeschaffungshorizont für Bestellungen aus Übersee.',
@@ -233,6 +235,7 @@ export const HELP_PAGES: DocPage[] = [
             'Zuordnen-Warteschlange: nicht zugeordnete Zahlungen (z. B. ohne bekannte Rechnung) erfassen und später einem offenen Posten zuordnen.',
             'Lieferantenrechnung erfassen: legt einen Kreditor-Posten an (optional mit Bestellbezug).',
             'Buchungsexport: CSV aller Posten (Semikolon, Komma-Dezimal, UTF-8) für die weitere Verarbeitung.',
+            'Offene-Posten-Tabelle sortierbar und pro Spalte filterbar (Richtung, Status, Betrag, Rest, Kontakt, Referenz); ein Zeitraum-Selektor (Standard + von-bis) grenzt nach Fälligkeit ein.',
           ] },
         ],
       },
