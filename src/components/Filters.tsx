@@ -9,12 +9,12 @@ const btn = (active: boolean) =>
 const dateInput =
   'rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100';
 
-export function Filters({ range, basePath = '/dashboard' }:
-  { range?: { start: string; end: string }; basePath?: string }) {
+export function Filters({ range, basePath = '/dashboard', defaultKey = '30' }:
+  { range?: { start: string; end: string }; basePath?: string; defaultKey?: string }) {
   const router = useRouter();
   const params = useSearchParams();
   const hasCustom = !!(params.get('start') && params.get('end'));
-  const active = hasCustom ? 'custom' : (params.get('days') ?? '30');
+  const active = hasCustom ? 'custom' : (params.get('days') ?? defaultKey);
   const [from, setFrom] = useState(params.get('start') ?? range?.start ?? '');
   const [to, setTo] = useState(params.get('end') ?? range?.end ?? '');
   const applyCustom = () => { if (from && to) router.push(`${basePath}?start=${from}&end=${to}`); };

@@ -62,7 +62,7 @@ export function OffenePostenListe({ items, debitorOpen, kreditorOpen, overdue, r
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-bold tracking-tight">Finanzen · Offene Posten</h2>
-        <Filters range={range} basePath="/finanzen" />
+        <Filters range={range} basePath="/finanzen" defaultKey="all" />
       </div>
 
       <KpiTrendRow items={kpis} gridClassName="grid gap-3 sm:grid-cols-3" />
