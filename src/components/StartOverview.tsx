@@ -3,7 +3,7 @@ import { eur } from '@/finanzen/format';
 
 export interface OverviewSignals {
   monthRevenue?: number;
-  belowReorder?: number;
+  reichweite90?: number;
   openItems?: number;
   overdue?: number;
 }
@@ -12,9 +12,9 @@ export function StartOverview({ signals }: { signals: OverviewSignals }) {
   const tiles: { label: string; value: string; href: string; danger?: boolean; sub?: string }[] = [];
   if (signals.monthRevenue !== undefined)
     tiles.push({ label: 'Umsatz akt. Monat', value: eur(signals.monthRevenue), href: '/verkauf' });
-  if (signals.belowReorder !== undefined)
-    tiles.push({ label: 'Unter Meldebestand', value: String(signals.belowReorder),
-      href: '/verfuegbarkeit/meldebestand', danger: signals.belowReorder > 0 });
+  if (signals.reichweite90 !== undefined)
+    tiles.push({ label: 'Reichweite < 90 Tage', value: String(signals.reichweite90),
+      href: '/verfuegbarkeit/meldebestand', danger: signals.reichweite90 > 0 });
   if (signals.openItems !== undefined)
     tiles.push({ label: 'Offene Posten', value: eur(signals.openItems), href: '/finanzen',
       sub: (signals.overdue ?? 0) > 0 ? `davon ${eur(signals.overdue!)} überfällig` : undefined });

@@ -19,14 +19,14 @@ export default async function LaunchpadPage() {
     const monthRange = { start: end.slice(0, 8) + '01', end };
     tasks.push(salesTotals(monthRange).then((t) => { signals.monthRevenue = t.revenueNet; }));
   }
-  if (access.apps.verfuegbarkeit) tasks.push(listReorderSuggestions().then((r) => { signals.belowReorder = r.length; }));
+  if (access.apps.verfuegbarkeit) tasks.push(listReorderSuggestions().then((r) => { signals.reichweite90 = r.length; }));
   if (access.apps.finanzen) tasks.push(listOpenItems().then((items) => {
     signals.openItems = items.filter((i) => i.status !== 'bezahlt').reduce((s, i) => s + i.remaining, 0);
     signals.overdue = items.filter((i) => i.overdue).reduce((s, i) => s + i.remaining, 0);
   }));
   await Promise.all(tasks);
 
-  const hasOverview = signals.monthRevenue !== undefined || signals.belowReorder !== undefined || signals.openItems !== undefined;
+  const hasOverview = signals.monthRevenue !== undefined || signals.reichweite90 !== undefined || signals.openItems !== undefined;
 
   return (
     <main className="flex-1 overflow-y-auto">
