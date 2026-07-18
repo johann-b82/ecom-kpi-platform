@@ -30,4 +30,4 @@ export interface PurchaseOrderOption { id: string; number: string; supplierId: s
 export interface KreditorInvoiceInput {
   supplierId: string; amount: number; dueDate: string; reference: string; purchaseOrderId?: string | null;
 }
-export interface OpenItemFilter { direction?: OpenItemDirection; onlyOpen?: boolean }
+export interface OpenItemFilter { direction?: OpenItemDirection; onlyOpen?: boolean; dueFrom?: string; dueTo?: string }

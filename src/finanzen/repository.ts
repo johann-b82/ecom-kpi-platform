@@ -12,6 +12,8 @@ export async function listOpenItems(filter: OpenItemFilter = {}): Promise<OpenIt
   const params: unknown[] = [];
   if (filter.direction) { params.push(filter.direction); where.push(`oi.direction = $${params.length}`); }
   if (filter.onlyOpen) where.push(`oi.status <> 'bezahlt'`);
+  if (filter.dueFrom) { params.push(filter.dueFrom); where.push(`oi.due_date >= $${params.length}`); }
+  if (filter.dueTo) { params.push(filter.dueTo); where.push(`oi.due_date <= $${params.length}`); }
   const clause = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const r = await pool.query(
     `SELECT oi.id, oi.direction, c.name AS contact_name, oi.reference,
