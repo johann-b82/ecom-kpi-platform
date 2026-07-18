@@ -6,7 +6,6 @@ const ITEMS = [
   { href: '/verkauf', label: 'Übersicht' },
   { href: '/verkauf/dashboard', label: 'E-Commerce' },
   { href: '/verkauf/woocommerce', label: 'WooCommerce' },
-  { href: '/verkauf/neu', label: 'Neuer Beleg' },
 ];
 
 export function VerkaufSidebar() {
