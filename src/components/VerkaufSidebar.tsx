@@ -11,7 +11,7 @@ const ITEMS = [
 export function VerkaufSidebar() {
   const pathname = usePathname();
   return (
-    <nav className="w-56 shrink-0 overflow-y-auto border-r border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+    <nav className="h-full w-full overflow-y-auto bg-white p-3 dark:bg-neutral-900">
       <p className="mb-3 px-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Verkauf</p>
       <ul className="space-y-1">
         {ITEMS.map((it) => {
