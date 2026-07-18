@@ -27,7 +27,9 @@ export function KpiTrendRow({ items, gridClassName }:
         {items.map((i) => {
           const clickable = !!i.series;
           const isOpen = open === i.key && clickable;
-          const hover = (clickable || i.href) ? 'transition hover:ring-2 hover:ring-accent/40' : '';
+          // transition-colors (nicht transition): Ring/box-shadow schaltet sofort,
+          // sonst faden beim Kachelwechsel alter + neuer Ring kurz gleichzeitig (Flackern).
+          const hover = (clickable || i.href) ? 'transition-colors hover:ring-2 hover:ring-accent/40' : '';
           const activeCls = isOpen
             ? 'ring-2 ring-accent ring-offset-2 ring-offset-neutral-0 dark:ring-offset-neutral-950 bg-accent/10 dark:bg-accent/15'
             : '';
