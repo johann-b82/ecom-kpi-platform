@@ -10,7 +10,7 @@ export function ModuleSidebar({ children }: { children: ReactNode }) {
       <div
         onClick={close}
         aria-hidden="true"
-        className={`fixed inset-0 z-30 bg-black/40 transition-opacity lg:hidden ${
+        className={`fixed inset-0 z-30 bg-neutral-950/40 transition-opacity lg:hidden ${
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       />
