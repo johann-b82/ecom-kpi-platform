@@ -8,6 +8,7 @@ import {
   adjustStock, createDraftPurchaseOrder, markPurchaseOrderOrdered, receiveGoods,
   cancelPurchaseOrder, getPurchaseOrder,
 } from '@/verfuegbarkeit/repository';
+import { categoryRollup } from '@/verfuegbarkeit/history';
 
 async function variantId(sku: string): Promise<string> {
   const r = await pool.query<{ id: string }>('SELECT id FROM product_variants WHERE sku = $1', [sku]);
@@ -64,12 +65,15 @@ describe('verfuegbarkeit repository — read', () => {
     expect(whs.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('listReorderSuggestions flaggt SJ-ROT (unter Meldebestand), nicht SJ-BLAU', async () => {
-    const sugg = await listReorderSuggestions();
-    expect(sugg.some((s) => s.sku === 'SJ-ROT')).toBe(true);
-    expect(sugg.some((s) => s.sku === 'SJ-BLAU')).toBe(false); // 40 on_hand, reorder 0/niedrig
-    const sjrot = sugg.find((s) => s.sku === 'SJ-ROT')!;
-    expect(sjrot.suggestedQty).toBeGreaterThan(0);
+  it('listReorderSuggestions == kritisch-Zähler; suggestedQty/Reichweite konsistent', async () => {
+    const [sugg, rollup] = await Promise.all([listReorderSuggestions(), categoryRollup()]);
+    const kritischTotal = rollup.reduce((a, r) => a + r.anzahlKritisch, 0);
+    expect(sugg.length).toBe(kritischTotal);            // KPI-Zahl == Zeilenzahl
+    for (const s of sugg) {
+      expect(s.onHand).toBeLessThan(s.units90d);         // Reichweite < 90 Tage
+      expect(s.suggestedQty).toBe(Math.max(1, s.units90d - s.onHand));
+      expect(s.reichweiteTage).toBe(Math.round((s.onHand * 90) / s.units90d));
+    }
   });
 });
 

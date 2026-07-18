@@ -146,23 +146,40 @@ export async function getPurchaseOrder(id: string): Promise<PurchaseOrderDetail 
 }
 
 export async function listReorderSuggestions(): Promise<ReorderSuggestion[]> {
+  // Kriterium wie categoryRollup „kritisch": on_hand (über alle Lager) < Absatz der
+  // letzten 90 Tage. Dadurch gilt: Anzahl Zeilen == Σ anzahlKritisch des Rollups.
   const r = await pool.query(
-    `SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point,
-            p.default_supplier_id, sup.name AS default_supplier_name,
-            (COALESCE(SUM(s.quantity_on_hand),0) - COALESCE(SUM(s.quantity_reserved),0))::int AS available
+    `WITH sold AS (
+       SELECT l.variant_id, SUM(l.quantity)::int AS units
+         FROM sales_order_lines l JOIN sales_orders o ON o.id = l.order_id
+        WHERE COALESCE(o.placed_at, o.created_at)::date >= CURRENT_DATE - 90
+          AND o.status NOT IN ('angebot','storniert')
+        GROUP BY l.variant_id
+     ),
+     stock AS (
+       SELECT variant_id, SUM(quantity_on_hand)::int AS on_hand FROM stock_levels GROUP BY variant_id
+     )
+     SELECT v.id AS variant_id, v.sku, p.name AS product_name,
+            COALESCE(st.on_hand, 0)::int AS on_hand, sd.units::int AS units_90d,
+            p.default_supplier_id, sup.name AS default_supplier_name
        FROM product_variants v
        JOIN products p ON p.id = v.product_id
+       JOIN sold sd ON sd.variant_id = v.id
+       LEFT JOIN stock st ON st.variant_id = v.id
        LEFT JOIN contacts sup ON sup.id = p.default_supplier_id
-       LEFT JOIN stock_levels s ON s.variant_id = v.id
-      WHERE v.reorder_point > 0
-      GROUP BY v.id, v.sku, p.name, v.reorder_point, p.default_supplier_id, sup.name
-     HAVING (COALESCE(SUM(s.quantity_on_hand),0) - COALESCE(SUM(s.quantity_reserved),0)) < v.reorder_point
-      ORDER BY v.sku`);
-  return r.rows.map((x) => ({
-    variantId: x.variant_id, sku: x.sku, productName: x.product_name, reorderPoint: x.reorder_point,
-    available: x.available, defaultSupplierId: x.default_supplier_id, defaultSupplierName: x.default_supplier_name,
-    suggestedQty: Math.max(1, x.reorder_point * 2 - x.available),
-  }));
+      WHERE sd.units > 0 AND COALESCE(st.on_hand, 0) < sd.units
+      ORDER BY (COALESCE(st.on_hand,0)::float / NULLIF(sd.units,0)) ASC, v.sku`);
+  return r.rows.map((x) => {
+    const onHand = Number(x.on_hand);
+    const units90d = Number(x.units_90d);
+    return {
+      variantId: x.variant_id, sku: x.sku, productName: x.product_name,
+      onHand, units90d,
+      reichweiteTage: units90d > 0 ? Math.round((onHand * 90) / units90d) : null,
+      defaultSupplierId: x.default_supplier_id, defaultSupplierName: x.default_supplier_name,
+      suggestedQty: Math.max(1, units90d - onHand),
+    };
+  });
 }
 
 async function defaultWarehouseId(c: PoolClient): Promise<string> {

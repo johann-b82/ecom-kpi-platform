@@ -43,7 +43,8 @@ export interface GoodsReceipt { lineId: string; quantity: number }
 
 // ── Meldebestand ──
 export interface ReorderSuggestion {
-  variantId: string; sku: string; productName: string; reorderPoint: number; available: number;
+  variantId: string; sku: string; productName: string;
+  onHand: number; units90d: number; reichweiteTage: number | null;
   defaultSupplierId: string | null; defaultSupplierName: string | null; suggestedQty: number;
 }
 export interface SupplierOption { id: string; name: string }
