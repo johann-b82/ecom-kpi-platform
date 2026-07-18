@@ -47,7 +47,7 @@ export function BpmSidebar() {
                     href={href}
                     className={`block rounded-md px-3 py-1.5 text-sm ${
                       isActive
-                        ? 'bg-brand font-medium text-white'
+                        ? 'bg-accent font-medium text-white'
                         : 'text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800'
                     }`}
                   >

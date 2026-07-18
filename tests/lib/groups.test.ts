@@ -23,7 +23,7 @@ describe('getUserAccess', () => {
      .mockResolvedValueOnce({ rows: [{ n: 0 }] } as never);
     const a = await getUserAccess('u1');
     expect(a.isAdmin).toBe(true);
-    expect(a.apps).toEqual({ dashboard: 'edit', brickpm: 'edit' });
+    expect(a.apps).toEqual({ brickpm: 'edit', kontakte: 'edit', katalog: 'edit', verkauf: 'edit', verfuegbarkeit: 'edit', finanzen: 'edit', hilfe: 'edit' });
   });
 
   it('aggregates the strongest right per app and admin from any admin group', async () => {
@@ -78,7 +78,7 @@ describe('requireAppAccess', () => {
   it('throws when the user has no access to the requested app at all', async () => {
     mockUser('u1');
     q().mockResolvedValue({ rows: [{ is_admin: false, app: 'brickpm', permission: 'edit' }] } as never);
-    await expect(requireAppAccess('dashboard')).rejects.toThrow(/Kein Zugriff/i);
+    await expect(requireAppAccess('kontakte')).rejects.toThrow(/Kein Zugriff/i);
   });
 
   it('throws when unauthenticated', async () => {

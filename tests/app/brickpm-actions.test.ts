@@ -5,7 +5,7 @@ vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
 vi.mock('@/brickpm/repository', () => ({ setNotificationStatus: vi.fn(), simulateIntegration: vi.fn() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
-import { changeNotificationStatus, simulateSync } from '@/app/brickpm/actions';
+import { changeNotificationStatus, simulateSync } from '@/app/(shell)/brickpm/actions';
 import { requireAppAccess } from '@/lib/groups';
 import { createClient } from '@/lib/supabase/server';
 import { setNotificationStatus, simulateIntegration } from '@/brickpm/repository';

@@ -29,3 +29,13 @@ export interface CanonicalDataset {
   adSpend: AdSpend[];
   subscribers: Subscriber[];
 }
+
+// Verkaufs-/Bestellzahlen aus den echten Belegen (sales_orders, gespeist aus
+// WooCommerce) — überschreiben im E-Commerce-Dashboard die GA4-Schätzwerte.
+export interface SalesFacts {
+  revenue: number;            // Netto-Umsatz im Zeitraum
+  purchases: number;          // Anzahl Käufe (Belege) im Zeitraum
+  aov: number | null;         // Warenkorbwert = revenue / purchases
+  clv: number | null;         // Ø Lifetime-Umsatz aktiver Kunden
+  repeatRate: number | null;  // Anteil aktiver Kunden mit >= 2 Belegen (lifetime)
+}

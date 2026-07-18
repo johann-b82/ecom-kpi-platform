@@ -8,10 +8,10 @@ export interface Branding {
 }
 
 export const BRANDING_DEFAULTS: Branding = {
-  title: 'Unified Data Platform',
+  title: 'bryx',
   tagline: 'Own the core',
   logo: null,
-  color: '#D9004C',
+  color: '#d9004c',
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -84,4 +84,22 @@ export async function setBranding(b: Partial<Branding>): Promise<void> {
       [key, value],
     );
   }
+}
+
+/** Ob Demo-Ads-Daten im Dashboard aktiv sind. Default false. */
+export async function getDemoAdsEnabled(): Promise<boolean> {
+  try {
+    const res = await pool.query("SELECT value FROM app_settings WHERE key = 'demo_ads_enabled'");
+    return res.rows[0]?.value === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export async function setDemoAdsEnabled(enabled: boolean): Promise<void> {
+  await pool.query(
+    `INSERT INTO app_settings(key, value, updated_at) VALUES('demo_ads_enabled', $1, now())
+     ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = now()`,
+    [enabled ? 'true' : 'false'],
+  );
 }

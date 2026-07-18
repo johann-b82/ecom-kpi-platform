@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; --brand: #D9004C; --brand-dark: #B0003D; }
+:root {
+  color-scheme: light;
+  /* White-label brand — overridden at runtime by RootLayout inline style (getBranding).
+     Default is the bryx brand magenta; a customer white-label swaps it via getBranding. */
+  --brand: #d9004c;
+  --brand-dark: #b2003e;
+  /* Design-system accent maps onto the white-label brand. */
+  --accent: var(--brand);
+  --accent-hover: var(--brand-dark);
+}
 .dark { color-scheme: dark; }
+/* Base type scale: responsive root so the rem-based Tailwind scale stays dense on
+   laptops (~17-18px) and grows on large desktop displays (~21px), instead of the
+   browser default 16px reading too small on big monitors. Absolute-px micro labels
+   (.anno, AppRail) deliberately stay put. */
+html { font-size: clamp(16px, 13px + 0.35vw, 21px); }
 body { @apply bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100; }
+
+/* Micro-labels / table headers / annotations (DM Mono, uppercase, wide). */
+.anno {
+  font-family: var(--font-dm-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #9a9488;
+}
+
+.bpm-focus { box-shadow: inset 3px 0 0 0 var(--brand); background: color-mix(in srgb, var(--brand) 8%, transparent); }

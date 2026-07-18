@@ -9,3 +9,32 @@
 - This overrides the global engineering guideline about deploying locally via
   Docker as part of testing. Automated tests (`npx vitest`) still run locally;
   only the running/deployed app must live on the VPS.
+
+## Design-Standard
+
+The warm Amber **ERP design system** is the binding frontend standard. Full
+reference: `docs/design/design-system.md`. Non-negotiable rules:
+
+- Accent color always via `--accent` (which maps to `var(--brand)`) — never a
+  hardcoded competing accent.
+- Warm `neutral` palette only — no cold gray/slate/zinc/stone, no pure
+  white/black outside the `neutral-0`/`neutral-950` tokens.
+- Fonts: Plus Jakarta Sans (`font-sans`) + DM Mono (`font-mono`, `.anno` for
+  UPPERCASE micro-labels — the only sanctioned uppercase styling).
+- Dark mode is required for anything new (`dark:` variants on the warmed
+  `neutral` scale).
+- White-label must keep working (`getBranding()` → `RootLayout` inline style).
+- New apps register in `src/lib/apps.ts` and mount under the `(shell)` route
+  group.
+
+## Dokumentation
+
+- Das Hilfe-Modul (`/hilfe`, Inhalte in `src/lib/help/content.ts`) ist die
+  gepflegte Nutzer- **und** Admin-Doku. Bei jeder relevanten Funktionsänderung
+  mitpflegen:
+  - Neues Modul/neue App → Modul-Hilfeseite ergänzen und in `content.ts`
+    registrieren (der Registry-Test `tests/lib/help-content.test.ts` erzwingt,
+    dass jede App eine Hilfeseite hat).
+  - Änderung am Datenmodell → Admin-Seite `datenmodell` aktualisieren.
+  - Neue Verbindung/Connector oder Zugriffslogik → `verbindungen` bzw.
+    `rollen-gruppen` aktualisieren.

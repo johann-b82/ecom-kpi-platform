@@ -81,4 +81,17 @@ describe('RLS on KPI tables', () => {
       }
     });
   }
+
+  for (const t of ['sales_orders','sales_order_lines','sales_order_events','warehouses','stock_levels','stock_adjustments','purchase_orders','purchase_order_lines','open_items','payments']) {
+    it(`authenticated is denied on ${t}`, async () => {
+      const c = await pool.connect();
+      try {
+        await c.query('SET ROLE authenticated');
+        await expect(c.query(`SELECT count(*) FROM ${t}`)).rejects.toThrow(/permission denied/i);
+      } finally {
+        await c.query('RESET ROLE');
+        c.release();
+      }
+    });
+  }
 });

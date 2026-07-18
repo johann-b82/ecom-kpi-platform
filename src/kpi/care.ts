@@ -1,20 +1,22 @@
-import type { CanonicalDataset, DateRange } from '@/lib/types';
+import type { CanonicalDataset, DateRange, SalesFacts } from '@/lib/types';
 import type { Kpi } from './types';
 import { inRange, kpi } from './helpers';
 import { daysBetween } from '@/lib/dates';
 
-export function careKpis(data: CanonicalDataset, range: DateRange): Kpi[] {
+export function careKpis(data: CanonicalDataset, range: DateRange, facts?: SalesFacts): Kpi[] {
   const { orders, customers, subscribers } = data;
 
   const activeIds = new Set(orders.filter((o) => inRange(o.date, range)).map((o) => o.customerId));
   const active = customers.filter((c) => activeIds.has(c.customerId));
   const hasActive = active.length > 0;
 
-  const repeatRate = hasActive
-    ? active.filter((c) => c.ordersCount >= 2).length / active.length : null;
+  // Wiederkaufrate und CLV aus den echten Belegen (WooCommerce), sobald `facts`
+  // übergeben wird; sonst aus den Analytics-Kundendaten.
+  const repeatRate = facts ? facts.repeatRate
+    : (hasActive ? active.filter((c) => c.ordersCount >= 2).length / active.length : null);
 
-  const clv = hasActive
-    ? active.reduce((s, c) => s + c.totalRevenue, 0) / active.length : null;
+  const clv = facts ? facts.clv
+    : (hasActive ? active.reduce((s, c) => s + c.totalRevenue, 0) / active.length : null);
 
   const multi = active.filter((c) => c.ordersCount >= 2);
   const interval = multi.length

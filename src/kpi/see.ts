@@ -1,8 +1,9 @@
-import type { CanonicalDataset, DateRange } from '@/lib/types';
+import type { CanonicalDataset, DateRange, SalesFacts } from '@/lib/types';
 import type { Kpi } from './types';
 import { inRange, metricSum, metricPresent, ratio, kpi } from './helpers';
 
-export function seeKpis(data: CanonicalDataset, range: DateRange): Kpi[] {
+// SEE nutzt keine Bestellzahlen; `_facts` nur für die einheitliche Phasen-Signatur.
+export function seeKpis(data: CanonicalDataset, range: DateRange, _facts?: SalesFacts): Kpi[] {
   const ads = data.adSpend.filter((a) => inRange(a.date, range));
   const hasAds = ads.length > 0;
   const impressions = ads.reduce((s, a) => s + a.impressions, 0);

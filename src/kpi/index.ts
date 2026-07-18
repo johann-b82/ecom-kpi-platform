@@ -1,4 +1,4 @@
-import type { CanonicalDataset, DateRange } from '@/lib/types';
+import type { CanonicalDataset, DateRange, SalesFacts } from '@/lib/types';
 import type { Kpi, PhaseKpis } from './types';
 import { addDays, daysBetween } from '@/lib/dates';
 import { seeKpis } from './see';
@@ -31,13 +31,16 @@ export function withDelta(current: Kpi[], previous: Kpi[]): Kpi[] {
   });
 }
 
-export function computeKpis(data: CanonicalDataset, range: DateRange): PhaseKpis[] {
+export function computeKpis(
+  data: CanonicalDataset, range: DateRange,
+  facts?: { current?: SalesFacts; previous?: SalesFacts },
+): PhaseKpis[] {
   const prev = previousRange(range);
   return PHASES.map((p) => ({
     phase: p.phase,
     title: p.title,
     subtitle: p.subtitle,
-    kpis: withDelta(p.fn(data, range), p.fn(data, prev)),
+    kpis: withDelta(p.fn(data, range, facts?.current), p.fn(data, prev, facts?.previous)),
   }));
 }
 

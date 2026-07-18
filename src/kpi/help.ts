@@ -58,28 +58,28 @@ export const KPI_HELP: Record<string, KpiHelp> = {
 
   // DO — Conversion
   conversion_rate: {
-    formula: 'GA4-Käufe (ecommercePurchases) ÷ Sessions.',
-    source: 'GA4 (ecommercePurchases + Sessions).',
+    formula: 'Käufe (WooCommerce-Bestellungen) ÷ Sessions.',
+    source: 'Shop (WooCommerce) → Bestellungen; Sessions weiter aus GA4 → daily_metrics.',
   },
   aov: {
-    formula: 'GA4-Umsatz (purchaseRevenue) ÷ GA4-Käufe (ecommercePurchases).',
-    source: 'GA4 (purchaseRevenue + ecommercePurchases).',
+    formula: 'Netto-Umsatz ÷ Käufe, beides aus den WooCommerce-Belegen.',
+    source: 'Shop (WooCommerce) → orders/order_lines (nicht mehr GA4).',
   },
   revenue: {
-    formula: 'Summe des GA4-Umsatzes (purchaseRevenue) im Zeitraum.',
-    source: 'GA4 (purchaseRevenue).',
+    formula: 'Summe des Netto-Umsatzes der WooCommerce-Belege im Zeitraum.',
+    source: 'Shop (WooCommerce) → orders/order_lines (nicht mehr GA4).',
   },
   roas: {
     formula: 'Conversion-Value ÷ Ad-Spend (Return on Ad Spend).',
     source: 'Ad-Plattformen (Meta/Google/TikTok Ads) → ad_spend.',
   },
   cac: {
-    formula: 'Ad-Spend ÷ GA4-Käufe (ecommercePurchases).',
-    source: 'Ad-Plattformen (Ad-Spend) + GA4 (ecommercePurchases).',
+    formula: 'Ad-Spend ÷ Käufe (WooCommerce-Bestellungen).',
+    source: 'Ad-Plattformen (Ad-Spend) + Shop (WooCommerce) → Bestellungen.',
   },
   cart_abandonment: {
-    formula: '1 − (GA4-Käufe ÷ begonnene Checkouts).',
-    source: 'GA4 (ecommercePurchases + checkouts_started).',
+    formula: '1 − (WooCommerce-Käufe ÷ begonnene Checkouts).',
+    source: 'Shop (WooCommerce) → Bestellungen; Checkouts weiter aus GA4 (checkouts_started).',
   },
 
   // CARE — Loyalty
