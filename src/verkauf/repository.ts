@@ -365,14 +365,24 @@ const ORDER_SORT_SQL: Record<string, string> = {
 };
 
 export async function listOrderRowsPaged(
-  opts: { channel?: OrderChannel; search?: string; sort?: string; limit?: number; offset?: number } = {},
+  opts: { channel?: OrderChannel; search?: string; status?: OrderStatus; from?: string; to?: string;
+          sort?: string; limit?: number; offset?: number } = {},
 ): Promise<{ rows: OrderRow[]; total: number }> {
-  const { channel, search, sort, limit = 50, offset = 0 } = opts;
+  const { channel, search, status, from, to, sort, limit = 50, offset = 0 } = opts;
   const s = parseSort(sort, ORDER_SORT.allowed, ORDER_SORT.fallback);
   const orderBy = `${ORDER_SORT_SQL[s.col]} ${s.dir === 'desc' ? 'DESC' : 'ASC'}, o.number DESC`;
-  const params = [channel ?? null, search ? `%${search}%` : null];
+  const params = [
+    channel ?? null,
+    search ? `%${search}%` : null,
+    status ?? null,
+    from ?? null,
+    to ?? null,
+  ];
   const where = `WHERE ($1::text IS NULL OR o.channel = $1)
-      AND ($2::text IS NULL OR o.number ILIKE $2 OR c.name ILIKE $2)`;
+      AND ($2::text IS NULL OR o.number ILIKE $2 OR c.name ILIKE $2)
+      AND ($3::text IS NULL OR o.status = $3)
+      AND ($4::date IS NULL OR COALESCE(o.placed_at, o.created_at)::date >= $4)
+      AND ($5::date IS NULL OR COALESCE(o.placed_at, o.created_at)::date <= $5)`;
   const countRes = await pool.query<{ n: number }>(
     `SELECT count(*)::int AS n FROM sales_orders o JOIN contacts c ON c.id = o.contact_id ${where}`, params);
   const r = await pool.query(
@@ -385,7 +395,7 @@ export async function listOrderRowsPaged(
        ${where}
       GROUP BY o.id, c.name
       ORDER BY ${orderBy}
-      LIMIT $3 OFFSET $4`, [...params, limit, offset]);
+      LIMIT $6 OFFSET $7`, [...params, limit, offset]);
   const rows = r.rows.map((x: any) => ({
     id: x.id, number: x.number, contactId: x.contact_id, contactName: x.contact_name,
     channel: x.channel, status: x.status, createdAt: x.created_at, placedAt: x.placed_at, stages: x.stages,
