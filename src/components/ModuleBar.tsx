@@ -5,7 +5,7 @@ import { useShellNav } from '@/components/ShellNav';
 
 export function ModuleBar() {
   const pathname = usePathname();
-  const { toggle } = useShellNav();
+  const { open, toggle } = useShellNav();
   const app = activeApp(pathname);
   if (!app) return null;
   return (
@@ -13,6 +13,7 @@ export function ModuleBar() {
       type="button"
       onClick={toggle}
       aria-label={`${app.label}-Menü`}
+      aria-expanded={open}
       className="flex min-h-11 items-center gap-1 rounded-md px-2 text-sm font-semibold text-neutral-900 hover:bg-neutral-100 dark:text-neutral-100 dark:hover:bg-neutral-800 lg:hidden"
     >
       {app.label}
