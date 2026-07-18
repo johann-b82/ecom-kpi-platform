@@ -1,6 +1,7 @@
 import { pool } from '@/lib/db';
 import { CONSUMPTION_WINDOW_DAYS } from './forecast';
 import type { SeriesPoint, VariantForecastInput, CategoryRollupRow, CategoryVariantRow } from './types';
+import type { DateRange } from '@/lib/types';
 
 const SALES_FILTER = `o.status NOT IN ('angebot','storniert')`;
 
@@ -10,6 +11,16 @@ export async function stockSeries(variantId: string, days: number): Promise<Seri
        FROM stock_snapshots
       WHERE variant_id = $1 AND snapshot_date >= CURRENT_DATE - $2::int
       GROUP BY snapshot_date ORDER BY snapshot_date`, [variantId, days]);
+  return r.rows.map((x: { date: string; value: number }) => ({ date: x.date, value: Number(x.value) }));
+}
+
+// Übersichts-Kurve: Gesamtbestand (Summe on_hand) je Snapshot-Tag im Bereich.
+export async function stockTotalSeries(range: DateRange): Promise<SeriesPoint[]> {
+  const r = await pool.query(
+    `SELECT snapshot_date::text AS date, SUM(quantity_on_hand)::int AS value
+       FROM stock_snapshots
+      WHERE snapshot_date BETWEEN $1 AND $2
+      GROUP BY snapshot_date ORDER BY snapshot_date`, [range.start, range.end]);
   return r.rows.map((x: { date: string; value: number }) => ({ date: x.date, value: Number(x.value) }));
 }
 
