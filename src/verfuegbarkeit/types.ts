@@ -55,8 +55,7 @@ export interface VariantForecastInput {
   onHand: number; reorderPoint: number; unitsInWindow: number;
 }
 export interface CategoryRollupRow {
-  category: string; variantCount: number; gesamtbestand: number;
-  anzahlUnterMeldebestand: number; anzahlKritisch: number;
+  category: string; variantCount: number; gesamtbestand: number; anzahlKritisch: number;
 }
 export interface CategoryVariantRow {
   variantId: string; sku: string; productName: string;

@@ -12,7 +12,6 @@ describe('categoryRollup', () => {
       expect(typeof r.category).toBe('string');
       expect(r.variantCount).toBeGreaterThan(0);
       expect(r.gesamtbestand).toBeGreaterThanOrEqual(0);
-      expect(r.anzahlUnterMeldebestand).toBeGreaterThanOrEqual(0);
       expect(r.anzahlKritisch).toBeLessThanOrEqual(r.variantCount);
     }
   });

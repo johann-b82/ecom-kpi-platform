@@ -98,8 +98,6 @@ export async function categoryRollup(): Promise<CategoryRollupRow[]> {
      SELECT COALESCE(p.category, 'Ohne Kategorie') AS category,
             COUNT(*)::int AS variant_count,
             COALESCE(SUM(st.on_hand), 0)::int AS gesamtbestand,
-            COUNT(*) FILTER (WHERE v.reorder_point > 0
-                              AND COALESCE(st.on_hand, 0) < v.reorder_point)::int AS unter_meldebestand,
             COUNT(*) FILTER (WHERE COALESCE(sd.units, 0) > 0
                               AND COALESCE(st.on_hand, 0) < sd.units)::int AS kritisch
        FROM product_variants v
@@ -109,12 +107,10 @@ export async function categoryRollup(): Promise<CategoryRollupRow[]> {
       GROUP BY COALESCE(p.category, 'Ohne Kategorie')
       ORDER BY category`);
   return r.rows.map((x: {
-    category: string; variant_count: number; gesamtbestand: number;
-    unter_meldebestand: number; kritisch: number;
+    category: string; variant_count: number; gesamtbestand: number; kritisch: number;
   }) => ({
     category: x.category, variantCount: Number(x.variant_count),
     gesamtbestand: Number(x.gesamtbestand),
-    anzahlUnterMeldebestand: Number(x.unter_meldebestand),
     anzahlKritisch: Number(x.kritisch),
   }));
 }
@@ -135,13 +131,31 @@ export async function listCategoryVariants(category: string): Promise<CategoryVa
   }));
 }
 
-export async function dashboardKpis(): Promise<{
-  gesamtbestand: number; unterMeldebestand: number; kritisch: number;
-}> {
+export async function dashboardKpis(): Promise<{ gesamtbestand: number; kritisch: number }> {
   const rows = await categoryRollup();
   return rows.reduce((a, r) => ({
     gesamtbestand: a.gesamtbestand + r.gesamtbestand,
-    unterMeldebestand: a.unterMeldebestand + r.anzahlUnterMeldebestand,
     kritisch: a.kritisch + r.anzahlKritisch,
-  }), { gesamtbestand: 0, unterMeldebestand: 0, kritisch: 0 });
+  }), { gesamtbestand: 0, kritisch: 0 });
+}
+
+// Lagerwert zu Einkaufskosten: Σ(Menge × EK). NULL-EK zählt 0; ekUnvollstaendig
+// meldet, ob bestandsführende Varianten ohne EK existieren (vgl. Verkauf).
+export async function warenwertKpi(): Promise<{ warenwert: number; ekUnvollstaendig: boolean }> {
+  const r = await pool.query(
+    `SELECT COALESCE(SUM(s.quantity_on_hand * COALESCE(v.purchase_price, 0)), 0)::float8 AS warenwert,
+            COALESCE(bool_or(v.purchase_price IS NULL) FILTER (WHERE s.quantity_on_hand > 0), false) AS ek_unvollstaendig
+       FROM stock_levels s JOIN product_variants v ON v.id = s.variant_id`);
+  return { warenwert: Number(r.rows[0].warenwert), ekUnvollstaendig: r.rows[0].ek_unvollstaendig };
+}
+
+// Warenwert-Verlauf: aktueller EK × historische Menge je Snapshot-Tag (keine EK-Historie).
+export async function warenwertSeries(range: DateRange): Promise<SeriesPoint[]> {
+  const r = await pool.query(
+    `SELECT s.snapshot_date::text AS date,
+            COALESCE(SUM(s.quantity_on_hand * COALESCE(v.purchase_price, 0)), 0)::float8 AS value
+       FROM stock_snapshots s JOIN product_variants v ON v.id = s.variant_id
+      WHERE s.snapshot_date BETWEEN $1 AND $2
+      GROUP BY s.snapshot_date ORDER BY s.snapshot_date`, [range.start, range.end]);
+  return r.rows.map((x: { date: string; value: number }) => ({ date: x.date, value: Number(x.value) }));
 }
