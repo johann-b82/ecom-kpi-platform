@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserAccess, accessibleApps } from '@/lib/groups';
 import { getBranding } from '@/lib/settings';
 import { AppRail } from '@/components/AppRail';
+import { BottomTabBar } from '@/components/BottomTabBar';
 import { UserMenu } from '@/components/UserMenu';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,7 @@ export default async function ShellLayout({ children }: { children: ReactNode })
         </header>
         <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
       </div>
+      <BottomTabBar apps={accessibleApps(access)} />
     </div>
   );
 }
