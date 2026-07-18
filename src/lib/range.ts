@@ -15,7 +15,18 @@ export type RangeKey = (typeof RANGE_OPTIONS)[number]['key'];
 
 const KEYS = RANGE_OPTIONS.map((o) => o.key) as readonly string[];
 
-export function resolveRange(param: string | undefined, end: string): { key: RangeKey; range: DateRange } {
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+export function resolveRange(
+  param: string | undefined,
+  end: string,
+  custom?: { start?: string; end?: string },
+): { key: RangeKey | 'custom'; range: DateRange } {
+  const cs = custom?.start;
+  const ce = custom?.end;
+  if (cs && ce && ISO.test(cs) && ISO.test(ce) && cs <= ce) {
+    return { key: 'custom', range: { start: cs, end: ce } };
+  }
   const key = (param && KEYS.includes(param) ? param : '30') as RangeKey;
   const start = key === 'all' ? '2000-01-01' : addDays(end, -(Number(key) - 1));
   return { key, range: { start, end } };
