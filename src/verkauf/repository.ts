@@ -341,6 +341,22 @@ export async function revenueByDay(range: DateRange, channel?: OrderChannel): Pr
   return r.rows.map((x: any) => ({ day: x.day, revenueNet: Number(x.revenue) }));
 }
 
+export interface SalesDailyPoint { day: string; revenueNet: number; orders: number }
+
+// Übersichts-Kurven: Umsatz UND Belegzahl je Tag (Ø folgt aus revenue/orders).
+export async function salesDailySeries(range: DateRange, channel?: OrderChannel): Promise<SalesDailyPoint[]> {
+  const r = await pool.query(
+    `SELECT COALESCE(o.placed_at, o.created_at)::date::text AS day,
+            COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue,
+            COUNT(DISTINCT o.id)::int AS orders
+       FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND o.status NOT IN ('angebot','storniert')
+        AND ($3::text IS NULL OR o.channel = $3)
+      GROUP BY day ORDER BY day`, [range.start, range.end, channel ?? null]);
+  return r.rows.map((x: any) => ({ day: x.day, revenueNet: Number(x.revenue), orders: x.orders }));
+}
+
 // Server-side paginated + searchable belege list — the store has 10k+ orders,
 // so the list must not load every row into the client.
 const ORDER_SORT_SQL: Record<string, string> = {
