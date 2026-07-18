@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatDeDate } from '@/lib/dates';
 import { RANGE_OPTIONS } from '@/lib/range';
@@ -17,6 +17,11 @@ export function Filters({ range, basePath = '/dashboard', defaultKey = '30' }:
   const active = hasCustom ? 'custom' : (params.get('days') ?? defaultKey);
   const [from, setFrom] = useState(params.get('start') ?? range?.start ?? '');
   const [to, setTo] = useState(params.get('end') ?? range?.end ?? '');
+  // Nach einem Preset-Wechsel (kein Custom in der URL) die Felder auf den
+  // aufgelösten Zeitraum zurücksetzen, statt stale Custom-Daten zu zeigen.
+  useEffect(() => {
+    if (!hasCustom && range) { setFrom(range.start); setTo(range.end); }
+  }, [hasCustom, range?.start, range?.end]);
   const applyCustom = () => { if (from && to) router.push(`${basePath}?start=${from}&end=${to}`); };
 
   return (

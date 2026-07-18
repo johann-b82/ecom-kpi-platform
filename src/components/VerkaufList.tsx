@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ORDER_SORT, type OrderRow, type OrderChannel, type OrderStatus } from '@/verkauf/types';
+import { STATUS_LABEL } from '@/verkauf/labels';
 import { SortableTh } from './SortableTh';
 import { Spur } from './Spur';
 
@@ -51,7 +52,7 @@ export function VerkaufList({ rows, total, page, pageSize, channel, search, stat
         <select value={status} onChange={(e) => go({ status: e.target.value })}
           className="rounded border border-neutral-300 bg-neutral-100 px-2 py-1 text-sm text-neutral-900 dark:border-transparent dark:bg-neutral-800 dark:text-neutral-100">
           <option value="">Alle Status</option>
-          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+          {STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
         </select>
         <input type="date" value={f} onChange={(e) => setF(e.target.value)} className={dateInput} aria-label="Von" />
         <span className="text-neutral-400">–</span>
@@ -82,7 +83,7 @@ export function VerkaufList({ rows, total, page, pageSize, channel, search, stat
               <td className="py-2"><Link href={`/verkauf/belege/${r.id}`} className="text-brand hover:text-brand-dark">{r.number}</Link></td>
               <td>{r.contactName}</td>
               <td>{CH_LABEL[r.channel]}</td>
-              <td>{r.status}</td>
+              <td>{STATUS_LABEL[r.status]}</td>
               <td><Spur stages={r.stages} /></td>
               <td className="text-neutral-500">{(r.placedAt ?? r.createdAt).slice(0, 10)}</td>
             </tr>

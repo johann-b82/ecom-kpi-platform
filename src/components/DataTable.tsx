@@ -46,7 +46,15 @@ export function DataTable<T>({ rows, columns, rowKey, initialSort, empty = 'Kein
     const col = columns.find((c) => c.key === sort.col);
     if (!col?.sort) return filtered;
     const factor = sort.dir === 'asc' ? 1 : -1;
-    return [...filtered].sort((a, b) => compareValues(col.sort!(a), col.sort!(b)) * factor);
+    return [...filtered].sort((a, b) => {
+      const av = col.sort!(a);
+      const bv = col.sort!(b);
+      // Leere Werte immer ans Ende — unabhängig von der Sortierrichtung.
+      const aEmpty = av === null || av === undefined;
+      const bEmpty = bv === null || bv === undefined;
+      if (aEmpty || bEmpty) return compareValues(av, bv);
+      return compareValues(av, bv) * factor;
+    });
   }, [filtered, sort, columns]);
 
   const onSort = (key: string) =>

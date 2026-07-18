@@ -29,7 +29,7 @@ export default async function VerkaufUebersichtPage({ searchParams }:
   const items: KpiTrendItem[] = [
     { key: 'umsatz', label: 'Umsatz', value: eur(totals.revenueNet), anno: 'NETTO · OHNE MWST', series: revenueSeries, format: 'eur' },
     { key: 'sales', label: 'Sales', value: String(totals.orders), series: ordersSeries, format: 'num' },
-    { key: 'avg', label: 'Ø Belegwert', value: eur(totals.avgOrderValueNet), anno: 'NETTO · OHNE MWST', series: avgSeries, format: 'eur' },
+    { key: 'avg', label: 'Ø Warenkorb', value: eur(totals.avgOrderValueNet), anno: 'NETTO · OHNE MWST', series: avgSeries, format: 'eur' },
     { key: 'angebote', label: 'Offene Angebote', value: String(totals.openOffers) },
   ];
 

@@ -67,7 +67,7 @@ export function KanalSalesBoard(
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <StatTile label="Umsatz" value={eur(totals.revenueNet)} anno="NETTO · OHNE MWST" />
         <StatTile label="Belege" value={String(totals.orders)} />
-        <StatTile label="Ø Belegwert" value={eur(totals.avgOrderValueNet)} anno="NETTO · OHNE MWST" />
+        <StatTile label="Ø Warenkorb" value={eur(totals.avgOrderValueNet)} anno="NETTO · OHNE MWST" />
       </div>
       <RevenueChart points={points} />
       <TopProducts items={top} />

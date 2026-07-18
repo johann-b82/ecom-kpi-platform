@@ -33,7 +33,7 @@ export function KpiTrendRow({ items, gridClassName }:
           );
           return (
             <ChartCard key={i.key}
-              className={`${clickable ? 'transition hover:ring-2 hover:ring-accent/40' : ''} ${isOpen ? 'ring-2 ring-accent' : ''}`}>
+              className={`${clickable ? 'transition hover:ring-2 hover:ring-accent/40' : ''} ${isOpen ? 'ring-2 ring-accent bg-accent/5 dark:bg-accent/10' : ''}`}>
               {clickable ? (
                 <button type="button" aria-expanded={isOpen}
                   onClick={() => setOpen(isOpen ? null : i.key)}

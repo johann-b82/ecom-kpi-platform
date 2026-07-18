@@ -150,14 +150,14 @@ export const HELP_PAGES: DocPage[] = [
       {
         heading: 'Übersicht & Kanäle (Ebene 1)',
         blocks: [
-          { type: 'p', text: 'Die Verkauf-Startseite zeigt für den gewählten Zeitraum (7/30/90 Tage) Umsatz, Anzahl Belege, durchschnittlichen Belegwert und offene Angebote. Alle Beträge sind netto (ohne MwSt).' },
+          { type: 'p', text: 'Die Verkauf-Startseite zeigt für den gewählten Zeitraum (7/30/90 Tage) Umsatz, Anzahl Belege, durchschnittlichen Warenkorbwert und offene Angebote. Alle Beträge sind netto (ohne MwSt).' },
           { type: 'list', items: [
-            'Kanal-Vergleich: Umsatz, Belege und Ø Belegwert je Kanal (Shop, B2B-Portal, Marktplatz, Telefon, Manuell) — ein Klick öffnet die auf den Kanal gefilterte Belegliste.',
+            'Kanal-Vergleich: Umsatz, Belege und Ø Warenkorb je Kanal (Shop, B2B-Portal, Marktplatz, Telefon, Manuell) — ein Klick öffnet die auf den Kanal gefilterte Belegliste.',
             'Status-Funnel: Anzahl Belege je Status von Angebot bis bezahlt.',
             'Umsatz zählt Belege ab Auftrag; Angebote sind Pipeline (eigene Kennzahl), Retouren mindern den Umsatz netto.',
             'Die Shop-/Marketing-KPIs (GA4, Shop, Ads) liegen unter Verkauf → Dashboard.',
             'Zeitraum: Standardzeiträume (7/30/90/365/Komplett) plus benutzerdefinierter von-bis-Bereich (zwei Datumsfelder → Anwenden).',
-            'KPI-Kacheln Umsatz, Sales und Ø Belegwert sind anklickbar — darunter klappt die jeweilige Verlaufskurve für den gewählten Zeitraum auf (eine gleichzeitig).',
+            'KPI-Kacheln Umsatz, Sales und Ø Warenkorb sind anklickbar — darunter klappt die jeweilige Verlaufskurve für den gewählten Zeitraum auf (eine gleichzeitig).',
           ] },
         ],
       },
