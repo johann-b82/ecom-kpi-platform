@@ -79,7 +79,8 @@ export function mapOrderLines(items: WooLineItem[], skuToVariant: Map<string, st
 
 export interface OrderImportResult {
   ordersCreated: number;
-  ordersLinked: number;      // already imported (idempotent skip)
+  ordersLinked: number;      // already imported, unchanged status (only lines reconciled)
+  ordersUpdated: number;     // already imported, status changed → status + events reconciled
   contactsCreated: number;
   linesImported: number;
   linesSkipped: number;
@@ -89,7 +90,7 @@ export async function importWooCommerceOrders(
   pool: Pool, rawOrders: Record<string, unknown>[], priceListId: string,
 ): Promise<OrderImportResult> {
   const result: OrderImportResult = {
-    ordersCreated: 0, ordersLinked: 0, contactsCreated: 0, linesImported: 0, linesSkipped: 0,
+    ordersCreated: 0, ordersLinked: 0, ordersUpdated: 0, contactsCreated: 0, linesImported: 0, linesSkipped: 0,
   };
 
   // Build lookups once.
@@ -127,7 +128,31 @@ export async function importWooCommerceOrders(
         }
         result.linesImported += re.lines.length;
         result.linesSkipped += re.skipped.length;
-        result.ordersLinked++;
+
+        // Status + automatische Events abgleichen (Storno/Refund propagieren).
+        const newStatus = mapOrderStatus(String(raw.status));
+        const cur = await c.query<{ status: string }>('SELECT status FROM sales_orders WHERE id=$1', [existingOrderId]);
+        if (cur.rows[0].status !== newStatus) {
+          await c.query('UPDATE sales_orders SET status=$2 WHERE id=$1', [existingOrderId, newStatus]);
+          await c.query('DELETE FROM sales_order_events WHERE order_id=$1 AND automated=true', [existingOrderId]);
+          const placedAt = (raw.date_created as string) ?? null;
+          await c.query(
+            `INSERT INTO sales_order_events (order_id, stage, source_app, automated, occurred_at)
+             VALUES ($1,'bestellt','verkauf',true, COALESCE($2::timestamptz, now()))`, [existingOrderId, placedAt]);
+          if (newStatus === 'bezahlt') {
+            await c.query(
+              `INSERT INTO sales_order_events (order_id, stage, source_app, automated, occurred_at)
+               VALUES ($1,'bezahlt','finanzen',true, COALESCE($2::timestamptz,$3::timestamptz, now()))`,
+              [existingOrderId, (raw.date_paid as string) ?? null, placedAt]);
+          } else if (newStatus === 'retoure') {
+            await c.query(
+              `INSERT INTO sales_order_events (order_id, stage, source_app, automated, occurred_at)
+               VALUES ($1,'retoure','verkauf',true, COALESCE($2::timestamptz, now()))`, [existingOrderId, placedAt]);
+          }
+          result.ordersUpdated++;
+        } else {
+          result.ordersLinked++;
+        }
         await c.query('COMMIT');
         continue;
       }
