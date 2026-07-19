@@ -61,6 +61,7 @@ export interface OrderCost {
 export interface DateRange { start: string; end: string } // ISO YYYY-MM-DD, inklusiv
 export interface SalesTotals {
   revenueNet: number; orders: number; avgOrderValueNet: number; openOffers: number;
+  cancelledRevenue: number; stornoQuote: number;
 }
 export interface ChannelSummary {
   channel: OrderChannel; revenueNet: number; orders: number; avgOrderValueNet: number;

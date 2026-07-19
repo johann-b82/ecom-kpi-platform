@@ -403,13 +403,17 @@ export async function listOrderRowsPaged(
   return { rows, total: countRes.rows[0].n };
 }
 
+// Umsatz-Basis: alles außer storniert (inkl. Angebote/Aufträge). Self-correcting,
+// da der aktuelle Status gelesen wird — verarbeitete Stornos sind automatisch abgezogen.
+const REVENUE_STATUS_SQL = "o.status <> 'storniert'";
+
 export async function salesTotals(range: DateRange, channel?: OrderChannel): Promise<SalesTotals> {
   const rev = await pool.query(
-    `SELECT COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue,
-            COUNT(DISTINCT o.id)::int AS orders
+    `SELECT COALESCE(SUM(l.quantity * l.unit_price) FILTER (WHERE ${REVENUE_STATUS_SQL}), 0)::float8 AS revenue,
+            (COUNT(DISTINCT o.id) FILTER (WHERE ${REVENUE_STATUS_SQL}))::int AS orders,
+            COALESCE(SUM(l.quantity * l.unit_price) FILTER (WHERE o.status = 'storniert'), 0)::float8 AS cancelled
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
         AND ($3::text IS NULL OR o.channel = $3)`,
     [range.start, range.end, channel ?? null]);
   const off = await pool.query(
@@ -419,11 +423,15 @@ export async function salesTotals(range: DateRange, channel?: OrderChannel): Pro
         AND ($3::text IS NULL OR o.channel = $3)`,
     [range.start, range.end, channel ?? null]);
   const revenueNet = Number(rev.rows[0].revenue);
+  const cancelledRevenue = Number(rev.rows[0].cancelled);
   const orders = rev.rows[0].orders;
+  const base = revenueNet + cancelledRevenue;
   return {
     revenueNet, orders,
     avgOrderValueNet: orders > 0 ? revenueNet / orders : 0,
     openOffers: off.rows[0].open_offers,
+    cancelledRevenue,
+    stornoQuote: base > 0 ? cancelledRevenue / base : 0,
   };
 }
 

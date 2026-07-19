@@ -269,17 +269,17 @@ describe('B4 aggregates', () => {
   const today = new Date().toISOString().slice(0, 10);
   const range = { start: addDays(today, -30), end: today };
 
-  it('salesTotals: Umsatz ∉ {angebot,storniert}, offene Angebote separat, Ø = Umsatz/Belege', async () => {
+  it('salesTotals: Umsatz = alles außer storniert (inkl. Angebote), offene Angebote separat', async () => {
     const before = await salesTotals(range);
 
-    // Angebot (manuell) → zählt NUR als openOffer, nicht Umsatz/Beleg
+    // Angebot (manuell) → zählt jetzt in Umsatz (2×10=20) UND als openOffer
     const offer = await createOrder({
       contactId: MUELLER, channel: 'manuell', priceListId: PL_HANDEL,
       lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 2, unitPrice: 10 }],
     });
     orderIds.push(offer.id);
 
-    // Auftrag (shop, startet als auftrag) → Umsatz 3*10=30, Beleg 1
+    // Auftrag (shop) → Umsatz 3×10=30
     const order = await createOrder({
       contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
       lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 3, unitPrice: 10 }],
@@ -287,10 +287,26 @@ describe('B4 aggregates', () => {
     orderIds.push(order.id);
 
     const after = await salesTotals(range);
-    expect(after.revenueNet - before.revenueNet).toBeCloseTo(30);
-    expect(after.orders - before.orders).toBe(1);       // nur der Auftrag
-    expect(after.openOffers - before.openOffers).toBe(1); // das Angebot
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(50);   // 20 (Angebot) + 30 (Auftrag)
+    expect(after.orders - before.orders).toBe(2);                    // beide zählen
+    expect(after.openOffers - before.openOffers).toBe(1);            // nur das Angebot
     expect(after.avgOrderValueNet).toBeCloseTo(after.revenueNet / after.orders);
+  });
+
+  it('salesTotals: storniert fließt in cancelledRevenue/stornoQuote, nicht in Umsatz', async () => {
+    const before = await salesTotals(range);
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 4, unitPrice: 10 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'storniert');   // aus 'auftrag' erlaubt
+
+    const after = await salesTotals(range);
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(0);       // Storno NICHT im Umsatz
+    expect(after.cancelledRevenue - before.cancelledRevenue).toBeCloseTo(40);
+    expect(after.stornoQuote).toBeGreaterThan(0);
+    expect(after.stornoQuote).toBeLessThanOrEqual(1);
   });
 
   it('salesTotals: avgOrderValueNet ist 0 statt Division-durch-0 bei leerem Zeitraum', async () => {
