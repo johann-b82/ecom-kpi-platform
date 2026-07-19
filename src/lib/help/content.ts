@@ -150,7 +150,7 @@ export const HELP_PAGES: DocPage[] = [
       {
         heading: 'Übersicht & Kanäle (Ebene 1)',
         blocks: [
-          { type: 'p', text: 'Die Verkauf-Startseite zeigt für den gewählten Zeitraum (7/30/90 Tage) Umsatz, Anzahl Belege (Sales), durchschnittlichen Warenkorbwert, die Stornoquote und offene Angebote. Alle Beträge sind netto (ohne MwSt).' },
+          { type: 'p', text: 'Die Verkauf-Startseite zeigt für den gewählten Zeitraum (7/30/90 Tage) Umsatz, Anzahl Belege (Sales), durchschnittlichen Warenkorbwert und die Stornoquote. Alle Beträge sind netto (ohne MwSt).' },
           { type: 'list', items: [
             'Kanal-Vergleich: Umsatz, Belege und Ø Warenkorb je Kanal (Shop, B2B-Portal, Marktplatz, Telefon, Manuell) — ein Klick öffnet die auf den Kanal gefilterte Belegliste.',
             'Status-Funnel: Anzahl Belege je Status von Angebot bis bezahlt.',
@@ -217,7 +217,7 @@ export const HELP_PAGES: DocPage[] = [
   {
     slug: 'finanzen',
     title: 'Finanzen',
-    summary: 'Offene Posten, Zahlungsabgleich, Zuordnen-Warteschlange und Buchungsexport.',
+    summary: 'Cashflow-Verlauf (Einzahlungen), offene Posten, Zahlungsabgleich, Zuordnen-Warteschlange und Buchungsexport.',
     group: 'module',
     sections: [
       {
@@ -230,6 +230,7 @@ export const HELP_PAGES: DocPage[] = [
         heading: 'Wichtige Funktionen',
         blocks: [
           { type: 'list', items: [
+            'Operativer Cashflow (Einzahlungen): Verlaufschart der Zahlungseingänge auf Debitor-Posten über die letzten 12 Monate (monatlich). Nicht zugeordnete Zahlungen zählen erst nach Zuordnung mit.',
             'Zahlung erfassen: gleicht eine Zahlung einen Debitor-Posten voll aus, wird der zugehörige Verkaufsbeleg automatisch auf „bezahlt" gesetzt (bezahlt-Perle im Faden).',
             'Teilzahlungen setzen den Posten auf „teilweise bezahlt"; der Rest bleibt offen.',
             'Zuordnen-Warteschlange: nicht zugeordnete Zahlungen (z. B. ohne bekannte Rechnung) erfassen und später einem offenen Posten zuordnen.',
