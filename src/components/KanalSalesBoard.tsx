@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ChartCard } from '@/components/charts/ChartCard';
 import { eur } from '@/verkauf/format';
+import { pct } from '@/components/charts/chart-style';
 import type { SalesTotals, RevenuePoint, TopProduct } from '@/verkauf/types';
 
 function StatTile({ label, value, anno }: { label: string; value: string; anno?: string }) {
@@ -66,10 +67,12 @@ export function KanalSalesBoard(
 ) {
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Umsatz" value={eur(totals.revenueNet)} anno="NETTO · OHNE MWST" />
         <StatTile label="Belege" value={String(totals.orders)} />
         <StatTile label="Ø Warenkorb" value={eur(totals.avgOrderValueNet)} anno="NETTO · OHNE MWST" />
+        <StatTile label="Stornoquote" value={pct(totals.stornoQuote * 100)}
+          anno={`${eur(totals.cancelledRevenue)} STORNIERT`} />
       </div>
       <RevenueChart points={points} />
       <TopProducts items={top} />
