@@ -7,7 +7,7 @@ import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, getOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
 import {
   listOrderRows, getOrderView, sellableVariants, priceForVariant, availableStock,
-  salesTotals, channelSummary, statusFunnel, countOpenQuotes,
+  salesTotals, channelSummary, statusFunnel, countOpenQuotes, salesDailySeries,
 } from '@/verkauf/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001'; // Spielwaren Müller, K-0001
@@ -307,6 +307,21 @@ describe('B4 aggregates', () => {
     expect(after.cancelledRevenue - before.cancelledRevenue).toBeCloseTo(40);
     expect(after.stornoQuote).toBeGreaterThan(0);
     expect(after.stornoQuote).toBeLessThanOrEqual(1);
+  });
+
+  it('salesDailySeries: Storno erhöht cancelledRevenue, nicht revenueNet, am Bestelltag', async () => {
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 5, unitPrice: 10 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'storniert');
+
+    const series = await salesDailySeries(range);
+    const total = series.reduce((s, p) => s + p.cancelledRevenue, 0);
+    expect(total).toBeGreaterThanOrEqual(50);   // enthält die 5×10 Stornierung
+    // stornierter Beleg fließt nicht in revenueNet
+    for (const p of series) expect(p.revenueNet).toBeGreaterThanOrEqual(0);
   });
 
   it('salesTotals: avgOrderValueNet ist 0 statt Division-durch-0 bei leerem Zeitraum', async () => {
