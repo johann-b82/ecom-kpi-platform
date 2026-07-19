@@ -3,8 +3,9 @@ import { getUserAccess, accessibleApps } from '@/lib/groups';
 import { Launchpad } from '@/components/Launchpad';
 import { StartOverview, type OverviewSignals } from '@/components/StartOverview';
 import { salesTotals } from '@/verkauf/repository';
+import { revenueGrowth, monthToDateRanges } from '@/verkauf/growth';
 import { listReorderSuggestions } from '@/verfuegbarkeit/repository';
-import { listOpenItems } from '@/finanzen/repository';
+import { cashflowIn } from '@/finanzen/repository';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,19 +15,19 @@ export default async function LaunchpadPage() {
 
   const signals: OverviewSignals = {};
   const tasks: Promise<void>[] = [];
+  const today = new Date().toISOString().slice(0, 10);
+  const { current, previous } = monthToDateRanges(today);
   if (access.apps.verkauf) {
-    const end = new Date().toISOString().slice(0, 10);
-    const monthRange = { start: end.slice(0, 8) + '01', end };
-    tasks.push(salesTotals(monthRange).then((t) => { signals.monthRevenue = t.revenueNet; }));
+    tasks.push(Promise.all([salesTotals(current), salesTotals(previous)]).then(([cur, prev]) => {
+      signals.revenueGrowthPct = revenueGrowth(cur.revenueNet, prev.revenueNet);
+    }));
   }
   if (access.apps.verfuegbarkeit) tasks.push(listReorderSuggestions().then((r) => { signals.reichweite90 = r.length; }));
-  if (access.apps.finanzen) tasks.push(listOpenItems().then((items) => {
-    signals.openItems = items.filter((i) => i.status !== 'bezahlt').reduce((s, i) => s + i.remaining, 0);
-    signals.overdue = items.filter((i) => i.overdue).reduce((s, i) => s + i.remaining, 0);
-  }));
+  if (access.apps.finanzen) tasks.push(cashflowIn(current).then((v) => { signals.cashflowIn = v; }));
   await Promise.all(tasks);
 
-  const hasOverview = signals.monthRevenue !== undefined || signals.reichweite90 !== undefined || signals.openItems !== undefined;
+  const hasOverview = signals.revenueGrowthPct !== undefined
+    || signals.reichweite90 !== undefined || signals.cashflowIn !== undefined;
 
   return (
     <main className="flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
