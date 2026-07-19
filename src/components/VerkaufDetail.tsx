@@ -7,6 +7,7 @@ import { Faden } from './Faden';
 import { transitionOrderStatusAction, createReturnAction } from '@/app/(shell)/verkauf/actions';
 import { contributionMargin } from '@/verkauf/marge';
 import { COST_TYPE_LABEL, COST_SOURCE_LABEL } from '@/verkauf/labels';
+import { eur } from '@/verkauf/format';
 
 const PRIMARY: Partial<Record<OrderStatus, { label: string; run: (id: string) => Promise<unknown> }>> = {
   angebot: { label: 'In Auftrag wandeln', run: (id) => transitionOrderStatusAction(id, 'auftrag') },
@@ -74,14 +75,14 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
                 <tr key={l.id} className="border-t border-neutral-200 dark:border-neutral-800">
                   <td className="py-2">{l.productName}</td><td className="text-neutral-500">{l.sku}</td>
                   <td className="text-right">{l.quantity}</td>
-                  <td className="text-right">{l.unitPrice.toFixed(2)} €</td>
-                  <td className="text-right">{(l.quantity * l.unitPrice).toFixed(2)} €</td>
+                  <td className="text-right">{eur(l.unitPrice)}</td>
+                  <td className="text-right">{eur(l.quantity * l.unitPrice)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr className="border-t border-neutral-300 font-medium dark:border-neutral-700">
-                <td className="py-2" colSpan={4}>Gesamt</td><td className="text-right">{total.toFixed(2)} €</td>
+                <td className="py-2" colSpan={4}>Gesamt</td><td className="text-right">{eur(total)}</td>
               </tr>
               <tr>
                 <td className="anno pt-1 text-neutral-500" colSpan={5}>Beträge netto, ohne MwSt</td>
@@ -102,7 +103,7 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
           <table className="w-full text-sm">
             <tbody>
               <tr className="border-b border-neutral-200 dark:border-neutral-800">
-                <td className="py-2">Umsatz netto</td><td /><td className="text-right">{total.toFixed(2)} €</td>
+                <td className="py-2">Umsatz netto</td><td /><td className="text-right">{eur(total)}</td>
               </tr>
               {order.costs.map((c) => (
                 <tr key={c.id}>
@@ -112,7 +113,7 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
                       {COST_SOURCE_LABEL[c.source]}
                     </span>
                   </td>
-                  <td className="text-right tabular-nums">{(-c.amount).toFixed(2)} €</td>
+                  <td className="text-right tabular-nums">{eur(-c.amount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -120,7 +121,7 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
               <tr className="border-t border-neutral-300 font-semibold dark:border-neutral-700">
                 <td className="py-2">Deckungsbeitrag</td><td />
                 <td className="text-right">
-                  {db.toFixed(2)} €{dbProzent !== null && (
+                  {eur(db)}{dbProzent !== null && (
                     <span className="ml-2 text-neutral-500">({(dbProzent * 100).toFixed(1)} %)</span>
                   )}
                 </td>

@@ -12,13 +12,14 @@ export const dynamic = 'force-dynamic';
 const CHANNELS: OrderChannel[] = ['shop', 'b2b_portal', 'marktplatz', 'telefon', 'manuell'];
 
 export default async function KanalPage(
-  { params, searchParams }: { params: { channel: string }; searchParams: { days?: string } },
+  { params, searchParams }:
+    { params: { channel: string }; searchParams: { days?: string; start?: string; end?: string } },
 ) {
   const channel = params.channel as OrderChannel;
   if (!CHANNELS.includes(channel)) notFound();
 
   const end = new Date().toISOString().slice(0, 10);
-  const { range } = resolveRange(searchParams.days, end);
+  const { range } = resolveRange(searchParams.days, end, { start: searchParams.start, end: searchParams.end });
 
   const [totals, points, top] = await Promise.all([
     salesTotals(range, channel), revenueByDay(range, channel), topProducts(range, 10, channel),

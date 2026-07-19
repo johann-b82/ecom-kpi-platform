@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ORDER_SORT, type OrderRow, type OrderChannel, type OrderStatus } from '@/verkauf/types';
 import { STATUS_LABEL } from '@/verkauf/labels';
 import { SortableTh } from './SortableTh';
+import { formatDeDate } from '@/lib/dates';
 import { Spur } from './Spur';
 
 const CHANNELS: (OrderChannel | '')[] = ['', 'shop', 'b2b_portal', 'telefon', 'marktplatz', 'manuell'];
@@ -86,7 +87,7 @@ export function VerkaufList({ rows, total, page, pageSize, channel, search, stat
                 <td>{CH_LABEL[r.channel]}</td>
                 <td>{STATUS_LABEL[r.status]}</td>
                 <td><Spur stages={r.stages} /></td>
-                <td className="text-neutral-500">{(r.placedAt ?? r.createdAt).slice(0, 10)}</td>
+                <td className="text-neutral-500">{formatDeDate(r.placedAt ?? r.createdAt)}</td>
               </tr>
             ))}
             {rows.length === 0 && (

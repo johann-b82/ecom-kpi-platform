@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { VariantStockDetail, WarehouseOption, AdjustmentReason, SeriesPoint } from '@/verfuegbarkeit/types';
 import { REASON_LABEL } from '@/verfuegbarkeit/labels';
+import { formatDeDate } from '@/lib/dates';
 import { adjustStockAction } from '@/app/(shell)/verfuegbarkeit/actions';
 import { StockSalesChart } from '@/components/StockSalesChart';
 import { ForecastTile } from '@/components/ForecastTile';
@@ -98,7 +99,7 @@ export function BestandDetail({ detail, warehouses, stock, sales, forecast }: {
                 <tbody>
                   {detail.adjustments.map((a) => (
                     <tr key={a.id} className="border-t border-neutral-200 dark:border-neutral-800">
-                      <td className="py-1 text-neutral-500">{a.createdAt.slice(0, 10)}</td>
+                      <td className="py-1 text-neutral-500">{formatDeDate(a.createdAt)}</td>
                       <td className={a.delta < 0 ? 'text-danger' : ''}>{a.delta > 0 ? `+${a.delta}` : a.delta}</td>
                       <td>{REASON_LABEL[a.reason]}</td>
                       <td className="text-neutral-500">{a.note ?? ''}</td>

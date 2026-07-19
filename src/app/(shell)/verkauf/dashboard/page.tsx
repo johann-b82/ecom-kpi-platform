@@ -10,9 +10,10 @@ import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
-export default async function VerkaufDashboardPage({ searchParams }: { searchParams: { days?: string } }) {
+export default async function VerkaufDashboardPage({ searchParams }:
+  { searchParams: { days?: string; start?: string; end?: string } }) {
   const end = new Date().toISOString().slice(0, 10);
-  const { range } = resolveRange(searchParams.days, end);
+  const { range } = resolveRange(searchParams.days, end, { start: searchParams.start, end: searchParams.end });
   const supabase = createClient();
   // Sales/Order-Zahlen (Umsatz, Käufe, Warenkorbwert, CLV) kommen aus den echten
   // WooCommerce-Belegen; Traffic-KPIs (Sessions/Checkouts) weiter aus GA4.
