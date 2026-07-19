@@ -71,6 +71,20 @@ export const HELP_PAGES: DocPage[] = [
           ] },
         ],
       },
+      {
+        heading: 'Analyse / Kundenkennzahlen',
+        blocks: [
+          { type: 'p', text: 'Unter Kontakte › Analyse (/kontakte/analyse) zeigt die Top-Kunden-Übersicht ein Ranking aller Kunden mit mindestens einer Bestellung nach Umsatz, Ø Warenkorb und Wiederkäufer-Quote.' },
+          { type: 'list', items: [
+            'Sortierung „Letzte Bestellung" bringt schlummernde Kunden (lange keine Bestellung mehr) nach oben.',
+            'Segment-Filter (Geschäft/Privat) und Zeitraum (Standardzeiträume oder benutzerdefinierter von-bis-Bereich) schränken die Liste ein.',
+            'Klick auf einen Kunden öffnet dessen Kontakt-Detailseite.',
+          ] },
+          { type: 'p', text: 'Auf der Kontakt-Detailseite zeigt der Abschnitt Geschäftskennzahlen je Kunde Umsatz gesamt, Anzahl Bestellungen, Ø Warenkorb, CLV, erste und letzte Bestellung sowie ein Wiederkäufer-Badge (ab 2 Bestellungen) — darunter die vollständige Bestellhistorie.' },
+          { type: 'note', text: 'Range-Semantik: In der Top-Kunden-Übersicht sind Umsatz, Anzahl Bestellungen und Ø Warenkorb auf den gewählten Zeitraum bezogen — Letzte Bestellung und CLV sind dagegen immer Lifetime-Werte (zeitraumunabhängig). Auf der Kontakt-Detailseite sind sämtliche Kennzahlen Lifetime-Werte.' },
+          { type: 'note', text: 'Deckungsbeitrag/Marge je Kunde folgt, sobald Einkaufspreise durchgängig erfasst sind — heute zeigt die Kundenanalyse nur Umsatzkennzahlen.' },
+        ],
+      },
     ],
   },
   {
