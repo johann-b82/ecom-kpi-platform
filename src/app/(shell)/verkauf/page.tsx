@@ -40,7 +40,6 @@ export default async function VerkaufUebersichtPage({ searchParams }:
     { key: 'avg', label: 'Ø Warenkorb', value: eur(totals.avgOrderValueNet), anno: 'NETTO · OHNE MWST', series: avgSeries, format: 'eur' },
     { key: 'storno', label: 'Stornoquote', value: pct(totals.stornoQuote * 100), anno: 'ANTEIL AM UMSATZVOLUMEN',
       series: stornoSeries, format: 'pct', hint: `${eur(totals.cancelledRevenue)} storniert` },
-    { key: 'angebote', label: 'Offene Angebote', value: String(totals.openOffers) },
   ];
 
   return (
