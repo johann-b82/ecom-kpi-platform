@@ -6,6 +6,7 @@ import type {
   OpenItemOption, ContactOption, OpenItemFilter, PaymentInput, KreditorInvoiceInput,
   PurchaseOrderOption,
 } from './types';
+import type { DateRange } from '@/verkauf/types';
 
 export async function listOpenItems(filter: OpenItemFilter = {}): Promise<OpenItemRow[]> {
   const where: string[] = [];
@@ -194,4 +195,28 @@ export async function exportBookings(): Promise<string> {
     ].join(';');
   });
   return '﻿' + [header, ...lines].join('\r\n') + '\r\n';
+}
+
+// Operativer Cashflow — Einzahlungen: Zahlungseingänge auf Debitor-Posten.
+// Nicht zugeordnete Zahlungen (open_item_id IS NULL) zählen bewusst nicht mit
+// (JOIN statt LEFT JOIN); sie fließen erst nach Zuordnung ein.
+export async function cashflowIn(range: DateRange): Promise<number> {
+  const r = await pool.query<{ total: number }>(
+    `SELECT COALESCE(SUM(p.amount), 0)::float8 AS total
+       FROM payments p JOIN open_items oi ON oi.id = p.open_item_id
+      WHERE oi.direction = 'debitor'
+        AND p.paid_at::date BETWEEN $1 AND $2`,
+    [range.start, range.end]);
+  return Number(r.rows[0].total);
+}
+
+export async function cashflowInByDay(range: DateRange): Promise<{ day: string; amount: number }[]> {
+  const r = await pool.query(
+    `SELECT p.paid_at::date::text AS day, COALESCE(SUM(p.amount), 0)::float8 AS amount
+       FROM payments p JOIN open_items oi ON oi.id = p.open_item_id
+      WHERE oi.direction = 'debitor'
+        AND p.paid_at::date BETWEEN $1 AND $2
+      GROUP BY day ORDER BY day`,
+    [range.start, range.end]);
+  return r.rows.map((x: any) => ({ day: x.day, amount: Number(x.amount) }));
 }
