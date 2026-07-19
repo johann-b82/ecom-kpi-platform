@@ -4,7 +4,7 @@ import { Filters } from '@/components/Filters';
 import { DataTable, type Column } from '@/components/DataTable';
 import { eur } from '@/verkauf/format';
 import { formatDeDate } from '@/lib/dates';
-import type { CustomerMetricRow } from '@/kontakte/analytics';
+import type { CustomerMetricRow, CustomerKpis } from '@/kontakte/analytics';
 import type { DateRange } from '@/lib/types';
 
 const SEGMENTS = [
@@ -22,12 +22,10 @@ function Tile({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function KundenAnalyse({ rows, range, segment }:
-  { rows: CustomerMetricRow[]; range: DateRange; segment: 'geschaeft' | 'privat' | null }) {
-  const active = rows.filter((r) => r.orders > 0);
-  const revenue = active.reduce((s, r) => s + r.revenueNet, 0);
-  const orders = active.reduce((s, r) => s + r.orders, 0);
-  const returning = active.filter((r) => r.isReturning).length;
+export function KundenAnalyse({ rows, kpis, limit, range, segment }:
+  { rows: CustomerMetricRow[]; kpis: CustomerKpis; limit: number;
+    range: DateRange; segment: 'geschaeft' | 'privat' | null }) {
+  const capped = kpis.totalCustomers > rows.length;
 
   const columns: Column<CustomerMetricRow>[] = [
     { key: 'name', header: 'Kunde', sort: (r) => r.name.toLowerCase(),
@@ -71,11 +69,17 @@ export function KundenAnalyse({ rows, range, segment }:
         })}
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile label="Aktive Kunden" value={String(active.length)} />
-        <Tile label="Umsatz" value={eur(revenue)} />
-        <Tile label="Ø Warenkorb" value={eur(orders > 0 ? revenue / orders : 0)} />
-        <Tile label="Wiederkäufer-Quote" value={active.length ? `${Math.round((returning / active.length) * 100)} %` : '—'} />
+        <Tile label="Aktive Kunden" value={kpis.activeCustomers.toLocaleString('de-DE')} />
+        <Tile label="Umsatz" value={eur(kpis.revenueNet)} />
+        <Tile label="Ø Warenkorb" value={eur(kpis.orders > 0 ? kpis.revenueNet / kpis.orders : 0)} />
+        <Tile label="Wiederkäufer-Quote"
+          value={kpis.activeCustomers ? `${Math.round((kpis.returningCustomers / kpis.activeCustomers) * 100)} %` : '—'} />
       </div>
+      {capped && (
+        <p className="anno text-neutral-500">
+          Top {rows.length.toLocaleString('de-DE')} nach Umsatz · von {kpis.totalCustomers.toLocaleString('de-DE')} Kunden
+        </p>
+      )}
       <DataTable rows={rows} columns={columns} rowKey={(r) => r.contactId}
         initialSort={{ col: 'revenue', dir: 'desc' }} empty="Keine Kunden im Zeitraum." />
     </div>

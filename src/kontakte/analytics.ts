@@ -12,10 +12,12 @@ export interface CustomerMetricRow {
   lifetimeOrders: number; clv: number; isReturning: boolean;
 }
 
-// Alle Kunden mit >=1 Lifetime-Beleg (optional segmentgefiltert): Perioden-Kennzahlen
-// (Umsatz/#/AOV im Zeitraum) + Lifetime-Kennzahlen (letzte Bestellung, CLV, Wiederkäufer).
+// Top-N Kunden mit >=1 Lifetime-Beleg (optional segmentgefiltert), nach Umsatz
+// absteigend: Perioden-Kennzahlen (Umsatz/#/AOV im Zeitraum) + Lifetime-Kennzahlen
+// (letzte Bestellung, CLV, Wiederkäufer). `limit` begrenzt die Tabellenzeilen
+// (Default 500) — die aggregierten Kopf-KPIs kommen aus customerKpis (voller Bestand).
 export async function customerMetrics(
-  range: DateRange, opts: { segment?: 'geschaeft' | 'privat' } = {},
+  range: DateRange, opts: { segment?: 'geschaeft' | 'privat'; limit?: number } = {},
 ): Promise<CustomerMetricRow[]> {
   const r = await pool.query(
     `WITH lifetime AS (
@@ -46,8 +48,9 @@ export async function customerMetrics(
        LEFT JOIN period p ON p.contact_id=c.id
       WHERE c.is_customer = true
         AND ($3::text IS NULL OR c.segment = $3)
-      ORDER BY revenue DESC, c.name`,
-    [range.start, range.end, opts.segment ?? null]);
+      ORDER BY revenue DESC, c.name
+      LIMIT $4`,
+    [range.start, range.end, opts.segment ?? null, opts.limit ?? 500]);
   return r.rows.map((x: any) => {
     const orders = Number(x.orders), revenueNet = Number(x.revenue);
     return {
@@ -58,6 +61,46 @@ export async function customerMetrics(
       isReturning: Number(x.lifetime_orders) >= 2,
     };
   });
+}
+
+export interface CustomerKpis {
+  activeCustomers: number; revenueNet: number; orders: number;
+  returningCustomers: number; totalCustomers: number;
+}
+
+// Aggregierte Kopf-KPIs über den VOLLEN Kundenbestand (nicht die Top-N-Tabelle):
+// aktive Kunden (>=1 Beleg im Zeitraum), Perioden-Umsatz/#, Wiederkäufer (lifetime>=2)
+// unter den aktiven, und Gesamtzahl der Kunden mit >=1 Lifetime-Beleg.
+export async function customerKpis(
+  range: DateRange, opts: { segment?: 'geschaeft' | 'privat' } = {},
+): Promise<CustomerKpis> {
+  const inRange = `${ORDER_DATE} BETWEEN $1 AND $2`;
+  const r = await pool.query(
+    `WITH per AS (
+       SELECT c.id,
+              COUNT(DISTINCT o.id) FILTER (WHERE ${REV} AND ${inRange})::int AS p_orders,
+              COALESCE(SUM(l.quantity*l.unit_price) FILTER (WHERE ${REV} AND ${inRange}),0)::float8 AS p_revenue,
+              COUNT(DISTINCT o.id) FILTER (WHERE ${REV})::int AS lt_orders
+         FROM contacts c
+         JOIN sales_orders o ON o.contact_id = c.id
+         LEFT JOIN sales_order_lines l ON l.order_id = o.id
+        WHERE c.is_customer = true AND ($3::text IS NULL OR c.segment = $3)
+        GROUP BY c.id
+       HAVING COUNT(DISTINCT o.id) FILTER (WHERE ${REV}) >= 1
+     )
+     SELECT COUNT(*) FILTER (WHERE p_orders > 0)::int AS active_customers,
+            COALESCE(SUM(p_revenue),0)::float8 AS revenue,
+            COALESCE(SUM(p_orders),0)::int AS orders,
+            COUNT(*) FILTER (WHERE p_orders > 0 AND lt_orders >= 2)::int AS returning_customers,
+            COUNT(*)::int AS total_customers
+       FROM per`,
+    [range.start, range.end, opts.segment ?? null]);
+  const x = r.rows[0];
+  return {
+    activeCustomers: Number(x.active_customers), revenueNet: Number(x.revenue),
+    orders: Number(x.orders), returningCustomers: Number(x.returning_customers),
+    totalCustomers: Number(x.total_customers),
+  };
 }
 
 export interface CustomerSummary {

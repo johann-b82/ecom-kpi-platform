@@ -4,7 +4,7 @@ import { seedKontakte } from '../../scripts/seed-kontakte';
 import { seedKatalog } from '../../scripts/seed-katalog';
 import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, transitionOrderStatus } from '@/verkauf/repository';
-import { customerMetrics, customerSummary, customerOrders } from '@/kontakte/analytics';
+import { customerMetrics, customerKpis, customerSummary, customerOrders } from '@/kontakte/analytics';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001';
 const PL_HANDEL = 'a1a1a1a1-0000-4000-8000-000000000001';
@@ -64,5 +64,24 @@ describe('kontakte analytics', () => {
     expect(list.length).toBeGreaterThan(0);
     expect(list[0].revenueNet).toBeGreaterThan(0);
     expect(list[0].number).toMatch(/^(A|WC)-/);
+  });
+
+  it('customerKpis: aggregiert über den vollen Bestand; totalCustomers >= activeCustomers', async () => {
+    await order(2, 20);
+    const kpis = await customerKpis(ALL);
+    const rows = await customerMetrics(ALL, { limit: 100000 });
+    expect(kpis.activeCustomers).toBe(rows.filter((r) => r.orders > 0).length);
+    expect(kpis.totalCustomers).toBe(rows.length);
+    expect(kpis.revenueNet).toBeCloseTo(rows.reduce((s, r) => s + r.revenueNet, 0), 1);
+    expect(kpis.returningCustomers).toBe(rows.filter((r) => r.orders > 0 && r.isReturning).length);
+    expect(kpis.totalCustomers).toBeGreaterThanOrEqual(kpis.activeCustomers);
+  });
+
+  it('customerMetrics: limit begrenzt die Zeilen auf die Top-N nach Umsatz', async () => {
+    await order(3, 25);
+    const top = await customerMetrics(ALL, { limit: 1 });
+    expect(top).toHaveLength(1);
+    const all = await customerMetrics(ALL, { limit: 100000 });
+    expect(top[0].revenueNet).toBeCloseTo(Math.max(...all.map((r) => r.revenueNet)), 2); // höchster Umsatz zuerst
   });
 });
