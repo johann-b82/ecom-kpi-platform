@@ -50,8 +50,10 @@ binnen ~1 h in `sales_orders` und damit in den Verkaufs-KPIs.
 
 `fetchOrdersRaw(page, perPage, modifiedAfter?)`: optionaler `modified_after`-
 Parameter, analog zum Connector-Client — hängt bei gesetztem `modifiedAfter`
-`&modified_after=<ISO>&dates_are_gmt=true` an die Query. Der Payload bleibt voll
-(kein `_fields`), damit `line_items`/`billing`/`number`/`currency` durchkommen.
+`&modified_after=<ISO>&dates_are_gmt=true` an die Query. Das bestehende
+`_fields` von `fetchOrdersRaw` (`id,number,status,date_created,date_paid,total,
+currency,customer_id,billing,line_items`) enthält bereits alles, was der Import
+braucht, und bleibt unverändert — nur der `modified_after`-Zusatz kommt hinzu.
 
 ### 2. `src/woocommerce/erp-watermark.ts` (neu) — ERP-Watermark
 
