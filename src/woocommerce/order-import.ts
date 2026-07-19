@@ -132,7 +132,7 @@ export async function importWooCommerceOrders(
         // Status + automatische Events abgleichen (Storno/Refund propagieren).
         const newStatus = mapOrderStatus(String(raw.status));
         const cur = await c.query<{ status: string }>('SELECT status FROM sales_orders WHERE id=$1', [existingOrderId]);
-        if (cur.rows[0].status !== newStatus) {
+        if (cur.rows[0] && cur.rows[0].status !== newStatus) {
           await c.query('UPDATE sales_orders SET status=$2 WHERE id=$1', [existingOrderId, newStatus]);
           await c.query('DELETE FROM sales_order_events WHERE order_id=$1 AND automated=true', [existingOrderId]);
           const placedAt = (raw.date_created as string) ?? null;
