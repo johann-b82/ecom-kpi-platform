@@ -1,14 +1,14 @@
 'use client';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { ChartCard } from './ChartCard';
-import { BRAND, MUTED, TICK, TOOLTIP_LABEL_STYLE, num, eur } from './chart-style';
+import { BRAND, MUTED, TICK, TOOLTIP_LABEL_STYLE, num, eur, pct } from './chart-style';
 import { formatDeDate } from '@/lib/dates';
 import type { SeriesPoint } from '@/verfuegbarkeit/types';
 
 // Einlinige KPI-Verlaufskurve für die aufklappbaren KPI-Kacheln.
 export function KpiLineChart({ title, series, format = 'num' }:
-  { title: string; series: SeriesPoint[]; format?: 'num' | 'eur' }) {
-  const fmt = format === 'eur' ? eur : num;
+  { title: string; series: SeriesPoint[]; format?: 'num' | 'eur' | 'pct' }) {
+  const fmt = format === 'eur' ? eur : format === 'pct' ? pct : num;
   if (series.length === 0) {
     return (
       <ChartCard title={title}>
