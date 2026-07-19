@@ -55,16 +55,26 @@ bewusst als möglicher Folge-Ausbau ausgeklammert (siehe *Bekannte Grenzen*).
 
 ## Umfang
 
+Leitprinzip: **Überall dieselbe Umsatzdefinition** (`<> 'storniert'`, ohne MwSt,
+aus `sales_order_lines`). Jede Fläche, die Umsatz aus `sales_orders` berechnet,
+nutzt dasselbe zentrale Prädikat.
+
 In Scope:
 - `/verkauf` Übersicht-KPIs (Umsatz, Sales, Ø Warenkorb) + neue Stornoquote-KPI.
 - `/verkauf/kanal/[channel]` Detailseite (StatTiles, Umsatzverlauf, Stornoquote).
 - Kanal-Vergleichstabelle auf der Übersicht (`channelSummary`) — Umsatz/Marge auf
-  dieselbe Basis (`<> 'storniert'`) umgestellt, damit die Übersicht in sich
-  konsistent ist.
+  dieselbe Basis umgestellt.
+- **E-Com-/Marketing-Dashboard** (`/verkauf/dashboard`): `ecomSalesFacts` und die
+  daraus abgeleitete `marginTotals` auf dieselbe Basis. Damit rechnen Übersicht,
+  Kanal und Dashboard mit **demselben** Umsatz.
 
-Out of Scope (bewusst, ggf. Folge-Arbeit):
-- E-Com-/Marketing-Dashboard (`/verkauf/dashboard`, `ecomSalesFacts`,
-  `marginTotals`, GA4). Behält vorerst seine bisherige Definition.
+Gesondert zu klären (nicht Teil dieser Änderung):
+- Der Connector-/GA4-KPI-Pfad (`src/connectors/woocommerce/connector.ts`,
+  `REVENUE_STATUSES = completed, processing`) berechnet Umsatz aus einer **anderen
+  Quelle** (WooCommerce `total` = **brutto, inkl. MwSt**), nicht aus
+  `sales_order_lines`. Er lässt sich daher nicht per Prädikat angleichen; eine
+  echte Vereinheitlichung ist eine separate Aufgabe (andere Steuer-/Datenbasis).
+  Wird hier nur als bekannte Divergenz dokumentiert.
 
 ## Änderungen
 
@@ -87,6 +97,9 @@ const REVENUE_STATUS_SQL = "o.status <> 'storniert'"; // Umsatz-Basis
 - **`revenueByDay(range, channel)`** und **`topProducts(range, n, channel)`**
   (Kanal-Detail) — Prädikat auf `REVENUE_STATUS_SQL`.
 - **`channelSummary(range)`** — Umsatz/Marge-Basis auf `REVENUE_STATUS_SQL`.
+- **`ecomSalesFacts(range, channel)`** — alle drei Vorkommen des Status-Prädikats
+  (Haupt-Aggregat + `active`- und `life`-CTE) auf `REVENUE_STATUS_SQL`. `marginTotals`
+  folgt automatisch, da es aus `channelSummary` abgeleitet wird.
 
 Feld-Benennung: Die bestehenden Felder heißen weiter `revenueNet` /
 `avgOrderValueNet` (das „Net" meint hier *ohne MwSt* und bleibt korrekt). Neu:
@@ -97,6 +110,11 @@ Feld-Benennung: Die bestehenden Felder heißen weiter `revenueNet` /
 - KPI-Kacheln Umsatz/Sales/Ø Warenkorb: Werte + Serien aus der neuen Basis.
 - **Neue Kachel „Stornoquote"** mit eigener Verlaufslinie (Prozent-Format). Die
   Quote-Serie wird aus `revenue`/`cancelledRevenue` je Bucket berechnet.
+  - **Hinweis im Frontend:** Die Kachel trägt eine dezente Erläuterung
+    (`hint`/`anno`, z. B. „Anteil stornierten Umsatzvolumens") und im
+    Chart-Tooltip die absolute stornierte Summe, damit die Definition
+    (wertbasiert: `storniert / (Umsatz + storniert)`) direkt in der UI sichtbar
+    ist. Dieselbe Erläuterung auch auf der Kanal-Detailseite.
 - „Offene Angebote" bleibt als informative Kachel erhalten.
 
 ### 3. Kanal-Detail — `src/components/KanalSalesBoard.tsx` + Page
@@ -155,5 +173,7 @@ Kurven auf Plausibilität prüfen.
 - **Storno-Zeitstempel:** Für eine am Verarbeitungstag datierte Storno-Kurve
   müsste ein Storno-Event/Zeitstempel erfasst werden (neue `sales_order_events`
   Stage `storniert` + Import-Änderung).
-- **Dashboard-Konsistenz:** `/verkauf/dashboard` nutzt vorerst weiter die alte
-  Definition; Angleichung wäre separate Arbeit.
+- **Connector-/GA4-Umsatz:** Der Pfad über `REVENUE_STATUSES` nutzt WooCommerce
+  `total` (brutto, inkl. MwSt) statt `sales_order_lines` — bleibt eine bewusste
+  Divergenz und wäre nur mit einem separaten Umbau (gemeinsame Steuer-/Datenbasis)
+  anzugleichen.
