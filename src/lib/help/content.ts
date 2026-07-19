@@ -377,6 +377,7 @@ export const HELP_PAGES: DocPage[] = [
         blocks: [
           { type: 'list', items: [
             'Plattform-Zugangsdaten & Sync: Einstellungen (/setup) › Verbindungen — nur für Administratoren.',
+            'Der stündliche WooCommerce-Sync aktualisiert zwei Stellen: die KPI-Rohdaten (orders) und die ERP-Belege (sales_orders). Statuswechsel inkl. Storno/Retoure werden dabei auf bestehende Belege übertragen (inkrementell via modified_after, nächtlicher Voll-Abgleich als Sicherheitsnetz).',
           ] },
         ],
       },
