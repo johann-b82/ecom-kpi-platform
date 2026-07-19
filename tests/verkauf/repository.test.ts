@@ -329,6 +329,22 @@ describe('B4 aggregates', () => {
     const t = await salesTotals(empty);
     expect(t.orders).toBe(0);
     expect(t.avgOrderValueNet).toBe(0);
+    expect(t.stornoQuote).toBe(0);
+  });
+
+  it('salesTotals: ausschließlich storniert → revenue 0, stornoQuote 1', async () => {
+    const win = { start: '2019-03-01', end: '2019-03-01' };
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      placedAt: '2019-03-01T10:00:00Z',
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 2, unitPrice: 10 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'storniert');
+    const t = await salesTotals(win);
+    expect(t.revenueNet).toBe(0);
+    expect(t.cancelledRevenue).toBeCloseTo(20);
+    expect(t.stornoQuote).toBe(1);
   });
 
   it('channelSummary: alle 5 Kanäle, umsatzloser Kanal = 0', async () => {

@@ -31,7 +31,7 @@ export default async function VerkaufUebersichtPage({ searchParams }:
   const stornoSeries = revenueSeries.map((r) => {
     const c = cancelledByDate.get(r.date) ?? 0;
     const base = r.value + c;
-    return { date: r.date, value: base > 0 ? (c / base) * 100 : 0 };
+    return { date: r.date, value: base > 0 ? Math.min(100, (c / base) * 100) : 0 };
   });
 
   const items: KpiTrendItem[] = [

@@ -433,7 +433,7 @@ export async function salesTotals(range: DateRange, channel?: OrderChannel): Pro
     avgOrderValueNet: orders > 0 ? revenueNet / orders : 0,
     openOffers: off.rows[0].open_offers,
     cancelledRevenue,
-    stornoQuote: base > 0 ? cancelledRevenue / base : 0,
+    stornoQuote: base > 0 ? Math.min(1, cancelledRevenue / base) : 0,
   };
 }
 
