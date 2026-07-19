@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
 import { nextContactNumber } from '@/kontakte/number';
+import { cleanContactName } from '@/kontakte/name';
 
 // ── Pure mappers (unit-tested) ─────────────────────────────────────────
 
@@ -42,8 +43,7 @@ export interface ContactFields {
 }
 
 export function mapBillingToContact(b: Billing): ContactFields {
-  const full = `${b.first_name ?? ''} ${b.last_name ?? ''}`.trim();
-  const name = (b.company && b.company.trim()) || full || b.email || 'Unbekannt';
+  const name = cleanContactName(b);
   const street = `${b.address_1 ?? ''} ${b.address_2 ?? ''}`.trim() || null;
   return {
     name,
