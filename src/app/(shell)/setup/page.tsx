@@ -49,7 +49,7 @@ export default async function SetupPage() {
         <UsersForm users={users} currentUserId={currentUser?.id} />
         <GroupsForm groups={groups} users={users} />
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Verbindungen</h2>
+          <h2 className="anno mb-3 text-neutral-500 dark:text-neutral-400">Verbindungen</h2>
           <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
             Zugangsdaten werden AES-256-verschlüsselt in der DB gespeichert. Secrets werden in der Oberfläche maskiert und nie zurückgegeben — leer lassen heißt „unverändert".
           </p>

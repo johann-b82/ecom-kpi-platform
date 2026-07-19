@@ -29,7 +29,7 @@ export default async function ShellLayout({ children }: { children: ReactNode })
               </Link>
               <ModuleBar />
             </div>
-            <UserMenu email={user?.email} canBrickPM={!!access.apps.brickpm} isAdmin={access.isAdmin} />
+            <UserMenu email={user?.email} isAdmin={access.isAdmin} />
           </header>
           <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
         </div>

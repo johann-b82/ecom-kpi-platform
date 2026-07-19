@@ -12,7 +12,6 @@ echo "==> git pull";      git pull --ff-only
 echo "==> build";         $COMPOSE build
 echo "==> migrate";       $COMPOSE run --rm app npm run migrate
 echo "==> seed groups";   $COMPOSE run --rm app npm run seed-groups
-echo "==> seed brickpm";  $COMPOSE run --rm app npm run seed-brickpm
 echo "==> recreate app";  docker rm -f budp-app >/dev/null 2>&1 || true
 $COMPOSE up -d
 echo "==> wait ready";    for i in $(seq 1 30); do docker logs budp-app 2>&1 | grep -q "Ready in" && break; sleep 2; done

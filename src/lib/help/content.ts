@@ -30,7 +30,7 @@ export const HELP_PAGES: DocPage[] = [
       {
         heading: 'Was ist diese Plattform?',
         blocks: [
-          { type: 'p', text: 'Eine modulare ERP-Plattform. Jedes Modul deckt einen Arbeitsbereich ab: Kennzahlen (Dashboard), Sortiments- und Preissteuerung (BrickPM), Geschäftspartner (Kontakte) und Produktkatalog (Katalog).' },
+          { type: 'p', text: 'Eine modulare ERP-Plattform. Jedes Modul deckt einen Arbeitsbereich ab: Verfügbarkeit, Verkauf und Finanzen bilden die Wertschöpfungskette; Geschäftspartner (Kontakte) und Produktkatalog (Katalog) liefern die Stammdaten.' },
         ],
       },
       {
@@ -48,31 +48,6 @@ export const HELP_PAGES: DocPage[] = [
   },
 
   // ── Module (Nutzer) ───────────────────────────────────────────────
-  {
-    slug: 'brickpm',
-    title: 'BrickPM',
-    summary: 'Sortiment, Preise, Aktionen und Wettbewerb steuern.',
-    group: 'module',
-    sections: [
-      {
-        heading: 'Was macht das Modul?',
-        blocks: [
-          { type: 'p', text: 'BrickPM ist das Product-Management für das Sortiment: Produkte, Preise/Margen, Aktionen und Wettbewerbsbeobachtung an einem Ort.' },
-        ],
-      },
-      {
-        heading: 'Wichtige Funktionen',
-        blocks: [
-          { type: 'list', items: [
-            'Sortiment: Produkte mit Preis, Kosten und Marge pflegen.',
-            'Aktionen & Goodies: Promotions planen und deren Margeneffekt sehen.',
-            'Wettbewerb & Preis-Historie: eigene Preise gegen Wettbewerber verfolgen.',
-            'Benachrichtigungen: Hinweise und fällige Aufgaben im Blick behalten.',
-          ] },
-        ],
-      },
-    ],
-  },
   {
     slug: 'kontakte',
     title: 'Kontakte',
@@ -331,7 +306,6 @@ export const HELP_PAGES: DocPage[] = [
             ['external_references', 'ID-Mapping zu Fremdsystemen', 'entity_type, entity_id, source_system, external_id'],
             ['sync_state', 'Sync-Status je Connector', 'connector, last_run_at, status, detail'],
           ] },
-          { type: 'note', text: 'BrickPM-Tabellen (bpm_*) sind hier noch nicht dokumentiert.' },
         ],
       },
       {

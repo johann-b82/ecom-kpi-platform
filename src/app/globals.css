@@ -28,5 +28,3 @@ body { @apply bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutr
   text-transform: uppercase;
   color: #9a9488;
 }
-
-.bpm-focus { box-shadow: inset 3px 0 0 0 var(--brand); background: color-mix(in srgb, var(--brand) 8%, transparent); }

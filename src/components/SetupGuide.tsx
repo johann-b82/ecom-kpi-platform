@@ -12,13 +12,13 @@ function defaultOpenFor(status: OAuthProviderStatus): number {
 function Marker({ state, index }: { state: StepState; index: number }) {
   if (state === 'done') {
     return (
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs font-bold text-white">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success text-xs font-bold text-white">
         ✓
       </span>
     );
   }
   const ring = state === 'current'
-    ? 'border-brand text-brand'
+    ? 'border-accent text-accent'
     : 'border-neutral-300 text-neutral-400 dark:border-neutral-600';
   return (
     <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${ring}`}>
@@ -41,7 +41,7 @@ export function SetupGuide({ oauth }: { oauth: OAuthProviderStatus[] }) {
   }
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4 text-sm dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="rounded-lg border border-neutral-200 bg-neutral-0 p-4 text-sm shadow-card dark:border-neutral-800 dark:bg-neutral-900">
       <h2 className="mb-2 text-base font-semibold text-neutral-900 dark:text-neutral-100">Setup-Anleitung</h2>
       <p className="mb-4 text-neutral-600 dark:text-neutral-400">{GUIDE_INTRO}</p>
 
@@ -57,7 +57,7 @@ export function SetupGuide({ oauth }: { oauth: OAuthProviderStatus[] }) {
               onClick={() => selectTab(o)}
               className={`-mb-px border-b-2 px-3 py-1.5 font-medium transition-colors ${
                 active
-                  ? 'border-brand text-brand'
+                  ? 'border-accent text-accent'
                   : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'
               }`}
             >
@@ -69,7 +69,7 @@ export function SetupGuide({ oauth }: { oauth: OAuthProviderStatus[] }) {
 
       <p className="mb-3 text-neutral-700 dark:text-neutral-300">
         {provider.connected ? (
-          <span className="font-medium text-green-700 dark:text-green-500">
+          <span className="font-medium text-success">
             ✓ Verbunden{provider.accountLabel ? ` (${provider.accountLabel})` : ''}
             {provider.expiresAt ? ` · läuft ab am ${formatDeDate(new Date(provider.expiresAt).toISOString())}` : ''}
           </span>

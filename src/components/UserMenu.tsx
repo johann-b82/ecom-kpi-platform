@@ -8,7 +8,7 @@ import { LockIcon } from '@/components/AdminOnlyTag';
 const itemClass =
   'flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800';
 
-export function UserMenu({ email, canBrickPM, isAdmin }: { email?: string | null; canBrickPM?: boolean; isAdmin?: boolean }) {
+export function UserMenu({ email, isAdmin }: { email?: string | null; isAdmin?: boolean }) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
@@ -48,7 +48,7 @@ export function UserMenu({ email, canBrickPM, isAdmin }: { email?: string | null
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Benutzermenü"
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white hover:bg-brand-dark"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-sm font-semibold text-white hover:bg-accent-hover"
       >
         {initial}
       </button>
@@ -56,17 +56,12 @@ export function UserMenu({ email, canBrickPM, isAdmin }: { email?: string | null
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-800 dark:bg-neutral-900"
+          className="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-0 py-1 shadow-popover dark:border-neutral-800 dark:bg-neutral-900"
         >
           {email && (
             <div className="truncate border-b border-neutral-100 px-4 py-2 text-xs text-neutral-500 dark:border-neutral-800">
               {email}
             </div>
-          )}
-          {canBrickPM && (
-            <a href="/brickpm" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
-              <GridIcon /> BrickPM
-            </a>
           )}
           {isAdmin && (
             <a href="/setup" role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
@@ -102,15 +97,6 @@ function GearIcon() {
     <svg {...iconProps}>
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-    </svg>
-  );
-}
-
-function GridIcon() {
-  return (
-    <svg {...iconProps}>
-      <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
     </svg>
   );
 }

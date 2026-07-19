@@ -7,7 +7,7 @@ vi.mock('@/lib/groups', () => ({ getUserAccess: vi.fn() }));
 vi.mock('@/lib/demo-ads', () => ({ enableDemoAds: vi.fn(), disableDemoAds: vi.fn() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
-import { toggleDemoAdsAction } from '@/app/setup/actions';
+import { toggleDemoAdsAction } from '@/app/(shell)/setup/actions';
 import { getUserAccess } from '@/lib/groups';
 import { enableDemoAds, disableDemoAds } from '@/lib/demo-ads';
 import { revalidatePath } from 'next/cache';

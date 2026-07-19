@@ -22,13 +22,13 @@ describe('group store (integration, benötigt DB)', () => {
 
   it('setAdmin / setAppAccess / setMembers reflected in listGroups', async () => {
     await setAdmin(gid, true);
-    await setAppAccess(gid, 'brickpm', 'edit');
+    await setAppAccess(gid, 'katalog', 'edit');
     await setAppAccess(gid, 'kontakte', 'view');
     await setMembers(gid, [U1, U2]);
     const g = (await listGroups()).find((x) => x.id === gid)!;
     expect(g.isAdmin).toBe(true);
     expect(g.memberIds.sort()).toEqual([U1, U2].sort());
-    expect(g.access.find((a) => a.app === 'brickpm')?.permission).toBe('edit');
+    expect(g.access.find((a) => a.app === 'katalog')?.permission).toBe('edit');
     expect(g.access.find((a) => a.app === 'kontakte')?.permission).toBe('view');
   });
 

@@ -19,15 +19,15 @@ describe('activeApp', () => {
 });
 
 describe('selectTabApps', () => {
-  const apps = APPS; // 7 Apps
+  const apps = APPS; // 6 Apps
   it('zeigt die ersten 4 + showMore bei >4 Apps', () => {
     const { tabs, showMore } = selectTabApps(apps, null);
     expect(tabs.map((a) => a.key)).toEqual(['verfuegbarkeit', 'verkauf', 'finanzen', 'katalog']);
     expect(showMore).toBe(true);
   });
   it('ersetzt Slot 4 durch die aktive App, wenn sie nicht unter den ersten 4 ist', () => {
-    const { tabs } = selectTabApps(apps, 'brickpm');
-    expect(tabs.map((a) => a.key)).toEqual(['verfuegbarkeit', 'verkauf', 'finanzen', 'brickpm']);
+    const { tabs } = selectTabApps(apps, 'kontakte');
+    expect(tabs.map((a) => a.key)).toEqual(['verfuegbarkeit', 'verkauf', 'finanzen', 'kontakte']);
   });
   it('lässt die ersten 4 unverändert, wenn die aktive App schon dabei ist', () => {
     const { tabs } = selectTabApps(apps, 'verkauf');
@@ -35,7 +35,7 @@ describe('selectTabApps', () => {
   });
   it('zeigt alle Apps ohne showMore bei <=4 Apps', () => {
     const four = apps.slice(0, 4) as AppDef[];
-    const { tabs, showMore } = selectTabApps(four, 'brickpm');
+    const { tabs, showMore } = selectTabApps(four, 'kontakte');
     expect(tabs).toHaveLength(4);
     expect(showMore).toBe(false);
   });

@@ -11,14 +11,14 @@ afterEach(cleanup);
 
 const users: AppUser[] = [{ id: 'u1', email: 'a@b.de', createdAt: '', lastSignInAt: null }];
 const groups: Group[] = [
-  { id: 'g1', name: 'Produktmanagement', isAdmin: false, memberIds: ['u1'], access: [{ app: 'brickpm', permission: 'edit' }] },
+  { id: 'g1', name: 'Produktmanagement', isAdmin: false, memberIds: ['u1'], access: [{ app: 'kontakte', permission: 'edit' }] },
 ];
 
 describe('GroupsForm', () => {
   it('renders each group with its name and a per-app access control', () => {
     render(<GroupsForm groups={groups} users={users} />);
     expect(screen.getByDisplayValue('Produktmanagement')).toBeTruthy();
-    // one access <select> per app (dashboard + brickpm) → at least 2
+    // one access <select> per app → at least 2
     expect(screen.getAllByRole('combobox').length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText('Neue Gruppe')).toBeTruthy();
   });

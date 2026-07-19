@@ -26,12 +26,12 @@ export function GroupsForm({ groups, users }: { groups: Group[]; users: AppUser[
 
   return (
     <section>
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Gruppen</h2>
+      <h2 className="anno mb-3 text-neutral-500 dark:text-neutral-400">Gruppen</h2>
       {msg && <p className="mb-3 text-sm text-neutral-900 dark:text-neutral-100">{msg}</p>}
 
       <div className="space-y-4">
         {groups.map((g) => (
-          <div key={g.id} className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+          <div key={g.id} className="rounded-lg border border-neutral-200 bg-neutral-0 p-4 shadow-card dark:border-neutral-800 dark:bg-neutral-900">
             <div className="mb-3 flex items-center gap-3">
               <input
                 className={`${inputClass} flex-1`}
@@ -42,7 +42,7 @@ export function GroupsForm({ groups, users }: { groups: Group[]; users: AppUser[
                 <input type="checkbox" checked={g.isAdmin} onChange={(e) => call({ action: 'setAdmin', id: g.id, isAdmin: e.target.checked })} />
                 Admin
               </label>
-              <button type="button" className="text-xs text-red-600 dark:text-red-400"
+              <button type="button" className="text-xs text-danger hover:underline"
                 onClick={() => { if (confirm(`Gruppe „${g.name}" löschen?`)) call({ action: 'delete', id: g.id }); }}>
                 Löschen
               </button>
@@ -66,7 +66,7 @@ export function GroupsForm({ groups, users }: { groups: Group[]; users: AppUser[
             </div>
 
             <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-neutral-500">Mitglieder</p>
+              <p className="anno mb-1 text-neutral-500 dark:text-neutral-400">Mitglieder</p>
               <div className="flex flex-wrap gap-3">
                 {users.map((u) => {
                   const member = g.memberIds.includes(u.id);
@@ -94,7 +94,7 @@ export function GroupsForm({ groups, users }: { groups: Group[]; users: AppUser[
         <input className={inputClass} placeholder="Gruppenname" value={newName} onChange={(e) => setNewName(e.target.value)} />
         <button
           type="button"
-          className="rounded bg-brand px-3 py-1 text-sm text-white"
+          className="rounded-md bg-accent px-3 py-1 text-sm text-white transition-colors hover:bg-accent-hover"
           onClick={() => { if (newName.trim()) { call({ action: 'create', name: newName.trim() }); setNewName(''); } }}
         >
           Neue Gruppe

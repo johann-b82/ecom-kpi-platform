@@ -1,5 +1,5 @@
 // AppKey ist der Authz-Schlüssel je Modul; APPS ist die Rail-/Launchpad-Registry.
-export type AppKey = 'brickpm' | 'kontakte' | 'katalog' | 'hilfe' | 'verkauf' | 'verfuegbarkeit' | 'finanzen';
+export type AppKey = 'kontakte' | 'katalog' | 'hilfe' | 'verkauf' | 'verfuegbarkeit' | 'finanzen';
 
 // group ordnet die Apps in Rail/Launchpad: die Wertschöpfungskette
 // (Verfügbarkeit → Verkauf → Finanzen) getrennt von den zentralen Funktionen.
@@ -21,7 +21,6 @@ export const APPS: AppDef[] = [
   // Zentrale Funktionen (Stammdaten, Werkzeuge, Hilfe)
   { key: 'katalog', label: 'Katalog', abbr: 'KA', href: '/katalog', group: 'zentral' },
   { key: 'kontakte', label: 'Kontakte', abbr: 'KO', href: '/kontakte', group: 'zentral' },
-  { key: 'brickpm', label: 'BrickPM', abbr: 'BP', href: '/brickpm', group: 'zentral' },
   { key: 'hilfe', label: 'Hilfe', abbr: 'HI', href: '/hilfe', group: 'zentral' },
 ];
 

@@ -42,8 +42,8 @@ export function BrandingForm({ initial }: { initial: Branding }) {
 
   return (
     <section>
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Branding</h2>
-      <div className="grid grid-cols-[14rem_1fr] items-center gap-x-3 gap-y-4 rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+      <h2 className="anno mb-3 text-neutral-500 dark:text-neutral-400">Branding</h2>
+      <div className="grid grid-cols-[14rem_1fr] items-center gap-x-3 gap-y-4 rounded-lg border border-neutral-200 bg-neutral-0 p-4 shadow-card dark:border-neutral-800 dark:bg-neutral-900">
         {/* Logo */}
         <label className="text-sm text-neutral-700 dark:text-neutral-300">Logo</label>
         <div className="flex items-center gap-3">
@@ -51,7 +51,7 @@ export function BrandingForm({ initial }: { initial: Branding }) {
           <img src={logo || '/bryx-logo.svg'} alt="Logo" className="h-9 w-auto rounded bg-neutral-100 p-1 dark:bg-neutral-800" />
           <input type="file" accept="image/*" onChange={onFile} className="text-sm text-neutral-600 file:mr-3 file:rounded file:border-0 file:bg-neutral-200 file:px-2 file:py-1 file:text-sm dark:text-neutral-400 dark:file:bg-neutral-700 dark:file:text-neutral-100" />
           {logo && (
-            <button type="button" className="text-xs text-red-600 dark:text-red-400" onClick={() => setLogo(null)}>
+            <button type="button" className="text-xs text-danger hover:underline" onClick={() => setLogo(null)}>
               Standard-Logo
             </button>
           )}
@@ -70,7 +70,7 @@ export function BrandingForm({ initial }: { initial: Branding }) {
         </div>
         {/* Save */}
         <div className="col-span-2 flex items-center gap-3">
-          <button type="button" onClick={save} disabled={busy} className="rounded bg-brand px-3 py-1 text-sm text-white disabled:opacity-50">
+          <button type="button" onClick={save} disabled={busy} className="rounded-md bg-accent px-3 py-1 text-sm text-white transition-colors hover:bg-accent-hover disabled:opacity-50">
             Speichern
           </button>
           {msg && <span className="text-sm text-neutral-600 dark:text-neutral-400">{msg}</span>}

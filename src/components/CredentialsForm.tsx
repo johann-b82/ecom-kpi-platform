@@ -64,14 +64,14 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
             type="button"
             aria-label={show[key] ? 'verbergen' : 'anzeigen'}
             title={show[key] ? 'verbergen' : 'anzeigen'}
-            className="text-neutral-500 hover:text-brand"
+            className="text-neutral-500 hover:text-accent"
             onClick={() => setShow({ ...show, [key]: !show[key] })}
           >
             {show[key] ? <EyeOffIcon /> : <EyeIcon />}
           </button>
         )}
-        <span className={`text-xs ${f.isSet ? 'text-emerald-600 dark:text-emerald-500' : 'text-neutral-500'}`}>{f.isSet ? 'gesetzt ✓' : 'nicht gesetzt'}</span>
-        {f.isSet && <button type="button" className="text-xs text-red-600 dark:text-red-400" onClick={() => remove(f.connector, f.field)}>Löschen</button>}
+        <span className={`text-xs ${f.isSet ? 'text-success' : 'text-neutral-500'}`}>{f.isSet ? 'gesetzt ✓' : 'nicht gesetzt'}</span>
+        {f.isSet && <button type="button" className="text-xs text-danger hover:underline" onClick={() => remove(f.connector, f.field)}>Löschen</button>}
       </div>
     );
   }
@@ -82,10 +82,10 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
       {msg && <p className="text-sm text-neutral-900 dark:text-neutral-100">{msg}</p>}
       {CONNECTOR_GROUPS.map((group) => (
         <section key={group.title}>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">{group.title}</h2>
+          <h2 className="anno mb-3 text-neutral-500 dark:text-neutral-400">{group.title}</h2>
           <div className="space-y-4">
             {group.connectors.map((connector) => (
-              <div key={connector} className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+              <div key={connector} className="rounded-lg border border-neutral-200 bg-neutral-0 p-4 shadow-card dark:border-neutral-800 dark:bg-neutral-900">
                 <h3 className="mb-3 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{CONNECTOR_LABELS[connector]}</h3>
                 {(() => {
                   const oc = oauth.find((o) => o.connectors.includes(connector as Connector));
@@ -99,11 +99,11 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
                             {oc.expiresAt ? ` · läuft ab am ${formatDeDate(new Date(oc.expiresAt).toISOString())}` : ''}
                           </span>
                           <form method="post" action={`/api/oauth/${oc.key}/disconnect`}>
-                            <button className="text-brand hover:text-brand-dark" type="submit">Verbindung trennen</button>
+                            <button className="text-accent hover:text-accent-hover" type="submit">Verbindung trennen</button>
                           </form>
                         </div>
                       ) : oc.hasAppCreds ? (
-                        <a className="text-brand hover:text-brand-dark" href={`/api/oauth/${oc.key}/start`}>
+                        <a className="text-accent hover:text-accent-hover" href={`/api/oauth/${oc.key}/start`}>
                           Mit {oc.label} verbinden →
                         </a>
                       ) : (
@@ -126,8 +126,8 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
                   return (
                     <>
                       {oauthFields.length > 0 && (
-                        <div className="mb-4 rounded-md border border-brand bg-neutral-50 p-3 dark:bg-neutral-950">
-                          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-brand">
+                        <div className="mb-4 rounded-md border border-accent bg-neutral-50 p-3 dark:bg-neutral-950">
+                          <p className="anno mb-3 text-accent">
                             OAuth-Zugangsdaten — für „Mit {CONNECTOR_LABELS[connector]} verbinden"
                           </p>
                           <div className="space-y-3">{oauthFields.map((f) => renderField(f))}</div>
@@ -136,7 +136,7 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
                       {otherFields.length > 0 && (
                         <div className="space-y-3">
                           {oauthFields.length > 0 && (
-                            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Weitere Felder</p>
+                            <p className="anno text-neutral-500 dark:text-neutral-400">Weitere Felder</p>
                           )}
                           {otherFields.map((f) => renderField(f))}
                         </div>
@@ -144,7 +144,7 @@ export function CredentialsForm({ fields, oauth = [] }: { fields: FieldView[]; o
                     </>
                   );
                 })()}
-                <button type="button" onClick={() => save(connector)} className="mt-3 rounded bg-brand px-3 py-1 text-sm text-white">Speichern</button>
+                <button type="button" onClick={() => save(connector)} className="mt-3 rounded-md bg-accent px-3 py-1 text-sm text-white transition-colors hover:bg-accent-hover">Speichern</button>
               </div>
             ))}
           </div>
