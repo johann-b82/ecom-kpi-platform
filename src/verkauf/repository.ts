@@ -409,6 +409,19 @@ export async function listOrderRowsPaged(
 // da der aktuelle Status gelesen wird — verarbeitete Stornos sind automatisch abgezogen.
 const REVENUE_STATUS_SQL = "o.status <> 'storniert'";
 
+// Nur der Netto-Umsatz eines Zeitraums (gleicher Umsatz-Filter wie salesTotals,
+// ohne die Zusatzaggregate/openOffers-Query). Für die Startseiten-Wachstumskachel,
+// damit die Launchpad nicht 2× das schwerere salesTotals auslöst.
+export async function revenueNetTotal(range: DateRange, channel?: OrderChannel): Promise<number> {
+  const r = await pool.query<{ revenue: number }>(
+    `SELECT COALESCE(SUM(l.quantity * l.unit_price) FILTER (WHERE ${REVENUE_STATUS_SQL}), 0)::float8 AS revenue
+       FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
+      WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
+        AND ($3::text IS NULL OR o.channel = $3)`,
+    [range.start, range.end, channel ?? null]);
+  return Number(r.rows[0].revenue);
+}
+
 export async function salesTotals(range: DateRange, channel?: OrderChannel): Promise<SalesTotals> {
   const rev = await pool.query(
     `SELECT COALESCE(SUM(l.quantity * l.unit_price) FILTER (WHERE ${REVENUE_STATUS_SQL}), 0)::float8 AS revenue,

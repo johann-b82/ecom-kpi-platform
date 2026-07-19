@@ -7,7 +7,7 @@ import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, getOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
 import {
   listOrderRows, getOrderView, sellableVariants, priceForVariant, availableStock,
-  salesTotals, channelSummary, statusFunnel, countOpenQuotes, salesDailySeries, ecomSalesFacts,
+  salesTotals, revenueNetTotal, channelSummary, statusFunnel, countOpenQuotes, salesDailySeries, ecomSalesFacts,
 } from '@/verkauf/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001'; // Spielwaren Müller, K-0001
@@ -291,6 +291,21 @@ describe('B4 aggregates', () => {
     expect(after.orders - before.orders).toBe(2);                    // beide zählen
     expect(after.openOffers - before.openOffers).toBe(1);            // nur das Angebot
     expect(after.avgOrderValueNet).toBeCloseTo(after.revenueNet / after.orders);
+  });
+
+  it('revenueNetTotal: stimmt mit salesTotals.revenueNet überein und schließt Storno aus', async () => {
+    const base = (await salesTotals(range)).revenueNet;
+    expect(await revenueNetTotal(range)).toBeCloseTo(base, 2);       // deckungsgleich mit dem schweren Aggregat
+
+    const order = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 2, unitPrice: 10 }],
+    });
+    orderIds.push(order.id);
+    expect(await revenueNetTotal(range)).toBeCloseTo(base + 20, 2);  // Auftrag zählt
+
+    await transitionOrderStatus(order.id, 'storniert');
+    expect(await revenueNetTotal(range)).toBeCloseTo(base, 2);       // Storno wieder draußen
   });
 
   it('salesTotals: storniert fließt in cancelledRevenue/stornoQuote, nicht in Umsatz', async () => {
