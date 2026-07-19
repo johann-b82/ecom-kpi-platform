@@ -63,30 +63,32 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
       <Faden events={order.events} />
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-        <table className="w-full text-sm">
-          <thead><tr className="anno text-left text-neutral-500">
-            <th className="py-2">Artikel</th><th>SKU</th><th className="text-right">Menge</th>
-            <th className="text-right">Einzelpreis</th><th className="text-right">Summe</th>
-          </tr></thead>
-          <tbody>
-            {order.lines.map((l) => (
-              <tr key={l.id} className="border-t border-neutral-200 dark:border-neutral-800">
-                <td className="py-2">{l.productName}</td><td className="text-neutral-500">{l.sku}</td>
-                <td className="text-right">{l.quantity}</td>
-                <td className="text-right">{l.unitPrice.toFixed(2)} €</td>
-                <td className="text-right">{(l.quantity * l.unitPrice).toFixed(2)} €</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="anno text-left text-neutral-500">
+              <th className="py-2">Artikel</th><th>SKU</th><th className="text-right">Menge</th>
+              <th className="text-right">Einzelpreis</th><th className="text-right">Summe</th>
+            </tr></thead>
+            <tbody>
+              {order.lines.map((l) => (
+                <tr key={l.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                  <td className="py-2">{l.productName}</td><td className="text-neutral-500">{l.sku}</td>
+                  <td className="text-right">{l.quantity}</td>
+                  <td className="text-right">{l.unitPrice.toFixed(2)} €</td>
+                  <td className="text-right">{(l.quantity * l.unitPrice).toFixed(2)} €</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-neutral-300 font-medium dark:border-neutral-700">
+                <td className="py-2" colSpan={4}>Gesamt</td><td className="text-right">{total.toFixed(2)} €</td>
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t border-neutral-300 font-medium dark:border-neutral-700">
-              <td className="py-2" colSpan={4}>Gesamt</td><td className="text-right">{total.toFixed(2)} €</td>
-            </tr>
-            <tr>
-              <td className="anno pt-1 text-neutral-500" colSpan={5}>Beträge netto, ohne MwSt</td>
-            </tr>
-          </tfoot>
-        </table>
+              <tr>
+                <td className="anno pt-1 text-neutral-500" colSpan={5}>Beträge netto, ohne MwSt</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
 
       {order.costs.length > 0 && (

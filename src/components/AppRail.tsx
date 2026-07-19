@@ -28,7 +28,7 @@ export function AppRail({ apps, logo, title }: { apps: AppDef[]; logo: string | 
   };
 
   return (
-    <nav className="flex w-16 shrink-0 flex-col items-center gap-1.5 bg-neutral-900 py-3">
+    <nav className="hidden w-16 shrink-0 flex-col items-center gap-1.5 bg-neutral-900 py-3 md:flex">
       <Link
         href="/"
         aria-label="Launchpad"

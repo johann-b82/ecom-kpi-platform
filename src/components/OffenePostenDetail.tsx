@@ -90,18 +90,20 @@ export function OffenePostenDetail({ item }: { item: OpenItemDetail }) {
         {item.payments.length === 0
           ? <p className="text-sm text-neutral-500">Noch keine Zahlungen.</p>
           : (
-            <table className="w-full text-sm">
-              <tbody>
-                {item.payments.map((p) => (
-                  <tr key={p.id} className="border-t border-neutral-200 dark:border-neutral-800">
-                    <td className="py-1 text-neutral-500">{p.paidAt.slice(0, 10)}</td>
-                    <td>{eur(p.amount)}</td>
-                    <td>{METHOD_LABEL[p.method]}</td>
-                    <td className="text-neutral-500">{p.reference ?? ''}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <tbody>
+                  {item.payments.map((p) => (
+                    <tr key={p.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                      <td className="py-1 text-neutral-500">{p.paidAt.slice(0, 10)}</td>
+                      <td>{eur(p.amount)}</td>
+                      <td>{METHOD_LABEL[p.method]}</td>
+                      <td className="text-neutral-500">{p.reference ?? ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
       </div>
     </div>

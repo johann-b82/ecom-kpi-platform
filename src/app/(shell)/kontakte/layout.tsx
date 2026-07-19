@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { requireAppAccess } from '@/lib/groups';
 import { KontakteSidebar } from '@/components/KontakteSidebar';
+import { ModuleSidebar } from '@/components/ModuleSidebar';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +13,8 @@ export default async function KontakteLayout({ children }: { children: ReactNode
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      <KontakteSidebar />
-      <main className="flex-1 overflow-y-auto p-6">{children}</main>
+      <ModuleSidebar><KontakteSidebar /></ModuleSidebar>
+      <main className="flex-1 overflow-y-auto p-6 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-6">{children}</main>
     </div>
   );
 }

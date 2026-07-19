@@ -68,31 +68,33 @@ export function VerkaufList({ rows, total, page, pageSize, channel, search, stat
         <Link href="/verkauf/neu"
           className="ml-auto rounded bg-accent px-3 py-1 text-sm font-medium text-white hover:bg-accent-hover">Neuer Beleg</Link>
       </div>
-      <table className="w-full text-sm">
-        <thead><tr className="text-left text-neutral-500">
-          <SortableTh col="number" label="Nummer" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} className="py-2" />
-          <SortableTh col="contact" label="Kunde" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} />
-          <SortableTh col="channel" label="Kanal" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} />
-          <SortableTh col="status" label="Status" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} />
-          <th className="anno">Spur</th>
-          <SortableTh col="placed" label="Datum" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} />
-        </tr></thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} className="border-t border-neutral-200 dark:border-neutral-800">
-              <td className="py-2"><Link href={`/verkauf/belege/${r.id}`} className="text-brand hover:text-brand-dark">{r.number}</Link></td>
-              <td>{r.contactName}</td>
-              <td>{CH_LABEL[r.channel]}</td>
-              <td>{STATUS_LABEL[r.status]}</td>
-              <td><Spur stages={r.stages} /></td>
-              <td className="text-neutral-500">{(r.placedAt ?? r.createdAt).slice(0, 10)}</td>
-            </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr><td colSpan={6} className="py-6 text-center text-neutral-500">Keine Sales.</td></tr>
-          )}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead><tr className="text-left text-neutral-500">
+            <SortableTh col="number" label="Nummer" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} className="py-2" />
+            <SortableTh col="contact" label="Kunde" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} />
+            <SortableTh col="channel" label="Kanal" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} />
+            <SortableTh col="status" label="Status" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} />
+            <th className="anno">Spur</th>
+            <SortableTh col="placed" label="Datum" allowed={ORDER_SORT.allowed} fallback={ORDER_SORT.fallback} />
+          </tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                <td className="py-2"><Link href={`/verkauf/belege/${r.id}`} className="text-brand hover:text-brand-dark">{r.number}</Link></td>
+                <td>{r.contactName}</td>
+                <td>{CH_LABEL[r.channel]}</td>
+                <td>{STATUS_LABEL[r.status]}</td>
+                <td><Spur stages={r.stages} /></td>
+                <td className="text-neutral-500">{(r.placedAt ?? r.createdAt).slice(0, 10)}</td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr><td colSpan={6} className="py-6 text-center text-neutral-500">Keine Sales.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
       <div className="flex items-center gap-3 pt-1 text-sm text-neutral-500">
         {page > 1
           ? <Link href={href({ ...base, search, from, to, page: page - 1 })} className="rounded bg-neutral-100 px-3 py-1 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200">← Zurück</Link>

@@ -90,34 +90,36 @@ export function KatalogList({ products }: { products: ProductListItem[] }) {
         {chip('', 'Alle')}
         {LIFECYCLE_STATUSES.map((s) => chip(s, s))}
       </div>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-neutral-500">
-            <th className="anno py-2">Bild</th>
-            <ClientSortableTh col="name" label="Name" sort={sort} onSort={onSort} />
-            <ClientSortableTh col="variants" label="Varianten" sort={sort} onSort={onSort} />
-            <ClientSortableTh col="status" label="Status" sort={sort} onSort={onSort} />
-            <ClientSortableTh col="ek" label="EK ab" sort={sort} onSort={onSort} />
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((p) => (
-            <tr key={p.id} className="border-t border-neutral-200 dark:border-neutral-800">
-              <td className="py-2">
-                {p.imageUrl
-                  ? <img src={p.imageUrl} alt="" className="h-8 w-8 rounded object-cover" />
-                  : <span className="text-neutral-400">—</span>}
-              </td>
-              <td>
-                <Link href={`/katalog/${p.id}`} className="text-brand hover:text-brand-dark">{p.name}</Link>
-              </td>
-              <td>{p.variantCount}</td>
-              <td>{p.lifecycleStatus}</td>
-              <td className="text-neutral-500">{p.minPurchasePrice ?? '—'}</td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-neutral-500">
+              <th className="anno py-2">Bild</th>
+              <ClientSortableTh col="name" label="Name" sort={sort} onSort={onSort} />
+              <ClientSortableTh col="variants" label="Varianten" sort={sort} onSort={onSort} />
+              <ClientSortableTh col="status" label="Status" sort={sort} onSort={onSort} />
+              <ClientSortableTh col="ek" label="EK ab" sort={sort} onSort={onSort} />
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((p) => (
+              <tr key={p.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                <td className="py-2">
+                  {p.imageUrl
+                    ? <img src={p.imageUrl} alt="" className="h-8 w-8 rounded object-cover" />
+                    : <span className="text-neutral-400">—</span>}
+                </td>
+                <td>
+                  <Link href={`/katalog/${p.id}`} className="text-brand hover:text-brand-dark">{p.name}</Link>
+                </td>
+                <td>{p.variantCount}</td>
+                <td>{p.lifecycleStatus}</td>
+                <td className="text-neutral-500">{p.minPurchasePrice ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

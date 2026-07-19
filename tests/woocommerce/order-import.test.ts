@@ -1,7 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
   mapOrderStatus, billingContactKey, mapBillingToContact, mapOrderLines,
 } from '@/woocommerce/order-import';
+import { pool } from '@/lib/db';
+import { importWooCommerceOrders } from '@/woocommerce/order-import';
+import { seedKontakte } from '../../scripts/seed-kontakte';
+import { seedKatalog } from '../../scripts/seed-katalog';
 
 describe('mapOrderStatus', () => {
   it('mappt WooCommerce-Status auf ERP-Belegstatus', () => {
@@ -64,5 +68,77 @@ describe('mapOrderLines', () => {
     const r = mapOrderLines([{ sku: '', quantity: 1, price: '1.00' }], skuToVariant);
     expect(r.lines).toHaveLength(0);
     expect(r.skipped).toEqual(['(ohne SKU)']);
+  });
+});
+
+describe('importWooCommerceOrders — Status/Event-Reconcile', () => {
+  const WOO_ID = 99900001;
+  const NUM = `WC-${WOO_ID}`;
+  let priceListId: string;
+
+  const rawOrder = (status: string) => ({
+    id: WOO_ID, number: String(WOO_ID), status,
+    date_created: '2026-07-10T10:00:00', date_paid: '2026-07-10T10:05:00', currency: 'EUR',
+    billing: { first_name: 'Recon', last_name: 'Test', email: 'recon.test@example.com', country: 'DE', postcode: '10115' },
+    line_items: [{ sku: 'SJ-BLAU', quantity: 2, price: '10.00' }],
+  });
+
+  async function statusOf(): Promise<string> {
+    const r = await pool.query<{ status: string }>('SELECT status FROM sales_orders WHERE number=$1', [NUM]);
+    return r.rows[0]?.status;
+  }
+  async function eventStages(): Promise<string[]> {
+    const r = await pool.query<{ stage: string }>(
+      `SELECT e.stage FROM sales_order_events e JOIN sales_orders o ON o.id=e.order_id
+        WHERE o.number=$1 ORDER BY e.stage`, [NUM]);
+    return r.rows.map((x) => x.stage);
+  }
+
+  beforeAll(async () => {
+    await seedKontakte(); await seedKatalog();
+    const pl = await pool.query<{ id: string }>('SELECT id FROM price_lists WHERE is_default LIMIT 1');
+    priceListId = pl.rows[0].id;
+    await importWooCommerceOrders(pool, [rawOrder('processing')], priceListId); // → auftrag
+  });
+
+  afterAll(async () => {
+    await pool.query(
+      `DELETE FROM external_references WHERE entity_type='sales_order'
+         AND entity_id IN (SELECT id FROM sales_orders WHERE number=$1)`, [NUM]);
+    await pool.query('DELETE FROM sales_orders WHERE number=$1', [NUM]);
+    await pool.query(`DELETE FROM contacts WHERE id IN (
+      SELECT entity_id FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='recon.test@example.com')`);
+    await pool.query(`DELETE FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='recon.test@example.com'`);
+    await pool.end();
+  });
+
+  it('setup: processing wurde als auftrag importiert', async () => {
+    expect(await statusOf()).toBe('auftrag');
+  });
+
+  it('re-import als cancelled → status storniert, ordersUpdated=1, keine Zeilen-Dubletten', async () => {
+    const r = await importWooCommerceOrders(pool, [rawOrder('cancelled')], priceListId);
+    expect(r.ordersUpdated).toBe(1);
+    expect(await statusOf()).toBe('storniert');
+    const lines = await pool.query('SELECT count(*)::int n FROM sales_order_lines l JOIN sales_orders o ON o.id=l.order_id WHERE o.number=$1', [NUM]);
+    expect(lines.rows[0].n).toBe(1);
+  });
+
+  it('re-import als completed → bezahlt mit bezahlt-Event; dann refunded → retoure, bezahlt-Event weg', async () => {
+    await importWooCommerceOrders(pool, [rawOrder('completed')], priceListId);
+    expect(await statusOf()).toBe('bezahlt');
+    expect(await eventStages()).toEqual(['bestellt', 'bezahlt']);
+
+    await importWooCommerceOrders(pool, [rawOrder('refunded')], priceListId);
+    expect(await statusOf()).toBe('retoure');
+    expect(await eventStages()).toEqual(['bestellt', 'retoure']);
+  });
+
+  it('re-import mit gleichem Status → ordersUpdated=0 (idempotent)', async () => {
+    const r = await importWooCommerceOrders(pool, [rawOrder('refunded')], priceListId);
+    expect(r.ordersUpdated).toBe(0);
+    expect(await statusOf()).toBe('retoure');
   });
 });

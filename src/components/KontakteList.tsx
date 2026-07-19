@@ -62,33 +62,35 @@ export function KontakteList(
         <span className="anno ml-1 text-neutral-400">Rolle</span>
         {ROLES.map((r) => chip(role === r.key, r.label, hrefWith({ role: r.key })))}
       </div>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-neutral-500">
-            <SortableTh col="name" label="Name" allowed={CONTACT_SORT.allowed} fallback={CONTACT_SORT.fallback} className="py-2" />
-            <SortableTh col="segment" label="Segment" allowed={CONTACT_SORT.allowed} fallback={CONTACT_SORT.fallback} />
-            <th className="anno py-2">Rolle</th>
-            <SortableTh col="city" label="Ort" allowed={CONTACT_SORT.allowed} fallback={CONTACT_SORT.fallback} />
-            <SortableTh col="status" label="Status" allowed={CONTACT_SORT.allowed} fallback={CONTACT_SORT.fallback} />
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((c) => (
-            <tr key={c.id} className="border-t border-neutral-200 dark:border-neutral-800">
-              <td className="py-2">
-                <Link href={`/kontakte/${c.id}`} className="text-brand hover:text-brand-dark">{c.name}</Link>
-              </td>
-              <td className="text-neutral-500">{SEGMENT_LABEL[c.segment]}</td>
-              <td>{[c.isCustomer && 'Kunde', c.isSupplier && 'Lieferant'].filter(Boolean).join(' + ') || '—'}</td>
-              <td className="text-neutral-500">{c.city || '—'}</td>
-              <td>{c.status}</td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-neutral-500">
+              <SortableTh col="name" label="Name" allowed={CONTACT_SORT.allowed} fallback={CONTACT_SORT.fallback} className="py-2" />
+              <SortableTh col="segment" label="Segment" allowed={CONTACT_SORT.allowed} fallback={CONTACT_SORT.fallback} />
+              <th className="anno py-2">Rolle</th>
+              <SortableTh col="city" label="Ort" allowed={CONTACT_SORT.allowed} fallback={CONTACT_SORT.fallback} />
+              <SortableTh col="status" label="Status" allowed={CONTACT_SORT.allowed} fallback={CONTACT_SORT.fallback} />
             </tr>
-          ))}
-          {rows.length === 0 && (
-            <tr><td colSpan={5} className="py-6 text-center text-neutral-500">Keine Kontakte.</td></tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((c) => (
+              <tr key={c.id} className="border-t border-neutral-200 dark:border-neutral-800">
+                <td className="py-2">
+                  <Link href={`/kontakte/${c.id}`} className="text-brand hover:text-brand-dark">{c.name}</Link>
+                </td>
+                <td className="text-neutral-500">{SEGMENT_LABEL[c.segment]}</td>
+                <td>{[c.isCustomer && 'Kunde', c.isSupplier && 'Lieferant'].filter(Boolean).join(' + ') || '—'}</td>
+                <td className="text-neutral-500">{c.city || '—'}</td>
+                <td>{c.status}</td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr><td colSpan={5} className="py-6 text-center text-neutral-500">Keine Kontakte.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
       <div className="flex items-center gap-3 pt-1 text-sm text-neutral-500">
         {page > 1
           ? <Link href={hrefWith({ page: String(page - 1) }, false)} className="rounded bg-neutral-100 px-3 py-1 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200">← Zurück</Link>

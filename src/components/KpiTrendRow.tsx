@@ -11,7 +11,7 @@ export interface KpiTrendItem {
   value: string;
   anno?: string;
   series?: SeriesPoint[];       // undefined ⇒ Kachel nicht klickbar
-  format?: 'num' | 'eur';       // Achsen-/Tooltip-Format der Kurve
+  format?: 'num' | 'eur' | 'pct';       // Achsen-/Tooltip-Format der Kurve
   href?: string;                // Kachel navigiert statt Kurve (schließt series aus)
   hint?: string;                // dezenter Zusatztext unter dem Wert
 }

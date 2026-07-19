@@ -108,46 +108,50 @@ function TabLink({ tab, active, label }: { tab: Tab; active: boolean; label: str
 
 function OrdersTable({ rows }: { rows: MirrorOrder[] }) {
   return (
-    <table className="w-full text-sm">
-      <thead><tr className="anno text-left text-neutral-500">
-        <th className="py-2">Nummer</th><th>Datum</th><th>Status</th><th className="text-right">Betrag</th><th>Währung</th>
-      </tr></thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.id} className="border-t border-neutral-200 dark:border-neutral-800">
-            <td className="py-2 font-mono text-xs">{r.number}</td>
-            <td className="text-neutral-500">{r.dateCreated.slice(0, 10)}</td>
-            <td>{r.status}</td>
-            <td className="text-right tabular-nums">{formatAmount(r.total)}</td>
-            <td className="text-neutral-500">{r.currency}</td>
-          </tr>
-        ))}
-        {rows.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-neutral-500">Keine Bestellungen.</td></tr>}
-      </tbody>
-    </table>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead><tr className="anno text-left text-neutral-500">
+          <th className="py-2">Nummer</th><th>Datum</th><th>Status</th><th className="text-right">Betrag</th><th>Währung</th>
+        </tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id} className="border-t border-neutral-200 dark:border-neutral-800">
+              <td className="py-2 font-mono text-xs">{r.number}</td>
+              <td className="text-neutral-500">{r.dateCreated.slice(0, 10)}</td>
+              <td>{r.status}</td>
+              <td className="text-right tabular-nums">{formatAmount(r.total)}</td>
+              <td className="text-neutral-500">{r.currency}</td>
+            </tr>
+          ))}
+          {rows.length === 0 && <tr><td colSpan={5} className="py-6 text-center text-neutral-500">Keine Bestellungen.</td></tr>}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
 function ProductsTable({ rows }: { rows: MirrorProduct[] }) {
   return (
-    <table className="w-full text-sm">
-      <thead><tr className="anno text-left text-neutral-500">
-        <th className="py-2">Name</th><th>SKU</th><th>Typ</th><th>Status</th><th className="text-right">Bestand</th><th className="text-right">Preis</th>
-      </tr></thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.id} className="border-t border-neutral-200 dark:border-neutral-800">
-            <td className="py-2">{r.name}</td>
-            <td className="font-mono text-xs">{r.sku || '—'}</td>
-            <td className="text-neutral-500">{r.type}</td>
-            <td>{r.status}</td>
-            <td className="text-right tabular-nums">{r.stockQuantity ?? '—'}</td>
-            <td className="text-right tabular-nums">{formatAmount(r.price)}</td>
-          </tr>
-        ))}
-        {rows.length === 0 && <tr><td colSpan={6} className="py-6 text-center text-neutral-500">Keine Produkte.</td></tr>}
-      </tbody>
-    </table>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead><tr className="anno text-left text-neutral-500">
+          <th className="py-2">Name</th><th>SKU</th><th>Typ</th><th>Status</th><th className="text-right">Bestand</th><th className="text-right">Preis</th>
+        </tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.id} className="border-t border-neutral-200 dark:border-neutral-800">
+              <td className="py-2">{r.name}</td>
+              <td className="font-mono text-xs">{r.sku || '—'}</td>
+              <td className="text-neutral-500">{r.type}</td>
+              <td>{r.status}</td>
+              <td className="text-right tabular-nums">{r.stockQuantity ?? '—'}</td>
+              <td className="text-right tabular-nums">{formatAmount(r.price)}</td>
+            </tr>
+          ))}
+          {rows.length === 0 && <tr><td colSpan={6} className="py-6 text-center text-neutral-500">Keine Produkte.</td></tr>}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

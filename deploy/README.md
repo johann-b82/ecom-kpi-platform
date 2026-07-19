@@ -20,7 +20,7 @@ Deploys the Next app as `budp-app` on the shared **mocafe** VPS.
 deploy/deploy.sh
 ```
 
-Runs: git pull → build `budp-app:local` → migrate → seed-groups → seed-brickpm →
+Runs: git pull → build `budp-app:local` → migrate → seed-groups →
 recreate `budp-app` → health check.
 
 ## Notes

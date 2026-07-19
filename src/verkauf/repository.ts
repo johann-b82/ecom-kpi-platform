@@ -320,7 +320,7 @@ export async function topProducts(range: DateRange, limit = 10, channel?: OrderC
        JOIN product_variants pv ON pv.id = l.variant_id
        JOIN products p ON p.id = pv.product_id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
         AND ($4::text IS NULL OR o.channel = $4)
       GROUP BY p.name, pv.sku
       ORDER BY revenue DESC
@@ -335,26 +335,28 @@ export async function revenueByDay(range: DateRange, channel?: OrderChannel): Pr
             COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
         AND ($3::text IS NULL OR o.channel = $3)
       GROUP BY day ORDER BY day`, [range.start, range.end, channel ?? null]);
   return r.rows.map((x: any) => ({ day: x.day, revenueNet: Number(x.revenue) }));
 }
 
-export interface SalesDailyPoint { day: string; revenueNet: number; orders: number }
+export interface SalesDailyPoint { day: string; revenueNet: number; orders: number; cancelledRevenue: number }
 
-// Übersichts-Kurven: Umsatz UND Belegzahl je Tag (Ø folgt aus revenue/orders).
+// Übersichts-Kurven: Umsatz, Belegzahl und stornierter Umsatz je Tag (nach Bestelldatum).
 export async function salesDailySeries(range: DateRange, channel?: OrderChannel): Promise<SalesDailyPoint[]> {
   const r = await pool.query(
     `SELECT COALESCE(o.placed_at, o.created_at)::date::text AS day,
-            COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue,
-            COUNT(DISTINCT o.id)::int AS orders
+            COALESCE(SUM(l.quantity * l.unit_price) FILTER (WHERE ${REVENUE_STATUS_SQL}), 0)::float8 AS revenue,
+            (COUNT(DISTINCT o.id) FILTER (WHERE ${REVENUE_STATUS_SQL}))::int AS orders,
+            COALESCE(SUM(l.quantity * l.unit_price) FILTER (WHERE o.status = 'storniert'), 0)::float8 AS cancelled
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
         AND ($3::text IS NULL OR o.channel = $3)
       GROUP BY day ORDER BY day`, [range.start, range.end, channel ?? null]);
-  return r.rows.map((x: any) => ({ day: x.day, revenueNet: Number(x.revenue), orders: x.orders }));
+  return r.rows.map((x: any) => ({
+    day: x.day, revenueNet: Number(x.revenue), orders: x.orders, cancelledRevenue: Number(x.cancelled),
+  }));
 }
 
 // Server-side paginated + searchable belege list — the store has 10k+ orders,
@@ -403,13 +405,17 @@ export async function listOrderRowsPaged(
   return { rows, total: countRes.rows[0].n };
 }
 
+// Umsatz-Basis: alles außer storniert (inkl. Angebote/Aufträge). Self-correcting,
+// da der aktuelle Status gelesen wird — verarbeitete Stornos sind automatisch abgezogen.
+const REVENUE_STATUS_SQL = "o.status <> 'storniert'";
+
 export async function salesTotals(range: DateRange, channel?: OrderChannel): Promise<SalesTotals> {
   const rev = await pool.query(
-    `SELECT COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue,
-            COUNT(DISTINCT o.id)::int AS orders
+    `SELECT COALESCE(SUM(l.quantity * l.unit_price) FILTER (WHERE ${REVENUE_STATUS_SQL}), 0)::float8 AS revenue,
+            (COUNT(DISTINCT o.id) FILTER (WHERE ${REVENUE_STATUS_SQL}))::int AS orders,
+            COALESCE(SUM(l.quantity * l.unit_price) FILTER (WHERE o.status = 'storniert'), 0)::float8 AS cancelled
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
         AND ($3::text IS NULL OR o.channel = $3)`,
     [range.start, range.end, channel ?? null]);
   const off = await pool.query(
@@ -419,11 +425,15 @@ export async function salesTotals(range: DateRange, channel?: OrderChannel): Pro
         AND ($3::text IS NULL OR o.channel = $3)`,
     [range.start, range.end, channel ?? null]);
   const revenueNet = Number(rev.rows[0].revenue);
+  const cancelledRevenue = Number(rev.rows[0].cancelled);
   const orders = rev.rows[0].orders;
+  const base = revenueNet + cancelledRevenue;
   return {
     revenueNet, orders,
     avgOrderValueNet: orders > 0 ? revenueNet / orders : 0,
     openOffers: off.rows[0].open_offers,
+    cancelledRevenue,
+    stornoQuote: base > 0 ? Math.min(1, cancelledRevenue / base) : 0,
   };
 }
 
@@ -436,7 +446,7 @@ export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = '
             COUNT(DISTINCT o.id)::int AS purchases
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
         AND ($3::text IS NULL OR o.channel = $3)`,
     [range.start, range.end, channel]);
   const life = await pool.query(
@@ -444,7 +454,7 @@ export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = '
         SELECT DISTINCT o.contact_id
           FROM sales_orders o
          WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-           AND o.status NOT IN ('angebot','storniert')
+           AND ${REVENUE_STATUS_SQL}
            AND ($3::text IS NULL OR o.channel = $3)
       ),
       life AS (
@@ -454,7 +464,7 @@ export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = '
           FROM sales_orders o
           JOIN active a ON a.contact_id = o.contact_id
           LEFT JOIN sales_order_lines l ON l.order_id = o.id
-         WHERE o.status NOT IN ('angebot','storniert')
+         WHERE ${REVENUE_STATUS_SQL}
            AND ($3::text IS NULL OR o.channel = $3)
          GROUP BY o.contact_id
       )
@@ -481,7 +491,7 @@ export async function channelSummary(range: DateRange): Promise<ChannelSummary[]
             COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
       GROUP BY o.channel`, [range.start, range.end]);
   const costs = await pool.query(
     `SELECT o.channel,
@@ -489,7 +499,7 @@ export async function channelSummary(range: DateRange): Promise<ChannelSummary[]
             COALESCE(SUM(oc.amount) FILTER (WHERE oc.type <> 'wareneinsatz'), 0)::float8 AS gebuehren
        FROM sales_orders o JOIN order_costs oc ON oc.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
       GROUP BY o.channel`, [range.start, range.end]);
   const adRows = await pool.query(
     `SELECT platform, COALESCE(SUM(spend), 0)::float8 AS spend
@@ -504,7 +514,7 @@ export async function channelSummary(range: DateRange): Promise<ChannelSummary[]
        JOIN sales_order_lines l ON l.order_id = o.id
        JOIN product_variants pv ON pv.id = l.variant_id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
       GROUP BY o.channel`, [range.start, range.end]);
 
   const revBy = new Map<string, any>(rev.rows.map((x: any) => [x.channel, x]));

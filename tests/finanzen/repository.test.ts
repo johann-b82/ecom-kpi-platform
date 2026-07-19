@@ -8,6 +8,7 @@ import {
   listOpenItems, getOpenItem, listContactOptions, listOpenItemOptions, listUnassignedPayments,
   listPurchaseOrderOptions,
   recordPayment, assignPayment, recordUnassignedPayment, createKreditorInvoice, exportBookings,
+  cashflowIn, cashflowInByDay,
 } from '@/finanzen/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001';
@@ -176,5 +177,38 @@ describe('finanzen repository — export', () => {
     expect(lines[0]).toBe('Datum;Richtung;Kontakt;Referenz;Betrag;Faellig;Status;Bezahlt;Rest');
     // mindestens eine Debitor-Zeile mit Komma-Dezimalbetrag
     expect(lines.slice(1).some((l) => l.includes(';Debitor;') && /;\d+,\d{2};/.test(l))).toBe(true);
+  });
+});
+
+describe('finanzen repository — cashflow (Einzahlungen)', () => {
+  const WINDOW = { start: '2020-03-01', end: '2020-03-31' };
+
+  it('cashflowIn summiert nur Debitor-Eingänge im Zeitraum; Kreditor & nicht zugeordnet zählen nicht', async () => {
+    // Debitor-Eingang im Fenster → zählt
+    const { openItemId, amount } = await invoicedOrder(3, 10); // 30,00
+    await recordPayment(openItemId, { amount, method: 'ueberweisung', reference: 'TEST-cf-deb', paidAt: '2020-03-15' });
+
+    // Kreditor-Zahlung im Fenster → zählt NICHT
+    const kredId = await createKreditorInvoice({
+      supplierId: MUELLER, amount: 99, dueDate: '2020-04-30', reference: 'TEST-cf-kred',
+    });
+    kreditorItemIds.push(kredId);
+    await recordPayment(kredId, { amount: 99, method: 'ueberweisung', reference: 'TEST-cf-kredpay', paidAt: '2020-03-16' });
+
+    // nicht zugeordnete Zahlung im Fenster → zählt NICHT
+    await recordUnassignedPayment({ amount: 77, method: 'ueberweisung', reference: 'TEST-cf-unassigned', paidAt: '2020-03-17' });
+
+    const total = await cashflowIn(WINDOW);
+    expect(total).toBeCloseTo(amount, 2); // exakt der Debitor-Eingang, sonst nichts im 2020-03-Fenster
+  });
+
+  it('cashflowInByDay bucketet den Debitor-Eingang auf seinen Zahltag', async () => {
+    const { openItemId, amount } = await invoicedOrder(2, 12.5); // 25,00
+    await recordPayment(openItemId, { amount, method: 'ueberweisung', reference: 'TEST-cf-day', paidAt: '2020-03-20' });
+
+    const rows = await cashflowInByDay(WINDOW);
+    const point = rows.find((r) => r.day === '2020-03-20');
+    expect(point).toBeDefined();
+    expect(point!.amount).toBeGreaterThanOrEqual(amount - 0.001); // ggf. + Debitor-Eingang aus Test 1 an anderem Tag; hier eigener Tag
   });
 });

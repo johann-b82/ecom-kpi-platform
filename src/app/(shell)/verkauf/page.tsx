@@ -6,6 +6,7 @@ import { KanalVergleich } from '@/components/KanalVergleich';
 import { StatusFunnel } from '@/components/StatusFunnel';
 import { KpiTrendRow, type KpiTrendItem } from '@/components/KpiTrendRow';
 import { eur } from '@/verkauf/format';
+import { pct } from '@/components/charts/chart-style';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,17 +21,25 @@ export default async function VerkaufUebersichtPage({ searchParams }:
   const bucket = pickBucket(range);
   const revenueSeries = bucketSum(daily.map((d) => ({ date: d.day, value: d.revenueNet })), bucket);
   const ordersSeries = bucketSum(daily.map((d) => ({ date: d.day, value: d.orders })), bucket);
+  const cancelledSeries = bucketSum(daily.map((d) => ({ date: d.day, value: d.cancelledRevenue })), bucket);
   const ordersByDate = new Map(ordersSeries.map((p) => [p.date, p.value]));
+  const cancelledByDate = new Map(cancelledSeries.map((p) => [p.date, p.value]));
   const avgSeries = revenueSeries.map((r) => {
     const o = ordersByDate.get(r.date) ?? 0;
     return { date: r.date, value: o > 0 ? r.value / o : 0 };
+  });
+  const stornoSeries = revenueSeries.map((r) => {
+    const c = cancelledByDate.get(r.date) ?? 0;
+    const base = r.value + c;
+    return { date: r.date, value: base > 0 ? Math.min(100, (c / base) * 100) : 0 };
   });
 
   const items: KpiTrendItem[] = [
     { key: 'umsatz', label: 'Umsatz', value: eur(totals.revenueNet), anno: 'NETTO · OHNE MWST', series: revenueSeries, format: 'eur' },
     { key: 'sales', label: 'Sales', value: String(totals.orders), series: ordersSeries, format: 'num' },
     { key: 'avg', label: 'Ø Warenkorb', value: eur(totals.avgOrderValueNet), anno: 'NETTO · OHNE MWST', series: avgSeries, format: 'eur' },
-    { key: 'angebote', label: 'Offene Angebote', value: String(totals.openOffers) },
+    { key: 'storno', label: 'Stornoquote', value: pct(totals.stornoQuote * 100), anno: 'ANTEIL AM UMSATZVOLUMEN',
+      series: stornoSeries, format: 'pct', hint: `${eur(totals.cancelledRevenue)} storniert` },
   ];
 
   return (

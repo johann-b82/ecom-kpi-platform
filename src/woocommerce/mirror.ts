@@ -136,10 +136,14 @@ export class WooCommerceMirror {
     return { items, total, totalPages, page };
   }
 
-  // Orders incl. billing + line_items for the ERP backfill (order-import).
-  async fetchOrdersRaw(page = 1, perPage = 100): Promise<MirrorPage<Record<string, unknown>>> {
+  // Orders incl. billing + line_items for the ERP import; optional modifiedAfter
+  // for incremental syncs (WooCommerce bumps date_modified on any status change).
+  async fetchOrdersRaw(page = 1, perPage = 100, modifiedAfter?: Date): Promise<MirrorPage<Record<string, unknown>>> {
     const fields = 'id,number,status,date_created,date_paid,total,currency,customer_id,billing,line_items';
-    const url = `${this.base}/orders?per_page=${perPage}&page=${page}&orderby=id&order=asc&status=any&_fields=${fields}`;
+    const mod = modifiedAfter
+      ? `&modified_after=${encodeURIComponent(modifiedAfter.toISOString())}&dates_are_gmt=true`
+      : '';
+    const url = `${this.base}/orders?per_page=${perPage}&page=${page}&orderby=id&order=asc&status=any&_fields=${fields}${mod}`;
     const res = await this.get(url);
     if (!res.ok) throw new Error(`WooCommerce orders fetch failed: ${res.status} ${await res.text()}`);
     const items = (await res.json()) as Record<string, unknown>[];

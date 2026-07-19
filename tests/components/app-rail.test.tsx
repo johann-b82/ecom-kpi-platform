@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 
-vi.mock('next/navigation', () => ({ usePathname: () => '/brickpm' }));
+vi.mock('next/navigation', () => ({ usePathname: () => '/kontakte' }));
 
 import { AppRail } from '@/components/AppRail';
 import { APPS } from '@/lib/apps';
@@ -10,9 +10,9 @@ afterEach(cleanup);
 
 it('renders one icon per app with the current app marked active', () => {
   render(<AppRail apps={APPS} logo={null} title="Muster GmbH" />);
-  expect(screen.getByText('BP')).toBeTruthy();
+  expect(screen.getByText('VF')).toBeTruthy();
   expect(screen.getByText('KO')).toBeTruthy();
-  const active = screen.getByRole('link', { name: /BrickPM/i });
+  const active = screen.getByRole('link', { name: /Kontakte/i });
   expect(active.getAttribute('aria-current')).toBe('page');
 });
 

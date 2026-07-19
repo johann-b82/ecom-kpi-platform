@@ -23,27 +23,27 @@ describe('getUserAccess', () => {
      .mockResolvedValueOnce({ rows: [{ n: 0 }] } as never);
     const a = await getUserAccess('u1');
     expect(a.isAdmin).toBe(true);
-    expect(a.apps).toEqual({ brickpm: 'edit', kontakte: 'edit', katalog: 'edit', verkauf: 'edit', verfuegbarkeit: 'edit', finanzen: 'edit', hilfe: 'edit' });
+    expect(a.apps).toEqual({ kontakte: 'edit', katalog: 'edit', verkauf: 'edit', verfuegbarkeit: 'edit', finanzen: 'edit', hilfe: 'edit' });
   });
 
   it('aggregates the strongest right per app and admin from any admin group', async () => {
     q().mockResolvedValue({ rows: [
       { is_admin: false, app: 'dashboard', permission: 'view' },
-      { is_admin: true,  app: 'brickpm',   permission: 'view' },
-      { is_admin: false, app: 'brickpm',   permission: 'edit' },
+      { is_admin: true,  app: 'kontakte',  permission: 'view' },
+      { is_admin: false, app: 'kontakte',  permission: 'edit' },
     ] } as never);
     const a = await getUserAccess('u1');
     expect(a.isAdmin).toBe(true);
-    expect(a.apps).toEqual({ dashboard: 'view', brickpm: 'edit' });
+    expect(a.apps).toEqual({ dashboard: 'view', kontakte: 'edit' });
   });
 
   it('a member of a limited non-admin group gets only that access', async () => {
     q().mockResolvedValue({ rows: [
-      { is_admin: false, app: 'brickpm', permission: 'view' },
+      { is_admin: false, app: 'kontakte', permission: 'view' },
     ] } as never);
     const a = await getUserAccess('u1');
     expect(a.isAdmin).toBe(false);
-    expect(a.apps).toEqual({ brickpm: 'view' });
+    expect(a.apps).toEqual({ kontakte: 'view' });
   });
 
   it('does NOT grandfather an admin group that has no app access (rows present, app null)', async () => {
@@ -65,24 +65,24 @@ describe('requireAppAccess', () => {
 
   it('passes when the user has the required right (edit satisfies view)', async () => {
     mockUser('u1');
-    q().mockResolvedValue({ rows: [{ is_admin: false, app: 'brickpm', permission: 'edit' }] } as never);
-    await expect(requireAppAccess('brickpm', 'view')).resolves.toBeUndefined();
+    q().mockResolvedValue({ rows: [{ is_admin: false, app: 'kontakte', permission: 'edit' }] } as never);
+    await expect(requireAppAccess('kontakte', 'view')).resolves.toBeUndefined();
   });
 
   it('throws when the user lacks edit', async () => {
     mockUser('u1');
-    q().mockResolvedValue({ rows: [{ is_admin: false, app: 'brickpm', permission: 'view' }] } as never);
-    await expect(requireAppAccess('brickpm', 'edit')).rejects.toThrow(/Kein Zugriff/i);
+    q().mockResolvedValue({ rows: [{ is_admin: false, app: 'kontakte', permission: 'view' }] } as never);
+    await expect(requireAppAccess('kontakte', 'edit')).rejects.toThrow(/Kein Zugriff/i);
   });
 
   it('throws when the user has no access to the requested app at all', async () => {
     mockUser('u1');
-    q().mockResolvedValue({ rows: [{ is_admin: false, app: 'brickpm', permission: 'edit' }] } as never);
+    q().mockResolvedValue({ rows: [{ is_admin: false, app: 'katalog', permission: 'edit' }] } as never);
     await expect(requireAppAccess('kontakte')).rejects.toThrow(/Kein Zugriff/i);
   });
 
   it('throws when unauthenticated', async () => {
     mockUser(null);
-    await expect(requireAppAccess('brickpm')).rejects.toThrow(/nicht angemeldet|not authenticated/i);
+    await expect(requireAppAccess('kontakte')).rejects.toThrow(/nicht angemeldet|not authenticated/i);
   });
 });

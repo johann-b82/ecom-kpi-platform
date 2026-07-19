@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ChartCard } from '@/components/charts/ChartCard';
 import { eur } from '@/verkauf/format';
+import { pct } from '@/components/charts/chart-style';
 import type { SalesTotals, RevenuePoint, TopProduct } from '@/verkauf/types';
 
 function StatTile({ label, value, anno }: { label: string; value: string; anno?: string }) {
@@ -37,22 +38,24 @@ function RevenueChart({ points }: { points: RevenuePoint[] }) {
 function TopProducts({ items }: { items: TopProduct[] }) {
   return (
     <ChartCard title="Top-Produkte · nach Umsatz">
-      <table className="w-full text-sm">
-        <thead><tr className="anno text-left text-neutral-500">
-          <th className="py-1">Produkt</th><th>SKU</th><th className="text-right">Stück</th><th className="text-right">Umsatz</th>
-        </tr></thead>
-        <tbody>
-          {items.map((p) => (
-            <tr key={p.sku} className="border-t border-neutral-200 dark:border-neutral-800">
-              <td className="py-1.5">{p.name}</td>
-              <td className="font-mono text-xs text-neutral-500">{p.sku}</td>
-              <td className="text-right tabular-nums">{p.units}</td>
-              <td className="text-right tabular-nums">{eur(p.revenueNet)}</td>
-            </tr>
-          ))}
-          {items.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-neutral-500">Keine Daten.</td></tr>}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead><tr className="anno text-left text-neutral-500">
+            <th className="py-1">Produkt</th><th>SKU</th><th className="text-right">Stück</th><th className="text-right">Umsatz</th>
+          </tr></thead>
+          <tbody>
+            {items.map((p) => (
+              <tr key={p.sku} className="border-t border-neutral-200 dark:border-neutral-800">
+                <td className="py-1.5">{p.name}</td>
+                <td className="font-mono text-xs text-neutral-500">{p.sku}</td>
+                <td className="text-right tabular-nums">{p.units}</td>
+                <td className="text-right tabular-nums">{eur(p.revenueNet)}</td>
+              </tr>
+            ))}
+            {items.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-neutral-500">Keine Daten.</td></tr>}
+          </tbody>
+        </table>
+      </div>
     </ChartCard>
   );
 }
@@ -64,10 +67,12 @@ export function KanalSalesBoard(
 ) {
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile label="Umsatz" value={eur(totals.revenueNet)} anno="NETTO · OHNE MWST" />
         <StatTile label="Belege" value={String(totals.orders)} />
         <StatTile label="Ø Warenkorb" value={eur(totals.avgOrderValueNet)} anno="NETTO · OHNE MWST" />
+        <StatTile label="Stornoquote" value={pct(totals.stornoQuote * 100)}
+          anno={`${eur(totals.cancelledRevenue)} STORNIERT`} />
       </div>
       <RevenueChart points={points} />
       <TopProducts items={top} />

@@ -62,11 +62,11 @@ export const KPI_HELP: Record<string, KpiHelp> = {
     source: 'Shop (WooCommerce) → Bestellungen; Sessions weiter aus GA4 → daily_metrics.',
   },
   aov: {
-    formula: 'Netto-Umsatz ÷ Käufe, beides aus den WooCommerce-Belegen.',
+    formula: 'Netto-Umsatz (ohne MwSt) ÷ Käufe — Umsatz = alle Belege außer storniert, inkl. Angebote.',
     source: 'Shop (WooCommerce) → orders/order_lines (nicht mehr GA4).',
   },
   revenue: {
-    formula: 'Summe des Netto-Umsatzes der WooCommerce-Belege im Zeitraum.',
+    formula: 'Summe des Netto-Umsatzes (ohne MwSt) aller Belege außer storniert (inkl. Angebote) im Zeitraum.',
     source: 'Shop (WooCommerce) → orders/order_lines (nicht mehr GA4).',
   },
   roas: {

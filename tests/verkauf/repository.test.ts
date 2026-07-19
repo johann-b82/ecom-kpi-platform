@@ -7,7 +7,7 @@ import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, getOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
 import {
   listOrderRows, getOrderView, sellableVariants, priceForVariant, availableStock,
-  salesTotals, channelSummary, statusFunnel, countOpenQuotes,
+  salesTotals, channelSummary, statusFunnel, countOpenQuotes, salesDailySeries, ecomSalesFacts,
 } from '@/verkauf/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001'; // Spielwaren Müller, K-0001
@@ -269,17 +269,17 @@ describe('B4 aggregates', () => {
   const today = new Date().toISOString().slice(0, 10);
   const range = { start: addDays(today, -30), end: today };
 
-  it('salesTotals: Umsatz ∉ {angebot,storniert}, offene Angebote separat, Ø = Umsatz/Belege', async () => {
+  it('salesTotals: Umsatz = alles außer storniert (inkl. Angebote), offene Angebote separat', async () => {
     const before = await salesTotals(range);
 
-    // Angebot (manuell) → zählt NUR als openOffer, nicht Umsatz/Beleg
+    // Angebot (manuell) → zählt jetzt in Umsatz (2×10=20) UND als openOffer
     const offer = await createOrder({
       contactId: MUELLER, channel: 'manuell', priceListId: PL_HANDEL,
       lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 2, unitPrice: 10 }],
     });
     orderIds.push(offer.id);
 
-    // Auftrag (shop, startet als auftrag) → Umsatz 3*10=30, Beleg 1
+    // Auftrag (shop) → Umsatz 3×10=30
     const order = await createOrder({
       contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
       lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 3, unitPrice: 10 }],
@@ -287,10 +287,41 @@ describe('B4 aggregates', () => {
     orderIds.push(order.id);
 
     const after = await salesTotals(range);
-    expect(after.revenueNet - before.revenueNet).toBeCloseTo(30);
-    expect(after.orders - before.orders).toBe(1);       // nur der Auftrag
-    expect(after.openOffers - before.openOffers).toBe(1); // das Angebot
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(50);   // 20 (Angebot) + 30 (Auftrag)
+    expect(after.orders - before.orders).toBe(2);                    // beide zählen
+    expect(after.openOffers - before.openOffers).toBe(1);            // nur das Angebot
     expect(after.avgOrderValueNet).toBeCloseTo(after.revenueNet / after.orders);
+  });
+
+  it('salesTotals: storniert fließt in cancelledRevenue/stornoQuote, nicht in Umsatz', async () => {
+    const before = await salesTotals(range);
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 4, unitPrice: 10 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'storniert');   // aus 'auftrag' erlaubt
+
+    const after = await salesTotals(range);
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(0);       // Storno NICHT im Umsatz
+    expect(after.cancelledRevenue - before.cancelledRevenue).toBeCloseTo(40);
+    expect(after.stornoQuote).toBeGreaterThan(0);
+    expect(after.stornoQuote).toBeLessThanOrEqual(1);
+  });
+
+  it('salesDailySeries: Storno erhöht cancelledRevenue, nicht revenueNet, am Bestelltag', async () => {
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 5, unitPrice: 10 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'storniert');
+
+    const series = await salesDailySeries(range);
+    const total = series.reduce((s, p) => s + p.cancelledRevenue, 0);
+    expect(total).toBeGreaterThanOrEqual(50);   // enthält die 5×10 Stornierung
+    // stornierter Beleg fließt nicht in revenueNet
+    for (const p of series) expect(p.revenueNet).toBeGreaterThanOrEqual(0);
   });
 
   it('salesTotals: avgOrderValueNet ist 0 statt Division-durch-0 bei leerem Zeitraum', async () => {
@@ -298,6 +329,22 @@ describe('B4 aggregates', () => {
     const t = await salesTotals(empty);
     expect(t.orders).toBe(0);
     expect(t.avgOrderValueNet).toBe(0);
+    expect(t.stornoQuote).toBe(0);
+  });
+
+  it('salesTotals: ausschließlich storniert → revenue 0, stornoQuote 1', async () => {
+    const win = { start: '2019-03-01', end: '2019-03-01' };
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      placedAt: '2019-03-01T10:00:00Z',
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 2, unitPrice: 10 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'storniert');
+    const t = await salesTotals(win);
+    expect(t.revenueNet).toBe(0);
+    expect(t.cancelledRevenue).toBeCloseTo(20);
+    expect(t.stornoQuote).toBe(1);
   });
 
   it('channelSummary: alle 5 Kanäle, umsatzloser Kanal = 0', async () => {
@@ -347,6 +394,20 @@ describe('B4 aggregates', () => {
     expect(shopRows.every((r) => r.channel === 'shop')).toBe(true);
     const all = await listOrderRows();
     expect(all.length).toBeGreaterThanOrEqual(shopRows.length);
+  });
+
+  it('Angebote zählen jetzt in channelSummary und ecomSalesFacts', async () => {
+    const beforeCh = (await channelSummary(range)).find((c) => c.channel === 'b2b_portal')!;
+    const beforeFacts = await ecomSalesFacts(range, 'b2b_portal');
+    const o = await createOrder({          // b2b_portal → Status 'angebot'
+      contactId: MUELLER, channel: 'b2b_portal', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 3, unitPrice: 10 }],
+    });
+    orderIds.push(o.id);
+    const afterCh = (await channelSummary(range)).find((c) => c.channel === 'b2b_portal')!;
+    const afterFacts = await ecomSalesFacts(range, 'b2b_portal');
+    expect(afterCh.revenueNet - beforeCh.revenueNet).toBeCloseTo(30);    // Angebot zählt jetzt mit
+    expect(afterFacts.revenue - beforeFacts.revenue).toBeCloseTo(30);
   });
 });
 

@@ -16,7 +16,7 @@ const INTERVAL_LABELS: Record<SyncInterval, string> = {
 };
 const INTERVAL_ORDER: SyncInterval[] = ['off', 'hourly', '6h', 'daily'];
 
-const th = 'px-3 py-2 text-left font-semibold text-neutral-500';
+const th = 'anno px-3 py-2 text-left';
 const td = 'px-3 py-2 text-neutral-800 dark:text-neutral-200';
 
 function StatusChip({ row }: { row: SyncStateRow }) {
@@ -27,13 +27,13 @@ function StatusChip({ row }: { row: SyncStateRow }) {
     cls = 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400';
   } else if (row.status === 'ok') {
     label = 'ok';
-    cls = 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300';
+    cls = 'bg-success/15 text-success';
   } else if (row.status === 'fehler') {
     label = 'Fehler';
-    cls = 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+    cls = 'bg-danger/15 text-danger';
   } else {
     label = 'noch nie';
-    cls = 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+    cls = 'bg-warning/15 text-warning';
   }
   return <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
 }
@@ -56,7 +56,7 @@ export function SyncForm({ interval, state }: { interval: SyncInterval; state: S
 
   return (
     <section>
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">Synchronisierung</h2>
+      <h2 className="anno mb-3 text-neutral-500 dark:text-neutral-400">Synchronisierung</h2>
       <p className="mb-4 text-sm text-neutral-600 dark:text-neutral-400">
         Wie oft die verbundenen Datenquellen automatisch synchronisiert werden. „Jetzt synchronisieren" löst alle konfigurierten Quellen sofort aus.
       </p>
@@ -77,7 +77,7 @@ export function SyncForm({ interval, state }: { interval: SyncInterval; state: S
           type="button"
           disabled={busy !== null}
           onClick={() => post({ action: 'now' }, 'now')}
-          className="rounded-md border border-brand px-3 py-1.5 text-sm font-medium text-brand transition-colors hover:bg-brand hover:text-white disabled:opacity-50"
+          className="rounded-md border border-accent px-3 py-1.5 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-white disabled:opacity-50"
         >
           {busy === 'now' ? 'Synchronisiere…' : 'Jetzt synchronisieren'}
         </button>
@@ -86,7 +86,7 @@ export function SyncForm({ interval, state }: { interval: SyncInterval; state: S
 
       <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
         <table className="w-full border-collapse text-sm">
-          <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wider dark:border-neutral-800 dark:bg-neutral-950">
+          <thead className="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950">
             <tr><th className={th}>Quelle</th><th className={th}>Status</th><th className={th}>Letzter Sync</th><th className={th}>Details</th></tr>
           </thead>
           <tbody>

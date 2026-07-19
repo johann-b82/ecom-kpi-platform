@@ -30,7 +30,7 @@ export const HELP_PAGES: DocPage[] = [
       {
         heading: 'Was ist diese Plattform?',
         blocks: [
-          { type: 'p', text: 'Eine modulare ERP-Plattform. Jedes Modul deckt einen Arbeitsbereich ab: Kennzahlen (Dashboard), Sortiments- und Preissteuerung (BrickPM), Geschäftspartner (Kontakte) und Produktkatalog (Katalog).' },
+          { type: 'p', text: 'Eine modulare ERP-Plattform. Jedes Modul deckt einen Arbeitsbereich ab: Verfügbarkeit, Verkauf und Finanzen bilden die Wertschöpfungskette; Geschäftspartner (Kontakte) und Produktkatalog (Katalog) liefern die Stammdaten.' },
         ],
       },
       {
@@ -48,31 +48,6 @@ export const HELP_PAGES: DocPage[] = [
   },
 
   // ── Module (Nutzer) ───────────────────────────────────────────────
-  {
-    slug: 'brickpm',
-    title: 'BrickPM',
-    summary: 'Sortiment, Preise, Aktionen und Wettbewerb steuern.',
-    group: 'module',
-    sections: [
-      {
-        heading: 'Was macht das Modul?',
-        blocks: [
-          { type: 'p', text: 'BrickPM ist das Product-Management für das Sortiment: Produkte, Preise/Margen, Aktionen und Wettbewerbsbeobachtung an einem Ort.' },
-        ],
-      },
-      {
-        heading: 'Wichtige Funktionen',
-        blocks: [
-          { type: 'list', items: [
-            'Sortiment: Produkte mit Preis, Kosten und Marge pflegen.',
-            'Aktionen & Goodies: Promotions planen und deren Margeneffekt sehen.',
-            'Wettbewerb & Preis-Historie: eigene Preise gegen Wettbewerber verfolgen.',
-            'Benachrichtigungen: Hinweise und fällige Aufgaben im Blick behalten.',
-          ] },
-        ],
-      },
-    ],
-  },
   {
     slug: 'kontakte',
     title: 'Kontakte',
@@ -150,11 +125,11 @@ export const HELP_PAGES: DocPage[] = [
       {
         heading: 'Übersicht & Kanäle (Ebene 1)',
         blocks: [
-          { type: 'p', text: 'Die Verkauf-Startseite zeigt für den gewählten Zeitraum (7/30/90 Tage) Umsatz, Anzahl Belege, durchschnittlichen Warenkorbwert und offene Angebote. Alle Beträge sind netto (ohne MwSt).' },
+          { type: 'p', text: 'Die Verkauf-Startseite zeigt für den gewählten Zeitraum (7/30/90 Tage) Umsatz, Anzahl Belege (Sales), durchschnittlichen Warenkorbwert und die Stornoquote. Alle Beträge sind netto (ohne MwSt).' },
           { type: 'list', items: [
             'Kanal-Vergleich: Umsatz, Belege und Ø Warenkorb je Kanal (Shop, B2B-Portal, Marktplatz, Telefon, Manuell) — ein Klick öffnet die auf den Kanal gefilterte Belegliste.',
             'Status-Funnel: Anzahl Belege je Status von Angebot bis bezahlt.',
-            'Umsatz zählt Belege ab Auftrag; Angebote sind Pipeline (eigene Kennzahl), Retouren mindern den Umsatz netto.',
+            'Umsatz zählt alle Belege außer stornierten (inkl. Angebote und Aufträge) und korrigiert sich automatisch, wenn Stornos/Abbrüche nachträglich reinkommen. Die Stornoquote (stornierter Umsatz ÷ platziertes Volumen) ist eine eigene, anklickbare Kennzahl mit Verlauf.',
             'Die Shop-/Marketing-KPIs (GA4, Shop, Ads) liegen unter Verkauf → Dashboard.',
             'Zeitraum: Standardzeiträume (7/30/90/365/Komplett) plus benutzerdefinierter von-bis-Bereich (zwei Datumsfelder → Anwenden).',
             'KPI-Kacheln Umsatz, Sales und Ø Warenkorb sind anklickbar — darunter klappt die jeweilige Verlaufskurve für den gewählten Zeitraum auf (eine gleichzeitig).',
@@ -217,7 +192,7 @@ export const HELP_PAGES: DocPage[] = [
   {
     slug: 'finanzen',
     title: 'Finanzen',
-    summary: 'Offene Posten, Zahlungsabgleich, Zuordnen-Warteschlange und Buchungsexport.',
+    summary: 'Cashflow-Verlauf (Einzahlungen), offene Posten, Zahlungsabgleich, Zuordnen-Warteschlange und Buchungsexport.',
     group: 'module',
     sections: [
       {
@@ -230,6 +205,7 @@ export const HELP_PAGES: DocPage[] = [
         heading: 'Wichtige Funktionen',
         blocks: [
           { type: 'list', items: [
+            'Operativer Cashflow (Einzahlungen): Verlaufschart der Zahlungseingänge auf Debitor-Posten über die letzten 12 Monate (monatlich). Nicht zugeordnete Zahlungen zählen erst nach Zuordnung mit.',
             'Zahlung erfassen: gleicht eine Zahlung einen Debitor-Posten voll aus, wird der zugehörige Verkaufsbeleg automatisch auf „bezahlt" gesetzt (bezahlt-Perle im Faden).',
             'Teilzahlungen setzen den Posten auf „teilweise bezahlt"; der Rest bleibt offen.',
             'Zuordnen-Warteschlange: nicht zugeordnete Zahlungen (z. B. ohne bekannte Rechnung) erfassen und später einem offenen Posten zuordnen.',
@@ -330,7 +306,6 @@ export const HELP_PAGES: DocPage[] = [
             ['external_references', 'ID-Mapping zu Fremdsystemen', 'entity_type, entity_id, source_system, external_id'],
             ['sync_state', 'Sync-Status je Connector', 'connector, last_run_at, status, detail'],
           ] },
-          { type: 'note', text: 'BrickPM-Tabellen (bpm_*) sind hier noch nicht dokumentiert.' },
         ],
       },
       {
@@ -377,6 +352,7 @@ export const HELP_PAGES: DocPage[] = [
         blocks: [
           { type: 'list', items: [
             'Plattform-Zugangsdaten & Sync: Einstellungen (/setup) › Verbindungen — nur für Administratoren.',
+            'Der stündliche WooCommerce-Sync aktualisiert zwei Stellen: die KPI-Rohdaten (orders) und die ERP-Belege (sales_orders). Statuswechsel inkl. Storno/Retoure werden dabei auf bestehende Belege übertragen (inkrementell via modified_after, nächtlicher Voll-Abgleich als Sicherheitsnetz).',
           ] },
         ],
       },

@@ -89,14 +89,14 @@ Route group `src/app/(shell)/` holds every "in the ERP" screen:
   `accessibleApps(access)` (from `src/lib/groups.ts`) into the rail. It also renders
   the platform-wide **top bar** (brand logo → `/`, `UserMenu` on the right) above the
   content column, so every shell screen shares one brand + profile/theme control.
-  App layouts (`brickpm`/`kontakte`/`katalog`) therefore only add their own module
-  sidebar, not their own header.
+  App layouts (`verfuegbarkeit`/`kontakte`/`katalog`) therefore only add their own
+  module sidebar, not their own header.
 - `(shell)/page.tsx` — the Launchpad (`/`), rendering `Launchpad`
   (`src/components/Launchpad.tsx`): an app grid over the same `accessibleApps` list.
 - `(shell)/dashboard/` — the KPI dashboard, moved here from the old `/` route.
-- `(shell)/brickpm/` — BrickPM, gated by `requireAppAccess('brickpm')`; keeps its
-  own module sidebar (`BpmSidebar`) inside a nested `brickpm/layout.tsx`, nested
-  inside the shell rail.
+- `(shell)/verfuegbarkeit/` — Verfügbarkeit, gated by `requireAppAccess('verfuegbarkeit')`;
+  keeps its own module sidebar (`VerfuegbarkeitSidebar`) inside a nested
+  `verfuegbarkeit/layout.tsx`, nested inside the shell rail.
 
 App registry: `src/lib/apps.ts` defines `AppDef { key, label, abbr, href }` and the
 `APPS`/`APP_KEYS` arrays — this is the single source for both the Rail and the
@@ -106,7 +106,11 @@ admin). **To add a new app:** add one entry to `APPS` in `src/lib/apps.ts`, moun
 its routes under `src/app/(shell)/<key>/`, and gate it with `requireAppAccess`
 if it needs its own permission — no other registry to touch.
 
-`login/` and `setup/` stay outside `(shell)` (no rail).
+`login/` stays outside `(shell)` (no rail). `setup/` lives **inside** `(shell)`
+(`(shell)/setup/`, URL `/setup`) so the settings screen carries the same
+AppRail + top bar as every other screen; it is not a registered `APPS` entry and
+is reached from the `UserMenu` (admin-only), with its own thin
+`(shell)/setup/layout.tsx` providing the scroll container (no module sidebar).
 
 ## 4. White-label
 

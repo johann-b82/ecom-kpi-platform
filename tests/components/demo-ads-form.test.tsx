@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { DemoAdsForm } from '@/components/DemoAdsForm';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
-vi.mock('@/app/setup/actions', () => ({ toggleDemoAdsAction: vi.fn() }));
+vi.mock('@/app/(shell)/setup/actions', () => ({ toggleDemoAdsAction: vi.fn() }));
 
 describe('DemoAdsForm', () => {
   it('zeigt „aktiv" + Ausschalt-Button, wenn enabled', () => {
