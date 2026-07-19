@@ -320,7 +320,7 @@ export async function topProducts(range: DateRange, limit = 10, channel?: OrderC
        JOIN product_variants pv ON pv.id = l.variant_id
        JOIN products p ON p.id = pv.product_id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
         AND ($4::text IS NULL OR o.channel = $4)
       GROUP BY p.name, pv.sku
       ORDER BY revenue DESC
@@ -335,7 +335,7 @@ export async function revenueByDay(range: DateRange, channel?: OrderChannel): Pr
             COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
         AND ($3::text IS NULL OR o.channel = $3)
       GROUP BY day ORDER BY day`, [range.start, range.end, channel ?? null]);
   return r.rows.map((x: any) => ({ day: x.day, revenueNet: Number(x.revenue) }));
@@ -446,7 +446,7 @@ export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = '
             COUNT(DISTINCT o.id)::int AS purchases
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
         AND ($3::text IS NULL OR o.channel = $3)`,
     [range.start, range.end, channel]);
   const life = await pool.query(
@@ -454,7 +454,7 @@ export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = '
         SELECT DISTINCT o.contact_id
           FROM sales_orders o
          WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-           AND o.status NOT IN ('angebot','storniert')
+           AND ${REVENUE_STATUS_SQL}
            AND ($3::text IS NULL OR o.channel = $3)
       ),
       life AS (
@@ -464,7 +464,7 @@ export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = '
           FROM sales_orders o
           JOIN active a ON a.contact_id = o.contact_id
           LEFT JOIN sales_order_lines l ON l.order_id = o.id
-         WHERE o.status NOT IN ('angebot','storniert')
+         WHERE ${REVENUE_STATUS_SQL}
            AND ($3::text IS NULL OR o.channel = $3)
          GROUP BY o.contact_id
       )
@@ -491,7 +491,7 @@ export async function channelSummary(range: DateRange): Promise<ChannelSummary[]
             COALESCE(SUM(l.quantity * l.unit_price), 0)::float8 AS revenue
        FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
       GROUP BY o.channel`, [range.start, range.end]);
   const costs = await pool.query(
     `SELECT o.channel,
@@ -499,7 +499,7 @@ export async function channelSummary(range: DateRange): Promise<ChannelSummary[]
             COALESCE(SUM(oc.amount) FILTER (WHERE oc.type <> 'wareneinsatz'), 0)::float8 AS gebuehren
        FROM sales_orders o JOIN order_costs oc ON oc.order_id = o.id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
       GROUP BY o.channel`, [range.start, range.end]);
   const adRows = await pool.query(
     `SELECT platform, COALESCE(SUM(spend), 0)::float8 AS spend
@@ -514,7 +514,7 @@ export async function channelSummary(range: DateRange): Promise<ChannelSummary[]
        JOIN sales_order_lines l ON l.order_id = o.id
        JOIN product_variants pv ON pv.id = l.variant_id
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
-        AND o.status NOT IN ('angebot','storniert')
+        AND ${REVENUE_STATUS_SQL}
       GROUP BY o.channel`, [range.start, range.end]);
 
   const revBy = new Map<string, any>(rev.rows.map((x: any) => [x.channel, x]));

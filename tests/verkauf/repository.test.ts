@@ -7,7 +7,7 @@ import { seedVerfuegbarkeit } from '../../scripts/seed-verfuegbarkeit';
 import { createOrder, getOrder, transitionOrderStatus, createReturn } from '@/verkauf/repository';
 import {
   listOrderRows, getOrderView, sellableVariants, priceForVariant, availableStock,
-  salesTotals, channelSummary, statusFunnel, countOpenQuotes, salesDailySeries,
+  salesTotals, channelSummary, statusFunnel, countOpenQuotes, salesDailySeries, ecomSalesFacts,
 } from '@/verkauf/repository';
 
 const MUELLER = 'c1c1c1c1-0000-4000-8000-000000000001'; // Spielwaren Müller, K-0001
@@ -378,6 +378,20 @@ describe('B4 aggregates', () => {
     expect(shopRows.every((r) => r.channel === 'shop')).toBe(true);
     const all = await listOrderRows();
     expect(all.length).toBeGreaterThanOrEqual(shopRows.length);
+  });
+
+  it('Angebote zählen jetzt in channelSummary und ecomSalesFacts', async () => {
+    const beforeCh = (await channelSummary(range)).find((c) => c.channel === 'b2b_portal')!;
+    const beforeFacts = await ecomSalesFacts(range, 'b2b_portal');
+    const o = await createOrder({          // b2b_portal → Status 'angebot'
+      contactId: MUELLER, channel: 'b2b_portal', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 3, unitPrice: 10 }],
+    });
+    orderIds.push(o.id);
+    const afterCh = (await channelSummary(range)).find((c) => c.channel === 'b2b_portal')!;
+    const afterFacts = await ecomSalesFacts(range, 'b2b_portal');
+    expect(afterCh.revenueNet - beforeCh.revenueNet).toBeCloseTo(30);    // Angebot zählt jetzt mit
+    expect(afterFacts.revenue - beforeFacts.revenue).toBeCloseTo(30);
   });
 });
 
