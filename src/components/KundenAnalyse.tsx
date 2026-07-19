@@ -34,8 +34,6 @@ export function KundenAnalyse({ rows, range, segment }:
       filter: { kind: 'text', value: (r) => r.name },
       cell: (r) => <Link href={`/kontakte/${r.contactId}`} className="text-brand hover:text-brand-dark">{r.name}</Link> },
     { key: 'segment', header: 'Segment', sort: (r) => r.segment,
-      filter: { kind: 'select', value: (r) => r.segment,
-        options: [{ value: 'geschaeft', label: 'Geschäft' }, { value: 'privat', label: 'Privat' }] },
       cell: (r) => r.segment === 'geschaeft' ? 'Geschäft' : 'Privat' },
     { key: 'orders', header: 'Bestellungen', className: 'text-right', sort: (r) => r.orders,
       filter: { kind: 'number', value: (r) => r.orders }, cell: (r) => String(r.orders) },
@@ -57,7 +55,7 @@ export function KundenAnalyse({ rows, range, segment }:
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-bold tracking-tight">Kontakte · Analyse</h2>
-        <Filters range={range} basePath="/kontakte/analyse" />
+        <Filters range={range} basePath="/kontakte/analyse" defaultKey="all" />
       </div>
       <div className="flex flex-wrap gap-2">
         {SEGMENTS.map((s) => {
