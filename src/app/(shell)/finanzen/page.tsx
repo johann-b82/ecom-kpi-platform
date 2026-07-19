@@ -2,7 +2,6 @@ import { listOpenItems, cashflowInByDay } from '@/finanzen/repository';
 import { resolveRange } from '@/lib/range';
 import { bucketSum } from '@/lib/series';
 import { OffenePostenListe } from '@/components/OffenePostenListe';
-import { ChartCard } from '@/components/charts/ChartCard';
 import { KpiLineChart } from '@/components/charts/KpiLineChart';
 
 export const dynamic = 'force-dynamic';
@@ -29,9 +28,7 @@ export default async function OffenePostenPage({ searchParams }:
   const overdue = items.filter((i) => i.overdue).reduce((s, i) => s + i.remaining, 0);
   return (
     <div className="space-y-6">
-      <ChartCard title="Operativer Cashflow · Einzahlungen">
-        <KpiLineChart title="Einzahlungen (letzte 12 Monate)" series={cashflowSeries} format="eur" />
-      </ChartCard>
+      <KpiLineChart title="Operativer Cashflow · Einzahlungen (letzte 12 Monate)" series={cashflowSeries} format="eur" />
       <OffenePostenListe items={items} debitorOpen={sum('debitor')} kreditorOpen={sum('kreditor')}
         overdue={overdue} range={range} />
     </div>
