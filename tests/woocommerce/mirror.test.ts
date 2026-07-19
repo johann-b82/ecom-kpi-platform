@@ -137,6 +137,19 @@ describe('WooCommerceMirror.fetchOrdersRaw', () => {
     expect(p.total).toBe(13518);
     expect(p.items[0]).toEqual(rawOrder);
   });
+
+  it('hängt modified_after (dates_are_gmt) nur an, wenn ein Datum übergeben wird', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(res([], { 'X-WP-Total': '0', 'X-WP-TotalPages': '0' }));
+    const mirror = new WooCommerceMirror(cfg, fetchMock as unknown as typeof fetch);
+
+    await mirror.fetchOrdersRaw(1, 100);
+    expect(fetchMock.mock.calls[0][0]).not.toContain('modified_after');
+
+    await mirror.fetchOrdersRaw(1, 100, new Date('2026-07-16T00:00:00.000Z'));
+    const url = fetchMock.mock.calls[1][0] as string;
+    expect(url).toContain('modified_after=2026-07-16T00%3A00%3A00.000Z');
+    expect(url).toContain('dates_are_gmt=true');
+  });
 });
 
 describe('WooCommerceMirror.fetchVariationsRaw', () => {
