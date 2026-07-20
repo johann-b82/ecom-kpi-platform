@@ -34,6 +34,22 @@ async function main() {
     [warehouseId]);
   console.log(`Bestand gesetzt: ${stock.rowCount} Varianten (Standardlager).`);
 
+  // 1b) is_stock_managed aus den Woo-Rohdaten ableiten. bool_and: Variante nur
+  // bestandsgeführt, wenn ALLE ihre Refs es sind; COALESCE(...,true) fängt den
+  // Fall ab, dass virtual/manage_stock in allen Refs fehlen (per-Ref NULL).
+  const managed = await pool.query(
+    `UPDATE product_variants v SET is_stock_managed = sub.managed
+       FROM (
+         SELECT er.entity_id,
+                COALESCE(bool_and(NOT (er.raw_payload->>'virtual' = 'true'
+                                       OR er.raw_payload->>'manage_stock' = 'false')), true) AS managed
+           FROM external_references er
+          WHERE er.source_system = 'woocommerce' AND er.entity_type = 'product_variant'
+          GROUP BY er.entity_id
+       ) sub
+      WHERE v.id = sub.entity_id`);
+  console.log(`is_stock_managed gesetzt: ${managed.rowCount} Varianten.`);
+
   // 2) Default-Meldebestand aus dem Absatz der letzten WINDOW_DAYS Tage.
   const sales = await pool.query<{ variant_id: string; units: string }>(
     `SELECT l.variant_id, SUM(l.quantity)::int AS units
