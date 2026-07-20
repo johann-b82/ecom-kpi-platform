@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { Filters } from '@/components/Filters';
 import { DataTable, type Column } from '@/components/DataTable';
+import { StatTile } from '@/components/StatTile';
 import { eur } from '@/verkauf/format';
 import { formatDeDate } from '@/lib/dates';
 import type { CustomerMetricRow, CustomerKpis } from '@/kontakte/analytics';
@@ -12,15 +13,6 @@ const SEGMENTS = [
   { key: 'geschaeft', label: 'Geschäft', href: '/kontakte/analyse?segment=geschaeft' },
   { key: 'privat', label: 'Privat', href: '/kontakte/analyse?segment=privat' },
 ] as const;
-
-function Tile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-neutral-200 bg-neutral-0 p-4 shadow-card dark:border-neutral-800 dark:bg-neutral-900">
-      <p className="anno text-neutral-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">{value}</p>
-    </div>
-  );
-}
 
 export function KundenAnalyse({ rows, kpis, limit, range, segment }:
   { rows: CustomerMetricRow[]; kpis: CustomerKpis; limit: number;
@@ -69,10 +61,10 @@ export function KundenAnalyse({ rows, kpis, limit, range, segment }:
         })}
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile label="Aktive Kunden" value={kpis.activeCustomers.toLocaleString('de-DE')} />
-        <Tile label="Umsatz" value={eur(kpis.revenueNet)} />
-        <Tile label="Ø Warenkorb" value={eur(kpis.orders > 0 ? kpis.revenueNet / kpis.orders : 0)} />
-        <Tile label="Wiederkäufer-Quote"
+        <StatTile label="Aktive Kunden" value={kpis.activeCustomers.toLocaleString('de-DE')} />
+        <StatTile label="Umsatz" value={eur(kpis.revenueNet)} />
+        <StatTile label="Ø Warenkorb" value={eur(kpis.orders > 0 ? kpis.revenueNet / kpis.orders : 0)} />
+        <StatTile label="Wiederkäufer-Quote"
           value={kpis.activeCustomers ? `${Math.round((kpis.returningCustomers / kpis.activeCustomers) * 100)} %` : '—'} />
       </div>
       {capped && (

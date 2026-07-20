@@ -2,10 +2,27 @@ import Link from 'next/link';
 import { eur } from '@/verkauf/format';
 import { formatDeDate } from '@/lib/dates';
 import { STATUS_LABEL, CHANNEL_LABEL } from '@/verkauf/labels';
+import { StatTile } from '@/components/StatTile';
 import type { CustomerSummary, CustomerOrderRow } from '@/kontakte/analytics';
 
 export function KundenKennzahlen({ summary, orders }:
   { summary: CustomerSummary; orders: CustomerOrderRow[] }) {
+  const heading = (
+    <div className="flex items-center gap-2">
+      <p className="anno text-neutral-500">Geschäftskennzahlen</p>
+      {summary.isReturning && <span className="rounded bg-accent/15 px-2 py-0.5 text-xs text-accent">Wiederkäufer</span>}
+    </div>
+  );
+
+  if (summary.orders === 0) {
+    return (
+      <section className="space-y-3">
+        {heading}
+        <p className="text-sm text-neutral-500">Noch keine Bestellungen.</p>
+      </section>
+    );
+  }
+
   const tiles: { label: string; value: string }[] = [
     { label: 'Umsatz gesamt', value: eur(summary.revenueNet) },
     { label: 'Bestellungen', value: String(summary.orders) },
@@ -16,17 +33,9 @@ export function KundenKennzahlen({ summary, orders }:
   ];
   return (
     <section className="space-y-3">
-      <div className="flex items-center gap-2">
-        <p className="anno text-neutral-500">Geschäftskennzahlen</p>
-        {summary.isReturning && <span className="rounded bg-accent/15 px-2 py-0.5 text-xs text-accent">Wiederkäufer</span>}
-      </div>
+      {heading}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {tiles.map((t) => (
-          <div key={t.label} className="rounded-lg border border-neutral-200 bg-neutral-0 p-3 dark:border-neutral-800 dark:bg-neutral-900">
-            <p className="anno text-neutral-500">{t.label}</p>
-            <p className="mt-1 text-lg font-semibold text-neutral-900 dark:text-neutral-100">{t.value}</p>
-          </div>
-        ))}
+        {tiles.map((t) => <StatTile key={t.label} label={t.label} value={t.value} size="sm" />)}
       </div>
       {orders.length > 0 && (
         <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
