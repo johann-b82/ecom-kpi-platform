@@ -100,6 +100,9 @@ export async function importWooCommerceVariations(
          ON CONFLICT (source_system, external_id, entity_type)
          DO UPDATE SET entity_id=excluded.entity_id, last_synced_at=now(), raw_payload=excluded.raw_payload`,
         [variantId, externalId, JSON.stringify(raw)]);
+      await c.query(
+        `UPDATE product_variants SET is_stock_managed = is_stock_managed AND $2 WHERE id = $1`,
+        [variantId, isStockManaged(raw)]);
       if (price !== null) {
         await c.query(
           `INSERT INTO prices (variant_id, price_list_id, min_qty, amount) VALUES ($1,$2,1,$3)
@@ -177,6 +180,10 @@ export async function importWooCommerceProducts(
          ON CONFLICT (source_system, external_id, entity_type)
          DO UPDATE SET entity_id=excluded.entity_id, last_synced_at=now(), raw_payload=excluded.raw_payload`,
         [variantId, externalId, payload]);
+
+      await c.query(
+        `UPDATE product_variants SET is_stock_managed = is_stock_managed AND $2 WHERE id = $1`,
+        [variantId, isStockManaged(raw)]);
 
       if (m.price !== null) {
         await c.query(
