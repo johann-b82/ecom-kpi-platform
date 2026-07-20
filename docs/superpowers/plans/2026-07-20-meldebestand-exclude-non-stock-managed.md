@@ -317,6 +317,117 @@ Da die Änderung ein reiner Query-Filter ist und die UI unverändert rendert, is
 
 ---
 
+### Task 6: `belowReorder`-Flächen der Bestand-Liste ebenfalls gaten
+
+**Kontext:** Die Ganzzweig-Review fand, dass die *Bestand*-Liste einen zweiten,
+`reorder_point`-basierten „unter Meldebestand"-Begriff hat (`belowReorder =
+reorder_point > 0 AND available < reorder_point`), der **nicht** gegatet war. Da
+der Backfill-Schritt 2 den Gutscheinen `reorder_point = 1` gab und ihr `on_hand`
+`-1` ist, erscheinen sie dort weiter als meldebedürftig. Dasselbe Symptom, andere
+Seite. Fix: `is_stock_managed` in die `belowReorder`-Logik aller drei Stellen
+aufnehmen.
+
+**Files:**
+- Modify: `src/verfuegbarkeit/repository.ts` (`listStock`, `listStockPaged`)
+- Modify: `src/verfuegbarkeit/history.ts` (`listCategoryVariants`)
+
+**Interfaces:**
+- Consumes: Spalte `is_stock_managed` (Task 2), befüllt durch Backfill (Task 4).
+- `StockRow`/`CategoryVariantRow`-Typen bleiben unverändert — `is_stock_managed`
+  wird nur als Roh-Query-Feld gelesen, nicht in die Rückgabeobjekte aufgenommen.
+
+- [ ] **Step 1: Baseline — „unter Meldebestand" enthält aktuell die Gutscheine**
+
+Run:
+```bash
+set -a && . ./.env && set +a && npx tsx -e "
+import { listStockPaged } from './src/verfuegbarkeit/repository';
+import { pool } from './src/lib/db';
+void (async () => {
+  const { rows, total } = await listStockPaged({ filter: 'below', limit: 5000 });
+  console.log('below total', total, 'vouchers', JSON.stringify(rows.filter(r=>['8-WooCommerce','115-WooCommerce'].includes(r.sku)).map(r=>r.sku)));
+  await pool.end();
+})();
+"
+```
+Expected: `below total 10`, `vouchers ["115-WooCommerce","8-WooCommerce"]`.
+
+- [ ] **Step 2: `listStock` gaten** (`src/verfuegbarkeit/repository.ts`)
+
+SELECT-Liste (Zeile 14) um `v.is_stock_managed` ergänzen:
+```sql
+    `SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point, v.is_stock_managed,
+```
+`GROUP BY` (Zeile 20) um `v.is_stock_managed` ergänzen:
+```sql
+      GROUP BY v.id, v.sku, p.name, v.reorder_point, v.is_stock_managed
+```
+`belowReorder` (Zeile 27) gaten:
+```ts
+      reorderPoint: x.reorder_point, belowReorder: x.is_stock_managed && x.reorder_point > 0 && available < x.reorder_point,
+```
+
+- [ ] **Step 3: `listStockPaged` gaten** (`src/verfuegbarkeit/repository.ts`)
+
+Inneres SELECT (Zeile 47) um `v.is_stock_managed` ergänzen:
+```sql
+    SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point, v.is_stock_managed,
+```
+`GROUP BY` (Zeile 55) um `v.is_stock_managed` ergänzen:
+```sql
+     GROUP BY v.id, v.sku, p.name, v.reorder_point, v.is_stock_managed`;
+```
+`below`-Filter (Zeile 57) gaten:
+```ts
+  const filtered = `SELECT t.* FROM (${inner}) t
+     WHERE ($2::boolean = false OR (t.is_stock_managed AND t.reorder_point > 0 AND t.available < t.reorder_point))`;
+```
+`belowReorder`-Map (Zeile 64) gaten:
+```ts
+    reorderPoint: x.reorder_point, belowReorder: x.is_stock_managed && x.reorder_point > 0 && x.available < x.reorder_point,
+```
+
+- [ ] **Step 4: `listCategoryVariants` gaten** (`src/verfuegbarkeit/history.ts`)
+
+SELECT (Zeile 120) um `v.is_stock_managed` ergänzen:
+```sql
+    `SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point, v.is_stock_managed,
+```
+`belowReorder`-Map (Zeile 130) gaten:
+```ts
+    belowReorder: x.is_stock_managed && Number(x.reorder_point ?? 0) > 0 && Number(x.on_hand) < Number(x.reorder_point),
+```
+
+- [ ] **Step 5: Funktional verifizieren — Gutscheine raus**
+
+Run:
+```bash
+set -a && . ./.env && set +a && npx tsx -e "
+import { listStockPaged } from './src/verfuegbarkeit/repository';
+import { pool } from './src/lib/db';
+void (async () => {
+  const { rows, total } = await listStockPaged({ filter: 'below', limit: 5000 });
+  console.log('below total', total, 'vouchers', JSON.stringify(rows.filter(r=>['8-WooCommerce','115-WooCommerce'].includes(r.sku)).map(r=>r.sku)), 'anyBelowFlagVoucher', rows.some(r=>['8-WooCommerce','115-WooCommerce'].includes(r.sku) && r.belowReorder));
+  await pool.end();
+})();
+"
+```
+Expected: `below total 8`, `vouchers []`, `anyBelowFlagVoucher false`.
+
+- [ ] **Step 6: Read-only Verfügbarkeits-Tests (keine Regression)**
+
+Run: `npx vitest run tests/verfuegbarkeit/category-rollup.test.ts tests/verfuegbarkeit/dashboard-kpis.test.ts`
+Expected: PASS.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add src/verfuegbarkeit/repository.ts src/verfuegbarkeit/history.ts
+git commit -m "fix(verfuegbarkeit): belowReorder der Bestand-Liste auf is_stock_managed gaten"
+```
+
+---
+
 ## Self-Review
 
 **Spec coverage:**
