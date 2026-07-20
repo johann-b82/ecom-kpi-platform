@@ -299,6 +299,8 @@ CREATE TABLE IF NOT EXISTS product_variants (
   status            TEXT NOT NULL DEFAULT 'aktiv' CHECK (status IN ('aktiv','inaktiv'))
 );
 
+ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS is_stock_managed BOOLEAN NOT NULL DEFAULT true;
+
 CREATE TABLE IF NOT EXISTS prices (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id     UUID REFERENCES tenants(id),
