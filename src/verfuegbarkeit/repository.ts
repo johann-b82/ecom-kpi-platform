@@ -167,7 +167,7 @@ export async function listReorderSuggestions(): Promise<ReorderSuggestion[]> {
        JOIN sold sd ON sd.variant_id = v.id
        LEFT JOIN stock st ON st.variant_id = v.id
        LEFT JOIN contacts sup ON sup.id = p.default_supplier_id
-      WHERE sd.units > 0 AND COALESCE(st.on_hand, 0) < sd.units
+      WHERE v.is_stock_managed AND sd.units > 0 AND COALESCE(st.on_hand, 0) < sd.units
       ORDER BY (COALESCE(st.on_hand,0)::float / NULLIF(sd.units,0)) ASC, v.sku`);
   return r.rows.map((x) => {
     const onHand = Number(x.on_hand);

@@ -98,7 +98,7 @@ export async function categoryRollup(): Promise<CategoryRollupRow[]> {
      SELECT COALESCE(p.category, 'Ohne Kategorie') AS category,
             COUNT(*)::int AS variant_count,
             COALESCE(SUM(st.on_hand), 0)::int AS gesamtbestand,
-            COUNT(*) FILTER (WHERE COALESCE(sd.units, 0) > 0
+            COUNT(*) FILTER (WHERE v.is_stock_managed AND COALESCE(sd.units, 0) > 0
                               AND COALESCE(st.on_hand, 0) < sd.units)::int AS kritisch
        FROM product_variants v
        JOIN products p ON p.id = v.product_id
