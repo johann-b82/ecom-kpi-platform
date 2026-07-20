@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { pool } from '@/lib/db';
-import { cleanContactNames } from '@/kontakte/name-cleanup';
+import { cleanContactNames, cleanContactSegments } from '@/kontakte/name-cleanup';
 import { nextContactNumber } from '@/kontakte/number';
 
 const ids: string[] = [];
@@ -38,6 +38,23 @@ describe('cleanContactNames', () => {
 
     const second = await cleanContactNames(pool);   // idempotent
     expect((await pool.query('SELECT name FROM contacts WHERE id=$1', [junk])).rows[0].name).toBe('Max Muster');
+    expect(second).toBe(0);
+  });
+});
+
+describe('cleanContactSegments', () => {
+  it('setzt Platzhalter-Firma auf privat, echte Firma bleibt geschaeft; idempotent', async () => {
+    // seedContact legt mit DEFAULT segment='geschaeft' an
+    const junk = await seedContact('Max Muster',
+      { first_name: 'Max', last_name: 'Muster', company: '-- Anrede wählen --' });
+    const real = await seedContact('Autohaus Marnet GmbH', { company: 'Autohaus Marnet GmbH' });
+
+    const changed = await cleanContactSegments(pool);
+    expect(changed).toBeGreaterThanOrEqual(1);
+    expect((await pool.query('SELECT segment FROM contacts WHERE id=$1', [junk])).rows[0].segment).toBe('privat');
+    expect((await pool.query('SELECT segment FROM contacts WHERE id=$1', [real])).rows[0].segment).toBe('geschaeft');
+
+    const second = await cleanContactSegments(pool);   // idempotent
     expect(second).toBe(0);
   });
 });
