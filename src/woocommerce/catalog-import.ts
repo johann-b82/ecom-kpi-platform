@@ -20,6 +20,16 @@ export function primaryWooCategory(raw: Record<string, unknown>): string | null 
   return name || null;
 }
 
+/** Bestandsgeführt gdw. WooCommerce eine echte physische Menge trackt.
+ *  Nicht bestandsgeführt bei virtual=true oder manage_stock=false; die Werte
+ *  manage_stock='parent'/true und fehlende Felder gelten als bestandsgeführt.
+ *  Behandelt sowohl JSON-Boolean- als auch String-Form (Woo-API mischt beides). */
+export function isStockManaged(raw: Record<string, unknown>): boolean {
+  if (raw.virtual === true || raw.virtual === 'true') return false;
+  if (raw.manage_stock === false || raw.manage_stock === 'false') return false;
+  return true;
+}
+
 export function mapProduct(woo: MirrorProduct): CatalogMapping | { skip: 'no-sku' } {
   if (!woo.sku) return { skip: 'no-sku' };
   const n = Number(woo.price);
