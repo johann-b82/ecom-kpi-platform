@@ -176,10 +176,10 @@ export const HELP_PAGES: DocPage[] = [
         heading: 'Wichtige Funktionen',
         blocks: [
           { type: 'list', items: [
-            'Bestandsübersicht: eine Zeile je Artikel mit verfügbar, reserviert und Meldebestand — unter dem Meldebestand wird der Artikel markiert.',
+            'Bestandsübersicht: eine Zeile je Artikel mit verfügbar, reserviert und Meldebestand — unter dem Meldebestand wird der Artikel markiert. Nicht bestandsgeführte Artikel (virtuelle Produkte wie Geschenkgutscheine, aus WooCommerce als virtual bzw. manage_stock=false) werden nie als „unter Meldebestand" markiert.',
             'Varianten-Detail: Bestand je Lager sowie Bestandskorrektur mit Pflicht-Grund (Inventurdifferenz, Bruch/Schwund, Korrektur Fehlbuchung) und Korrektur-Historie.',
             'Wareneingang: Bestellungen von Entwurf über Bestellt bis Teilweise/Abgeschlossen; gebuchte Mengen erhöhen den Bestand im Standardlager.',
-            'Meldebestand: alle Artikel mit Reichweite unter 90 Tagen (Bestand kleiner als der Absatz der letzten 90 Tage) — „Nachbestellung entwerfen" legt eine Bestellung im Status Entwurf beim (vorbelegten) Lieferanten an; die Vorschlagsmenge deckt den 90-Tage-Bedarf.',
+            'Meldebestand: alle bestandsgeführten Artikel mit Reichweite unter 90 Tagen (Bestand kleiner als der Absatz der letzten 90 Tage) — „Nachbestellung entwerfen" legt eine Bestellung im Status Entwurf beim (vorbelegten) Lieferanten an; die Vorschlagsmenge deckt den 90-Tage-Bedarf. Virtuelle Produkte ohne echten Bestand (z. B. Geschenkgutscheine) sind ausgenommen und zählen auch nicht zur Kennzahl „Artikel mit Reichweite unter 90 Tagen".',
           ] },
         ],
       },
@@ -292,7 +292,7 @@ export const HELP_PAGES: DocPage[] = [
         blocks: [
           { type: 'table', head: ['Tabelle', 'Zweck', 'Wichtige Felder'], rows: [
             ['products', 'Produkt-Stammdaten', 'name, lifecycle_status, category, brand, default_supplier_id'],
-            ['product_variants', 'Varianten je Produkt', 'product_id, sku, gtin, purchase_price, reorder_point, status'],
+            ['product_variants', 'Varianten je Produkt', 'product_id, sku, gtin, purchase_price, reorder_point, is_stock_managed, status'],
             ['prices', 'Preise je Variante/Preisliste', 'variant_id, price_list_id, min_qty, amount, valid_from'],
             ['product_bundles', 'Bundle-Zusammensetzung', 'bundle_variant_id, component_variant_id, quantity'],
             ['product_documents', 'Dokumente je Produkt', 'product_id, type, file_url, expires_at'],
