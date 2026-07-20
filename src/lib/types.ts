@@ -17,6 +17,7 @@ export interface Customer {
 export interface AdSpend {
   date: string; platform: AdPlatform; spend: number; impressions: number;
   clicks: number; conversions: number; convValue: number;
+  campaignId?: string; campaignName?: string;
 }
 export interface Subscriber {
   date: string; source: Source; signups: number; unsubscribes: number; npsScore: number | null;
