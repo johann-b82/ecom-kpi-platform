@@ -84,4 +84,22 @@ describe('kontakte analytics', () => {
     const all = await customerMetrics(ALL, { limit: 100000 });
     expect(top[0].revenueNet).toBeCloseTo(Math.max(...all.map((r) => r.revenueNet)), 2); // höchster Umsatz zuerst
   });
+
+  async function createOrderWithLines(lines: { qty: number; price: number }[]): Promise<string> {
+    const vid = await variantId('SJ-BLAU');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: lines.map((l) => ({ variantId: vid, quantity: l.qty, unitPrice: l.price })),
+    });
+    orderIds.push(o.id);
+    return o.id;
+  }
+
+  it('customerKpis: gespeicherte Belegsumme hat Vorrang und vervielfacht nicht', async () => {
+    const before = (await customerKpis(ALL)).revenueNet;
+    const id = await createOrderWithLines([{ qty: 1, price: 10 }, { qty: 1, price: 10 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const after = (await customerKpis(ALL)).revenueNet;
+    expect(after - before).toBeCloseTo(100);   // 100, nicht 20 und nicht 200
+  });
 });

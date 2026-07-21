@@ -249,6 +249,17 @@ describe('verkauf repository — Lesefunktionen für die UI', () => {
     expect(v!.lines[0].productName).toBe('Sternenjäger');
   });
 
+  it('getOrderView liefert die gespeicherte Netto-Belegsumme statt der Positionssumme', async () => {
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'b2b_portal', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 2, unitPrice: 11.9 }],
+    });
+    orderIds.push(o.id);
+    expect((await getOrderView(o.id))!.totalNet).toBeNull();
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [o.id]);
+    expect((await getOrderView(o.id))!.totalNet).toBe(100);
+  });
+
   it('availableStock = on_hand − reserved über alle Lager; priceForVariant wählt die Staffel', async () => {
     const av = await availableStock(await variantId('SJ-ROT'));
     expect(typeof av).toBe('number'); // SJ-ROT: 8 + 4 on_hand, minus Reservierungen aus anderen Tests
@@ -423,6 +434,60 @@ describe('B4 aggregates', () => {
     const afterFacts = await ecomSalesFacts(range, 'b2b_portal');
     expect(afterCh.revenueNet - beforeCh.revenueNet).toBeCloseTo(30);    // Angebot zählt jetzt mit
     expect(afterFacts.revenue - beforeFacts.revenue).toBeCloseTo(30);
+  });
+});
+
+describe('ORDER_REVENUE_SQL: gespeicherte Belegsumme vs. Positionen', () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const range = { start: addDays(today, -30), end: today };
+
+  async function createOrderWithLines(lines: { qty: number; price: number }[]): Promise<string> {
+    const vid = await variantId('SJ-BLAU');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: lines.map((l) => ({ variantId: vid, quantity: l.qty, unitPrice: l.price })),
+    });
+    orderIds.push(o.id);
+    return o.id;
+  }
+
+  it('salesTotals: gespeicherte Belegsumme hat Vorrang vor den Positionen', async () => {
+    const before = await salesTotals(range);
+    const id = await createOrderWithLines([{ qty: 1, price: 30 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const after = await salesTotals(range);
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(100);   // 100, nicht 30
+  });
+
+  it('salesTotals: mehrere Positionen vervielfachen die Belegsumme NICHT', async () => {
+    const before = await salesTotals(range);
+    const id = await createOrderWithLines([{ qty: 1, price: 10 }, { qty: 1, price: 10 }, { qty: 1, price: 10 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const after = await salesTotals(range);
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(100);   // 100, nicht 300
+  });
+
+  it('salesTotals: ohne total_net weiterhin aus Positionen', async () => {
+    const before = await salesTotals(range);
+    await createOrderWithLines([{ qty: 2, price: 10 }]);
+    const after = await salesTotals(range);
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(20);
+  });
+
+  it('channelSummary: mehrere Positionen vervielfachen die Belegsumme NICHT', async () => {
+    const before = (await channelSummary(range)).find((c) => c.channel === 'shop')!;
+    const id = await createOrderWithLines([{ qty: 1, price: 10 }, { qty: 1, price: 10 }, { qty: 1, price: 10 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const after = (await channelSummary(range)).find((c) => c.channel === 'shop')!;
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(100);   // 100, nicht 300
+  });
+
+  it('ecomSalesFacts: mehrere Positionen vervielfachen die Belegsumme NICHT', async () => {
+    const before = await ecomSalesFacts(range, 'shop');
+    const id = await createOrderWithLines([{ qty: 1, price: 10 }, { qty: 1, price: 10 }, { qty: 1, price: 10 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const after = await ecomSalesFacts(range, 'shop');
+    expect(after.revenue - before.revenue).toBeCloseTo(100);   // 100, nicht 300
   });
 });
 

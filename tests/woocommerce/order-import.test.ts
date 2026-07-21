@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
-  mapOrderStatus, billingContactKey, mapBillingToContact, mapOrderLines,
+  mapOrderStatus, billingContactKey, mapBillingToContact, mapOrderLines, mapOrderTotal,
 } from '@/woocommerce/order-import';
 import { pool } from '@/lib/db';
 import { importWooCommerceOrders } from '@/woocommerce/order-import';
@@ -68,6 +68,25 @@ describe('mapOrderLines', () => {
     const r = mapOrderLines([{ sku: '', quantity: 1, price: '1.00' }], skuToVariant);
     expect(r.lines).toHaveLength(0);
     expect(r.skipped).toEqual(['(ohne SKU)']);
+  });
+});
+
+describe('mapOrderTotal', () => {
+  it('summiert alle Positionen — auch die ohne SKU (geloeschte Produkte)', () => {
+    const items = [
+      { sku: 'A1', quantity: 2, price: 10, total: '20.00' },
+      { quantity: 1, price: 55.5, total: '55.50' },          // ohne SKU
+      { sku: 'B2', quantity: 1, price: 5, total: '5.00' },
+    ];
+    expect(mapOrderTotal(items as any)).toBeCloseTo(80.5);
+  });
+  it('nutzt total (nach Rabatt), nicht subtotal', () => {
+    const items = [{ sku: 'A1', quantity: 1, price: 100, subtotal: '100.00', total: '80.00' }];
+    expect(mapOrderTotal(items as any)).toBeCloseTo(80);
+  });
+  it('leere Liste ergibt 0, fehlendes total zaehlt als 0', () => {
+    expect(mapOrderTotal([])).toBe(0);
+    expect(mapOrderTotal([{ sku: 'X', quantity: 1, price: 1 }] as any)).toBe(0);
   });
 });
 
@@ -140,5 +159,33 @@ describe('importWooCommerceOrders — Status/Event-Reconcile', () => {
     const r = await importWooCommerceOrders(pool, [rawOrder('refunded')], priceListId);
     expect(r.ordersUpdated).toBe(0);
     expect(await statusOf()).toBe('retoure');
+  });
+
+  it('setzt total_net beim Import und auch beim erneuten Import (idempotent)', async () => {
+    const raw = [{
+      id: 987654, number: '987654', status: 'completed', date_created: '2026-05-01T10:00:00',
+      billing: { first_name: 'Max', last_name: 'Muster', email: 'max@example.com' },
+      line_items: [
+        { sku: 'SKU-EXIST', quantity: 1, price: 30, total: '30.00' },
+        { quantity: 1, price: 70, total: '70.00' },   // ohne SKU -> Position faellt weg, Summe nicht
+      ],
+    }];
+    await importWooCommerceOrders(pool, raw as any, priceListId);
+    const a = await pool.query(`SELECT total_net FROM sales_orders WHERE number = 'WC-987654'`);
+    expect(Number(a.rows[0].total_net)).toBeCloseTo(100);
+
+    await importWooCommerceOrders(pool, raw as any, priceListId);   // erneut
+    const b = await pool.query(`SELECT total_net FROM sales_orders WHERE number = 'WC-987654'`);
+    expect(Number(b.rows[0].total_net)).toBeCloseTo(100);
+
+    await pool.query(
+      `DELETE FROM external_references WHERE entity_type='sales_order'
+         AND entity_id IN (SELECT id FROM sales_orders WHERE number='WC-987654')`);
+    await pool.query(`DELETE FROM sales_orders WHERE number='WC-987654'`);
+    await pool.query(`DELETE FROM contacts WHERE id IN (
+      SELECT entity_id FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='max@example.com')`);
+    await pool.query(`DELETE FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='max@example.com'`);
   });
 });
