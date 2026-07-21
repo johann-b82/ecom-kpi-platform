@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { campaignStage, listCampaigns } from '@/kpi/campaigns';
+import { campaignStage, listCampaigns, campaignKpis } from '@/kpi/campaigns';
 
 describe('campaignStage', () => {
   it('leitet die Stage aus dem Kampagnennamen ab (case-insensitive)', () => {
@@ -43,6 +43,35 @@ describe('listCampaigns', () => {
     const [c] = listCampaigns(anon, range);
     expect(c.id).toBe('__account__');
     expect(c.stage).toBeNull();
+  });
+});
+
+const doRows = [{ date: '2026-01-01', platform: 'meta_ads' as const, spend: 200,
+  impressions: 10000, clicks: 100, conversions: 40, convValue: 800,
+  campaignId: 'm2', campaignName: 'Retargeting_DPA' }];
+
+describe('campaignKpis', () => {
+  it('DO zeigt Conversions, ROAS, CAC (Ad), Conversion-Wert', () => {
+    const ks = campaignKpis(doRows, 'do');
+    const by = (k: string) => ks.find((x) => x.key === k)!;
+    expect(ks.map((k) => k.key)).toEqual(['conversions', 'roas', 'cac_ads', 'conv_value']);
+    expect(by('roas').value).toBeCloseTo(4);        // 800 / 200
+    expect(by('cac_ads').value).toBeCloseTo(5);     // 200 / 40
+    expect(by('conversions').value).toBe(40);
+  });
+  it('SEE zeigt Impressions, CPM, Klicks, CTR', () => {
+    const ks = campaignKpis(doRows, 'see');
+    const by = (k: string) => ks.find((x) => x.key === k)!;
+    expect(ks.map((k) => k.key)).toEqual(['impressions', 'cpm', 'clicks', 'ctr']);
+    expect(by('cpm').value).toBeCloseTo(20);        // 200 / 10000 * 1000
+    expect(by('ctr').value).toBeCloseTo(0.01);      // 100 / 10000
+  });
+  it('markiert KPI als nicht verfügbar bei Division durch Null', () => {
+    const empty = [{ date: '2026-01-01', platform: 'meta_ads' as const, spend: 0,
+      impressions: 0, clicks: 0, conversions: 0, convValue: 0 }];
+    const roas = campaignKpis(empty, 'do').find((k) => k.key === 'roas')!;
+    expect(roas.available).toBe(false);
+    expect(roas.value).toBeNull();
   });
 });
 

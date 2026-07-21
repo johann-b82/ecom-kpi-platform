@@ -52,3 +52,30 @@ export function listCampaigns(adSpend: AdSpend[], range: DateRange): CampaignSum
   }
   return [...byId.values()].sort((a, b) => b.spend - a.spend);
 }
+
+export function campaignKpis(rows: AdSpend[], stage: Phase | null): Kpi[] {
+  const spend = rows.reduce((s, a) => s + a.spend, 0);
+  const impressions = rows.reduce((s, a) => s + a.impressions, 0);
+  const clicks = rows.reduce((s, a) => s + a.clicks, 0);
+  const conversions = rows.reduce((s, a) => s + a.conversions, 0);
+  const convValue = rows.reduce((s, a) => s + a.convValue, 0);
+  const cpm = ratio(spend, impressions);
+
+  const impr = kpi('impressions', 'Impressions', 'see', impressions, 'number');
+  const cpmK = kpi('cpm', 'CPM', 'see', cpm === null ? null : cpm * 1000, 'currency');
+  const clk  = kpi('clicks', 'Klicks', 'see', clicks, 'number');
+  const ctr  = kpi('ctr', 'CTR', 'see', ratio(clicks, impressions), 'percent');
+  const cpc  = kpi('cpc', 'CPC', 'think', ratio(spend, clicks), 'currency');
+  const conv = kpi('conversions', 'Conversions', 'do', conversions, 'number');
+  const roas = kpi('roas', 'ROAS', 'do', ratio(convValue, spend), 'ratio');
+  const cac  = kpi('cac_ads', 'CAC (Ad-Conversions)', 'do', ratio(spend, conversions), 'currency');
+  const cv   = kpi('conv_value', 'Conversion-Wert', 'do', convValue, 'currency');
+
+  switch (stage) {
+    case 'see':   return [impr, cpmK, clk, ctr];
+    case 'think': return [clk, ctr, cpc];
+    case 'do':    return [conv, roas, cac, cv];
+    case 'care':  return [conv, cv];
+    default:      return [impr, clk, conv, cv]; // unzugeordnet: Roh-Ad-Kennzahlen
+  }
+}
