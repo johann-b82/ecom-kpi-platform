@@ -426,6 +426,44 @@ describe('B4 aggregates', () => {
   });
 });
 
+describe('ORDER_REVENUE_SQL: gespeicherte Belegsumme vs. Positionen', () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const range = { start: addDays(today, -30), end: today };
+
+  async function createOrderWithLines(lines: { qty: number; price: number }[]): Promise<string> {
+    const vid = await variantId('SJ-BLAU');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: lines.map((l) => ({ variantId: vid, quantity: l.qty, unitPrice: l.price })),
+    });
+    orderIds.push(o.id);
+    return o.id;
+  }
+
+  it('salesTotals: gespeicherte Belegsumme hat Vorrang vor den Positionen', async () => {
+    const before = await salesTotals(range);
+    const id = await createOrderWithLines([{ qty: 1, price: 30 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const after = await salesTotals(range);
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(100);   // 100, nicht 30
+  });
+
+  it('salesTotals: mehrere Positionen vervielfachen die Belegsumme NICHT', async () => {
+    const before = await salesTotals(range);
+    const id = await createOrderWithLines([{ qty: 1, price: 10 }, { qty: 1, price: 10 }, { qty: 1, price: 10 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const after = await salesTotals(range);
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(100);   // 100, nicht 300
+  });
+
+  it('salesTotals: ohne total_net weiterhin aus Positionen', async () => {
+    const before = await salesTotals(range);
+    await createOrderWithLines([{ qty: 2, price: 10 }]);
+    const after = await salesTotals(range);
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(20);
+  });
+});
+
 describe('countOpenQuotes', () => {
   it('zählt nur angebot-Belege, nicht überführte', async () => {
     const before = await countOpenQuotes();
