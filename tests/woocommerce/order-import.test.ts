@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
-  mapOrderStatus, billingContactKey, mapBillingToContact, mapOrderLines,
+  mapOrderStatus, billingContactKey, mapBillingToContact, mapOrderLines, mapOrderTotal,
 } from '@/woocommerce/order-import';
 import { pool } from '@/lib/db';
 import { importWooCommerceOrders } from '@/woocommerce/order-import';
@@ -68,6 +68,25 @@ describe('mapOrderLines', () => {
     const r = mapOrderLines([{ sku: '', quantity: 1, price: '1.00' }], skuToVariant);
     expect(r.lines).toHaveLength(0);
     expect(r.skipped).toEqual(['(ohne SKU)']);
+  });
+});
+
+describe('mapOrderTotal', () => {
+  it('summiert alle Positionen — auch die ohne SKU (geloeschte Produkte)', () => {
+    const items = [
+      { sku: 'A1', quantity: 2, price: 10, total: '20.00' },
+      { quantity: 1, price: 55.5, total: '55.50' },          // ohne SKU
+      { sku: 'B2', quantity: 1, price: 5, total: '5.00' },
+    ];
+    expect(mapOrderTotal(items as any)).toBeCloseTo(80.5);
+  });
+  it('nutzt total (nach Rabatt), nicht subtotal', () => {
+    const items = [{ sku: 'A1', quantity: 1, price: 100, subtotal: '100.00', total: '80.00' }];
+    expect(mapOrderTotal(items as any)).toBeCloseTo(80);
+  });
+  it('leere Liste ergibt 0, fehlendes total zaehlt als 0', () => {
+    expect(mapOrderTotal([])).toBe(0);
+    expect(mapOrderTotal([{ sku: 'X', quantity: 1, price: 1 }] as any)).toBe(0);
   });
 });
 

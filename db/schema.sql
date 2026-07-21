@@ -502,3 +502,8 @@ ALTER TABLE ad_spend ADD COLUMN IF NOT EXISTS campaign_id   TEXT NOT NULL DEFAUL
 ALTER TABLE ad_spend ADD COLUMN IF NOT EXISTS campaign_name TEXT;
 ALTER TABLE ad_spend DROP CONSTRAINT IF EXISTS ad_spend_pkey;
 ALTER TABLE ad_spend ADD PRIMARY KEY (date, platform, campaign_id);
+
+-- Netto-Belegsumme aus dem Quellsystem (WooCommerce, inkl. Positionen geloeschter
+-- Produkte ohne SKU). Nullable: Belege ohne gespeicherte Summe rechnen weiter aus
+-- ihren Positionen, es gibt daher keine Invariante zu pflegen.
+ALTER TABLE sales_orders ADD COLUMN IF NOT EXISTS total_net NUMERIC(12,2);

@@ -59,7 +59,7 @@ export function mapBillingToContact(b: Billing): ContactFields {
   };
 }
 
-interface WooLineItem { sku?: string; quantity: number; price: string | number }
+interface WooLineItem { sku?: string; quantity: number; price: string | number; total?: string | number }
 
 export function mapOrderLines(items: WooLineItem[], skuToVariant: Map<string, string>):
   { lines: { variantId: string; quantity: number; unitPrice: number }[]; skipped: string[] } {
@@ -72,6 +72,13 @@ export function mapOrderLines(items: WooLineItem[], skuToVariant: Map<string, st
     lines.push({ variantId, quantity: it.quantity, unitPrice: Number(it.price) || 0 });
   }
   return { lines, skipped };
+}
+
+// Netto-Belegsumme aus WooCommerce: Summe ueber ALLE Positionen, auch die ohne
+// SKU (geloeschte Produkte). `total` ist der Betrag NACH Rabatt — `subtotal`
+// waere davor und wuerde Rabatte als Umsatz ausweisen.
+export function mapOrderTotal(items: WooLineItem[]): number {
+  return items.reduce((s, it) => s + (Number(it.total) || 0), 0);
 }
 
 // ── Impure importer: inert historical records, idempotent ──────────────
