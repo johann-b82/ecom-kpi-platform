@@ -8,7 +8,7 @@ import { Filters } from '@/components/Filters';
 import { MarketingMargin } from '@/components/MarketingMargin';
 import { CampaignSelector } from '@/components/CampaignSelector';
 import { CampaignDetail } from '@/components/CampaignDetail';
-import { listCampaigns, campaignKpis } from '@/kpi/campaigns';
+import { listCampaigns, campaignKpis, campaignKey } from '@/kpi/campaigns';
 import { inRange } from '@/kpi/helpers';
 import { createClient } from '@/lib/supabase/server';
 
@@ -49,7 +49,7 @@ export default async function VerkaufDashboardPage({ searchParams }:
           summary={selected}
           kpis={campaignKpis(
             dataset.adSpend.filter((a) =>
-              `${a.platform}|${a.campaignId ?? '__account__'}` === selected.id && inRange(a.date, range)),
+              campaignKey(a) === selected.id && inRange(a.date, range)),
             selected.stage,
           )}
         />

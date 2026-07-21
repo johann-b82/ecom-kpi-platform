@@ -30,6 +30,7 @@ describe('splitTotal', () => {
     const parts = splitTotal(100, [0.4, 0.3, 0.3], true);
     expect(parts.reduce((a, b) => a + b, 0)).toBe(100);
     expect(parts.length).toBe(3);
+    expect(parts).toEqual([40, 30, 30]);
   });
   it('erhält auch Float-Summen exakt', () => {
     const parts = splitTotal(10.5, [0.5, 0.5], false);
@@ -56,7 +57,6 @@ describe('generateSeedData Kampagnen', () => {
   // Summen über den Range 2026-01-01..2026-03-31 wurden dort einmalig ermittelt
   // und müssen nach dem Split auf Kampagnen unverändert bleiben (Invariante).
   it('erhält Spend/Impressions/Klicks/Conversions in Summe verlustfrei (Invariante, Referenzwerte aus 3babb6d)', () => {
-    const range = { start: '2026-01-01', end: '2026-03-31' };
     const data = generateSeedData(range);
     const totals = data.adSpend.reduce(
       (acc, a) => {
