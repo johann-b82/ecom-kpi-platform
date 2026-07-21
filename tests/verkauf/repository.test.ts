@@ -462,6 +462,22 @@ describe('ORDER_REVENUE_SQL: gespeicherte Belegsumme vs. Positionen', () => {
     const after = await salesTotals(range);
     expect(after.revenueNet - before.revenueNet).toBeCloseTo(20);
   });
+
+  it('channelSummary: mehrere Positionen vervielfachen die Belegsumme NICHT', async () => {
+    const before = (await channelSummary(range)).find((c) => c.channel === 'shop')!;
+    const id = await createOrderWithLines([{ qty: 1, price: 10 }, { qty: 1, price: 10 }, { qty: 1, price: 10 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const after = (await channelSummary(range)).find((c) => c.channel === 'shop')!;
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(100);   // 100, nicht 300
+  });
+
+  it('ecomSalesFacts: mehrere Positionen vervielfachen die Belegsumme NICHT', async () => {
+    const before = await ecomSalesFacts(range, 'shop');
+    const id = await createOrderWithLines([{ qty: 1, price: 10 }, { qty: 1, price: 10 }, { qty: 1, price: 10 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const after = await ecomSalesFacts(range, 'shop');
+    expect(after.revenue - before.revenue).toBeCloseTo(100);   // 100, nicht 300
+  });
 });
 
 describe('countOpenQuotes', () => {
