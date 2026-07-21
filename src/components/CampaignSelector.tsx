@@ -3,6 +3,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { CampaignSummary } from '@/kpi/campaigns';
 import { PHASE_META } from '@/kpi/index';
 import type { Phase } from '@/kpi/types';
+import { formatCurrency } from '@/lib/format';
 
 const STAGES: Phase[] = ['see', 'think', 'do', 'care'];
 
@@ -36,7 +37,7 @@ export function CampaignSelector(
         return (
           <optgroup key={s} label={PHASE_META[s].title}>
             {items.map((c) => (
-              <option key={c.id} value={c.id}>{`${c.name} · ${c.spend.toLocaleString('de-DE')} €`}</option>
+              <option key={c.id} value={c.id}>{`${c.name} · ${formatCurrency(c.spend)}`}</option>
             ))}
           </optgroup>
         );
@@ -44,7 +45,7 @@ export function CampaignSelector(
       {byStage(null).length > 0 && (
         <optgroup label="Unzugeordnet">
           {byStage(null).map((c) => (
-            <option key={c.id} value={c.id}>{`${c.name} · ${c.spend.toLocaleString('de-DE')} €`}</option>
+            <option key={c.id} value={c.id}>{`${c.name} · ${formatCurrency(c.spend)}`}</option>
           ))}
         </optgroup>
       )}

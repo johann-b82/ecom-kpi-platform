@@ -2,6 +2,7 @@ import type { CampaignSummary } from '@/kpi/campaigns';
 import type { Kpi } from '@/kpi/types';
 import { PHASE_META } from '@/kpi/index';
 import { formatDeDate } from '@/lib/dates';
+import { formatNumber, formatCurrency, formatPercent } from '@/lib/format';
 import { KpiCard } from './KpiCard';
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -15,7 +16,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export function CampaignDetail({ summary, kpis }: { summary: CampaignSummary; kpis: Kpi[] }) {
   const stageTitle = summary.stage ? PHASE_META[summary.stage].title : 'Unzugeordnet';
-  const ctr = summary.impressions ? (summary.clicks / summary.impressions) * 100 : null;
+  const ctr = summary.impressions ? summary.clicks / summary.impressions : null;
   const [hero, ...rest] = kpis;
 
   return (
@@ -25,11 +26,11 @@ export function CampaignDetail({ summary, kpis }: { summary: CampaignSummary; kp
         <span className="anno rounded bg-brand/10 px-2 py-0.5 text-brand">{stageTitle}</span>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Stat label="Spend" value={`${summary.spend.toLocaleString('de-DE')} €`} />
+        <Stat label="Spend" value={formatCurrency(summary.spend)} />
         <Stat label="Laufzeit" value={`${formatDeDate(summary.firstDate)} – ${formatDeDate(summary.lastDate)}`} />
-        <Stat label="Impressions" value={summary.impressions.toLocaleString('de-DE')} />
-        <Stat label="Klicks" value={summary.clicks.toLocaleString('de-DE')} />
-        <Stat label="CTR" value={ctr === null ? '—' : `${ctr.toFixed(2)} %`} />
+        <Stat label="Impressions" value={formatNumber(summary.impressions)} />
+        <Stat label="Klicks" value={formatNumber(summary.clicks)} />
+        <Stat label="CTR" value={ctr === null ? '—' : formatPercent(ctr)} />
       </div>
       <p className="anno mt-4 text-neutral-500 dark:text-neutral-400">{stageTitle} · Ad-Performance dieser Kampagne</p>
       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-md">

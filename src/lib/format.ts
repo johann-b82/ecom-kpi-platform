@@ -14,6 +14,12 @@ export function formatValue(kpi: Kpi): string {
   }
 }
 
+// Gleiche Formatierung wie die KPI-Karten, für Werte die nicht als Kpi vorliegen
+// (z. B. die Kopfzeile der Kampagnen-Detailsicht).
+export const formatNumber = (value: number): string => nf.format(value);
+export const formatCurrency = (value: number): string => cf.format(value);
+export const formatPercent = (ratio: number): string => `${pf.format(ratio * 100)} %`;
+
 export function formatDelta(deltaPct: number | null): string | null {
   if (deltaPct === null) return null;
   return `${pf.format(Math.abs(deltaPct))} %`;
