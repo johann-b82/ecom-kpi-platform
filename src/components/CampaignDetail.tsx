@@ -21,7 +21,7 @@ export function CampaignDetail({ summary, kpis }: { summary: CampaignSummary; kp
 
   return (
     <div>
-      <div className="mb-4 flex items-baseline justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-baseline gap-3">
         <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{summary.name}</h3>
         <span className="anno rounded bg-brand/10 px-2 py-0.5 text-brand">{stageTitle}</span>
       </div>
