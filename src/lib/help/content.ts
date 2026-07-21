@@ -158,6 +158,20 @@ export const HELP_PAGES: DocPage[] = [
           { type: 'note', text: 'Werbung wird ehrlich als eigene Spalte gezeigt, nicht in der Marge versteckt. Web-Ads (Google/Meta/TikTok) zählen automatisch auf den Shop, Amazon-Ads auf den Marktplatz; zusätzliche Werbekosten lassen sich manuell je Kanal buchen.' },
         ],
       },
+      {
+        heading: 'STDC-Dashboard & Kampagnen-Ansicht',
+        blocks: [
+          { type: 'p', text: 'Unter Verkauf → Dashboard liegen die Marketing-KPIs nach dem STDC-Modell (See/Think/Do/Care). Über den Umschalter „Global ↔ Kampagne" oben lässt sich von der Gesamtsicht auf eine einzelne Kampagne wechseln.' },
+          { type: 'p', text: 'Jede Kampagne wird genau einer Ziel-Stage zugeordnet — abgeleitet aus ihrem Namen. Die Kampagnen-Detailsicht zeigt nur ad-native Kennzahlen (Spend, Impressions, CPM, Klicks, CTR, ROAS, CAC, Conversion-Wert). Umsatz-, Conversion-Rate- und CLV-Kennzahlen sind nicht kampagnen-attribuiert und bleiben der Global-Ansicht vorbehalten.' },
+          { type: 'table', head: ['Kampagnenname enthält', 'Stage'], rows: [
+            ['Prospecting, Awareness, Video', 'SEE (Awareness)'],
+            ['Consideration, Traffic', 'THINK (Consideration)'],
+            ['Retargeting, Conversion, Sales', 'DO (Conversion)'],
+            ['Newsletter, Reactivation, Loyalty', 'CARE (Loyalty)'],
+          ] },
+          { type: 'note', text: 'Greift keine Regel, erscheint die Kampagne unter „Unzugeordnet". Benenne Kampagnen nach dieser Konvention, damit sie automatisch der richtigen Stage zugeordnet werden. Der Zeitraum-Umschalter setzt die Ansicht auf Global zurück.' },
+        ],
+      },
     ],
   },
   {
@@ -339,6 +353,19 @@ export const HELP_PAGES: DocPage[] = [
           { type: 'table', head: ['Tabelle', 'Zurechnung', 'Quelle'], rows: [
             ['order_costs', 'je Beleg', 'berechnet (EK) / API / manuell'],
             ['channel_costs', 'je Kanal + Zeitraum', 'API / manuell'],
+          ] },
+        ],
+      },
+      {
+        heading: 'Marketing (ad_spend)',
+        blocks: [
+          { type: 'p', text: 'ad_spend hält die täglichen Ad-Kennzahlen je Plattform und Kampagne (Meta/Google/TikTok). Seit der Kampagnenebene ist die Tabelle kampagnen-granular.' },
+          { type: 'table', head: ['Feld', 'Zweck'], rows: [
+            ['date, platform', 'Tag + Ad-Plattform'],
+            ['campaign_id', 'Kampagnen-ID (Teil des Primärschlüssels; „__account__" für nicht zugeordnete Zeilen)'],
+            ['campaign_name', 'Kampagnenname — Basis der Stage-Ableitung (siehe Modul-Hilfe Verkauf)'],
+            ['spend, impressions, clicks, conversions, conv_value', 'Kennzahlen; Summe je (date, platform) entspricht dem Plattform-Tageswert'],
+            ['is_demo', 'markiert Demo-Daten (über Einstellungen ein/ausschaltbar)'],
           ] },
         ],
       },
