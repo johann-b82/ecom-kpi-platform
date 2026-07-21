@@ -20,14 +20,14 @@ export async function enableDemoAds(endDate: string = new Date().toISOString().s
       const part = adSpend.slice(i, i + CHUNK);
       const values: unknown[] = [];
       const tuples = part.map((a, j) => {
-        const b = j * 7;
-        values.push(a.date, a.platform, a.spend, a.impressions, a.clicks, a.conversions, a.convValue);
-        return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6},$${b + 7},true)`;
+        const b = j * 9;
+        values.push(a.date, a.platform, a.spend, a.impressions, a.clicks, a.conversions, a.convValue, a.campaignId, a.campaignName);
+        return `($${b + 1},$${b + 2},$${b + 3},$${b + 4},$${b + 5},$${b + 6},$${b + 7},$${b + 8},$${b + 9},true)`;
       });
       await client.query(
-        `INSERT INTO ad_spend(date, platform, spend, impressions, clicks, conversions, conv_value, is_demo)
+        `INSERT INTO ad_spend(date, platform, spend, impressions, clicks, conversions, conv_value, campaign_id, campaign_name, is_demo)
          VALUES ${tuples.join(',')}
-         ON CONFLICT (date, platform) DO NOTHING`,
+         ON CONFLICT (date, platform, campaign_id) DO NOTHING`,
         values,
       );
     }
