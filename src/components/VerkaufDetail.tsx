@@ -33,7 +33,9 @@ export function VerkaufDetail({ order }: { order: OrderView }) {
   });
   const cancel = () => start(async () => { await transitionOrderStatusAction(order.id, 'storniert'); router.refresh(); });
 
-  const total = order.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
+  // Gespeicherte Netto-Belegsumme hat Vorrang — sie enthaelt auch Positionen
+  // geloeschter Produkte, die es in order.lines nicht mehr gibt.
+  const total = order.totalNet ?? order.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0);
   const { db, dbProzent } = contributionMargin(total, order.costs);
 
   return (

@@ -16,7 +16,7 @@ export interface SalesOrder {
   id: string; tenantId: string | null; number: string; contactId: string;
   channel: OrderChannel; status: OrderStatus; priceListId: string | null;
   relatedOrderId: string | null; currency: string;
-  placedAt: string | null; createdAt: string;
+  placedAt: string | null; createdAt: string; totalNet: number | null;
 }
 export interface SalesOrderLine {
   id: string; orderId: string; variantId: string; quantity: number; unitPrice: number;

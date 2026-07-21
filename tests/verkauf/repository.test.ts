@@ -249,6 +249,17 @@ describe('verkauf repository — Lesefunktionen für die UI', () => {
     expect(v!.lines[0].productName).toBe('Sternenjäger');
   });
 
+  it('getOrderView liefert die gespeicherte Netto-Belegsumme statt der Positionssumme', async () => {
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'b2b_portal', priceListId: PL_HANDEL,
+      lines: [{ variantId: await variantId('SJ-BLAU'), quantity: 2, unitPrice: 11.9 }],
+    });
+    orderIds.push(o.id);
+    expect((await getOrderView(o.id))!.totalNet).toBeNull();
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [o.id]);
+    expect((await getOrderView(o.id))!.totalNet).toBe(100);
+  });
+
   it('availableStock = on_hand − reserved über alle Lager; priceForVariant wählt die Staffel', async () => {
     const av = await availableStock(await variantId('SJ-ROT'));
     expect(typeof av).toBe('number'); // SJ-ROT: 8 + 4 on_hand, minus Reservierungen aus anderen Tests

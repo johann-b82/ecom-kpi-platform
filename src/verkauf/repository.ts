@@ -14,7 +14,7 @@ import {
 } from './types';
 
 const ORDER_COLS = `id, tenant_id, number, contact_id, channel, status, price_list_id,
-  related_order_id, currency, placed_at::text AS placed_at, created_at::text AS created_at`;
+  related_order_id, currency, placed_at::text AS placed_at, created_at::text AS created_at, total_net`;
 
 function mapOrder(x: any): SalesOrder {
   return {
@@ -22,6 +22,7 @@ function mapOrder(x: any): SalesOrder {
     channel: x.channel, status: x.status, priceListId: x.price_list_id,
     relatedOrderId: x.related_order_id, currency: x.currency,
     placedAt: x.placed_at, createdAt: x.created_at,
+    totalNet: x.total_net === null ? null : Number(x.total_net),
   };
 }
 function mapLine(x: any): SalesOrderLine {
