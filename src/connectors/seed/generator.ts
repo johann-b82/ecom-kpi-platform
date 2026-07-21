@@ -35,7 +35,7 @@ export function splitTotal(total: number, weights: number[], round: boolean): nu
 }
 
 // Demo-Kampagnen je Plattform — Namen folgen der Stage-Konvention (siehe src/kpi/campaigns.ts).
-const DEMO_CAMPAIGNS: Record<AdPlatform, { id: string; name: string; weight: number }[]> = {
+export const DEMO_CAMPAIGNS: Record<AdPlatform, { id: string; name: string; weight: number }[]> = {
   google_ads: [
     { id: 'g-prospecting', name: 'Prospecting_Search', weight: 0.4 },
     { id: 'g-traffic',     name: 'Traffic_Discovery',  weight: 0.3 },

@@ -1,9 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 
 function fakeSupabase(tables: Record<string, unknown[]>) {
+  const selects: Record<string, string> = {};
   return {
-    from: (t: string) => ({ select: () => Promise.resolve({ data: tables[t] ?? [], error: null }) }),
+    from: (t: string) => ({
+      select: (query: string) => {
+        selects[t] = query;
+        return Promise.resolve({ data: tables[t] ?? [], error: null });
+      },
+    }),
     rpc: vi.fn(),
+    __selects: selects,
   } as any;
 }
 
@@ -22,6 +29,8 @@ describe('loadDataset (supabase-js)', () => {
     expect(data.adSpend[0].impressions).toBe(1000);
     expect(data.adSpend[0].clicks).toBe(50);
     expect(data.adSpend[0].conversions).toBe(3);
+    expect(supabase.__selects.ad_spend).toContain('campaignId:campaign_id');
+    expect(supabase.__selects.ad_spend).toContain('campaignName:campaign_name');
   });
   it('throws when a query returns an error', async () => {
     const { loadDataset } = await import('@/kpi/repository');

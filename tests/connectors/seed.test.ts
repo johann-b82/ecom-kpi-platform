@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateSeedData, splitTotal } from '@/connectors/seed/generator';
+import { generateSeedData, splitTotal, DEMO_CAMPAIGNS } from '@/connectors/seed/generator';
 
 const range = { start: '2026-01-01', end: '2026-03-31' };
 
@@ -38,7 +38,7 @@ describe('splitTotal', () => {
 });
 
 describe('generateSeedData Kampagnen', () => {
-  it('splittet den Plattform-Spend je Tag verlustfrei auf Kampagnen (Invariante)', () => {
+  it('erzeugt benannte Demo-Kampagnen je Plattform mit Stage-Abdeckung', () => {
     const data = generateSeedData({ start: '2026-01-01', end: '2026-01-10' });
     // Gruppiere nach date+platform und prüfe: mehrere Kampagnen, alle mit Namen.
     const metaRows = data.adSpend.filter((a) => a.platform === 'meta_ads' && a.date === '2026-01-01');
@@ -49,5 +49,45 @@ describe('generateSeedData Kampagnen', () => {
     expect(names.some((n) => /Prospecting/.test(n))).toBe(true);   // see
     expect(names.some((n) => /Retargeting/.test(n))).toBe(true);   // do
     expect(names.some((n) => /Newsletter/.test(n))).toBe(true);    // care
+  });
+
+  // Referenzwerte eingefroren aus commit 3babb6d (Stand vor der Kampagnenebene):
+  // dort war ad_spend noch eine Zeile je (date, platform) ohne Split. Diese vier
+  // Summen über den Range 2026-01-01..2026-03-31 wurden dort einmalig ermittelt
+  // und müssen nach dem Split auf Kampagnen unverändert bleiben (Invariante).
+  it('erhält Spend/Impressions/Klicks/Conversions in Summe verlustfrei (Invariante, Referenzwerte aus 3babb6d)', () => {
+    const range = { start: '2026-01-01', end: '2026-03-31' };
+    const data = generateSeedData(range);
+    const totals = data.adSpend.reduce(
+      (acc, a) => {
+        acc.spend += a.spend;
+        acc.impressions += a.impressions;
+        acc.clicks += a.clicks;
+        acc.conversions += a.conversions;
+        return acc;
+      },
+      { spend: 0, impressions: 0, clicks: 0, conversions: 0 },
+    );
+    expect(totals.spend).toBe(84175);
+    expect(totals.impressions).toBe(16184030);
+    expect(totals.clicks).toBe(245246);
+    expect(totals.conversions).toBe(9792);
+  });
+
+  it('jede (date, platform)-Gruppe enthält genau die erwarteten Demo-Kampagnen', () => {
+    const data = generateSeedData({ start: '2026-01-01', end: '2026-01-10' });
+    const groups = new Map<string, typeof data.adSpend>();
+    for (const row of data.adSpend) {
+      const key = `${row.date}|${row.platform}`;
+      const g = groups.get(key) ?? [];
+      g.push(row);
+      groups.set(key, g);
+    }
+    for (const [key, rows] of groups) {
+      const [, platform] = key.split('|') as [string, keyof typeof DEMO_CAMPAIGNS];
+      const expectedIds = DEMO_CAMPAIGNS[platform].map((c) => c.id);
+      expect(rows.length).toBe(expectedIds.length);
+      expect(rows.map((r) => r.campaignId).sort()).toEqual([...expectedIds].sort());
+    }
   });
 });
