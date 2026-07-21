@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { campaignStage } from '@/kpi/campaigns';
+import { campaignStage, listCampaigns } from '@/kpi/campaigns';
 
 describe('campaignStage', () => {
   it('leitet die Stage aus dem Kampagnennamen ab (case-insensitive)', () => {
@@ -14,3 +14,35 @@ describe('campaignStage', () => {
     expect(campaignStage('Brandkampagne 2026')).toBeNull();
   });
 });
+
+const rows = [
+  { date: '2026-01-01', platform: 'meta_ads' as const, spend: 100, impressions: 1000, clicks: 20, conversions: 2, convValue: 300, campaignId: 'm1', campaignName: 'Prospecting_Video' },
+  { date: '2026-01-03', platform: 'meta_ads' as const, spend: 200, impressions: 3000, clicks: 40, conversions: 5, convValue: 700, campaignId: 'm1', campaignName: 'Prospecting_Video' },
+  { date: '2026-01-02', platform: 'meta_ads' as const, spend: 500, impressions: 4000, clicks: 60, conversions: 9, convValue: 1500, campaignId: 'm2', campaignName: 'Retargeting_DPA' },
+  { date: '2026-02-01', platform: 'meta_ads' as const, spend: 999, impressions: 9, clicks: 9, conversions: 9, convValue: 9, campaignId: 'm2', campaignName: 'Retargeting_DPA' },
+];
+const range = { start: '2026-01-01', end: '2026-01-31' };
+
+describe('listCampaigns', () => {
+  it('aggregiert je Kampagne im Zeitraum und sortiert nach Spend', () => {
+    const list = listCampaigns(rows, range);
+    expect(list.map((c) => c.id)).toEqual(['m2', 'm1']); // 500 vor 300
+    const m1 = list.find((c) => c.id === 'm1')!;
+    expect(m1.spend).toBe(300);          // 100 + 200
+    expect(m1.impressions).toBe(4000);
+    expect(m1.clicks).toBe(60);
+    expect(m1.firstDate).toBe('2026-01-01');
+    expect(m1.lastDate).toBe('2026-01-03');
+    expect(m1.stage).toBe('see');
+    const m2 = list.find((c) => c.id === 'm2')!;
+    expect(m2.spend).toBe(500);          // Zeile vom 2026-02-01 ist außerhalb des Range
+    expect(m2.stage).toBe('do');
+  });
+  it('Zeilen ohne Kampagnenfelder landen als unzugeordnet', () => {
+    const anon = [{ date: '2026-01-05', platform: 'google_ads' as const, spend: 50, impressions: 500, clicks: 5, conversions: 1, convValue: 60 }];
+    const [c] = listCampaigns(anon, range);
+    expect(c.id).toBe('__account__');
+    expect(c.stage).toBeNull();
+  });
+});
+
