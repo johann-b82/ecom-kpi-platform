@@ -5,6 +5,13 @@ import type { OrderChannel, OrderStatus } from '@/verkauf/types';
 const REV = "o.status <> 'storniert'";
 const ORDER_DATE = 'COALESCE(o.placed_at, o.created_at)::date';
 
+// Siehe verkauf/repository.ts: gespeicherte Belegsumme hat Vorrang; Abfragen,
+// die das nutzen, duerfen sales_order_lines nicht joinen.
+const ORDER_REVENUE_SQL = `COALESCE(o.total_net, (
+  SELECT COALESCE(SUM(l.quantity * l.unit_price), 0)
+    FROM sales_order_lines l WHERE l.order_id = o.id
+))`;
+
 export interface CustomerMetricRow {
   contactId: string; name: string; segment: 'geschaeft' | 'privat';
   orders: number; revenueNet: number; avgOrderValueNet: number;
@@ -23,16 +30,16 @@ export async function customerMetrics(
     `WITH lifetime AS (
        SELECT o.contact_id,
               COUNT(DISTINCT o.id) FILTER (WHERE ${REV}) AS lt_orders,
-              COALESCE(SUM(l.quantity*l.unit_price) FILTER (WHERE ${REV}),0)::float8 AS clv,
+              COALESCE(SUM(${ORDER_REVENUE_SQL}) FILTER (WHERE ${REV}),0)::float8 AS clv,
               MAX(${ORDER_DATE}) FILTER (WHERE ${REV}) AS last_order
-         FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id=o.id
+         FROM sales_orders o
         GROUP BY o.contact_id
      ),
      period AS (
        SELECT o.contact_id,
               COUNT(DISTINCT o.id) FILTER (WHERE ${REV}) AS p_orders,
-              COALESCE(SUM(l.quantity*l.unit_price) FILTER (WHERE ${REV}),0)::float8 AS p_revenue
-         FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id=o.id
+              COALESCE(SUM(${ORDER_REVENUE_SQL}) FILTER (WHERE ${REV}),0)::float8 AS p_revenue
+         FROM sales_orders o
         WHERE ${ORDER_DATE} BETWEEN $1 AND $2
         GROUP BY o.contact_id
      )
@@ -79,11 +86,10 @@ export async function customerKpis(
     `WITH per AS (
        SELECT c.id,
               COUNT(DISTINCT o.id) FILTER (WHERE ${REV} AND ${inRange})::int AS p_orders,
-              COALESCE(SUM(l.quantity*l.unit_price) FILTER (WHERE ${REV} AND ${inRange}),0)::float8 AS p_revenue,
+              COALESCE(SUM(${ORDER_REVENUE_SQL}) FILTER (WHERE ${REV} AND ${inRange}),0)::float8 AS p_revenue,
               COUNT(DISTINCT o.id) FILTER (WHERE ${REV})::int AS lt_orders
          FROM contacts c
          JOIN sales_orders o ON o.contact_id = c.id
-         LEFT JOIN sales_order_lines l ON l.order_id = o.id
         WHERE c.is_customer = true AND ($3::text IS NULL OR c.segment = $3)
         GROUP BY c.id
        HAVING COUNT(DISTINCT o.id) FILTER (WHERE ${REV}) >= 1
@@ -112,10 +118,10 @@ export interface CustomerSummary {
 export async function customerSummary(contactId: string): Promise<CustomerSummary> {
   const r = await pool.query(
     `SELECT COUNT(DISTINCT o.id) FILTER (WHERE ${REV})::int AS orders,
-            COALESCE(SUM(l.quantity*l.unit_price) FILTER (WHERE ${REV}),0)::float8 AS revenue,
+            COALESCE(SUM(${ORDER_REVENUE_SQL}) FILTER (WHERE ${REV}),0)::float8 AS revenue,
             MIN(${ORDER_DATE}) FILTER (WHERE ${REV})::text AS first_order,
             MAX(${ORDER_DATE}) FILTER (WHERE ${REV})::text AS last_order
-       FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id=o.id
+       FROM sales_orders o
       WHERE o.contact_id = $1`, [contactId]);
   const x = r.rows[0];
   const orders = Number(x.orders), revenueNet = Number(x.revenue);
@@ -134,10 +140,9 @@ export interface CustomerOrderRow {
 export async function customerOrders(contactId: string): Promise<CustomerOrderRow[]> {
   const r = await pool.query(
     `SELECT o.id, o.number, ${ORDER_DATE}::text AS placed_at, o.channel, o.status,
-            COALESCE(SUM(l.quantity*l.unit_price),0)::float8 AS revenue
-       FROM sales_orders o LEFT JOIN sales_order_lines l ON l.order_id=o.id
+            ${ORDER_REVENUE_SQL}::float8 AS revenue
+       FROM sales_orders o
       WHERE o.contact_id=$1
-      GROUP BY o.id
       ORDER BY ${ORDER_DATE} DESC, o.number DESC`, [contactId]);
   return r.rows.map((x: any) => ({
     id: x.id, number: x.number, placedAt: x.placed_at, channel: x.channel,
