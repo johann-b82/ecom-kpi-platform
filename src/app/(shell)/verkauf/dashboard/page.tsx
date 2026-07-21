@@ -40,7 +40,7 @@ export default async function VerkaufDashboardPage({ searchParams }:
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <h2 className="text-xl font-bold tracking-tight">Verkauf · E-Commerce</h2>
-          <CampaignSelector campaigns={campaigns} active={searchParams.campaign} basePath="/verkauf/dashboard" />
+          <CampaignSelector campaigns={campaigns} active={selected?.id} basePath="/verkauf/dashboard" />
         </div>
         <Filters range={range} basePath="/verkauf/dashboard" />
       </header>
@@ -48,7 +48,8 @@ export default async function VerkaufDashboardPage({ searchParams }:
         <CampaignDetail
           summary={selected}
           kpis={campaignKpis(
-            dataset.adSpend.filter((a) => a.campaignId === selected.id && inRange(a.date, range)),
+            dataset.adSpend.filter((a) =>
+              `${a.platform}|${a.campaignId ?? '__account__'}` === selected.id && inRange(a.date, range)),
             selected.stage,
           )}
         />

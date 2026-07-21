@@ -17,8 +17,10 @@ function rng(seed: number): () => number {
 const PLATFORMS: AdPlatform[] = ['google_ads', 'meta_ads', 'tiktok_ads'];
 
 // Verteilt eine Tagessumme deterministisch auf Kampagnen. Die letzte Kampagne
-// absorbiert den Rundungsrest, sodass die Summe EXAKT erhalten bleibt — die
-// globalen KPIs (die über alle ad_spend-Zeilen summieren) ändern sich dadurch nicht.
+// absorbiert den Rundungsrest, sodass die Summe für gerundete/ganzzahlige Metriken
+// (round=true) EXAKT erhalten bleibt. Für convValue (round=false) gilt das nur bis
+// auf IEEE-754-Darstellungsfehler exakt — die globalen KPIs (die über alle
+// ad_spend-Zeilen summieren) ändern sich dadurch praktisch nicht.
 export function splitTotal(total: number, weights: number[], round: boolean): number[] {
   const sum = weights.reduce((a, b) => a + b, 0);
   const out: number[] = [];

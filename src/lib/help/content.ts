@@ -169,7 +169,7 @@ export const HELP_PAGES: DocPage[] = [
             ['Retargeting, Conversion, Sales', 'DO (Conversion)'],
             ['Newsletter, Reactivation, Loyalty', 'CARE (Loyalty)'],
           ] },
-          { type: 'note', text: 'Greift keine Regel, erscheint die Kampagne unter „Unzugeordnet". Benenne Kampagnen nach dieser Konvention, damit sie automatisch der richtigen Stage zugeordnet werden. Der Zeitraum-Umschalter setzt die Ansicht auf Global zurück.' },
+          { type: 'note', text: 'Die Regeln werden von oben nach unten geprüft, die erste passende gewinnt — ein Name wie „Video_Retargeting" landet dadurch unter SEE, nicht DO. Greift keine Regel, erscheint die Kampagne unter „Unzugeordnet". Benenne Kampagnen nach dieser Konvention, damit sie automatisch der richtigen Stage zugeordnet werden. Der Zeitraum-Umschalter setzt die Ansicht auf Global zurück.' },
         ],
       },
     ],

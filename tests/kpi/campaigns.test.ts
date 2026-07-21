@@ -26,22 +26,22 @@ const range = { start: '2026-01-01', end: '2026-01-31' };
 describe('listCampaigns', () => {
   it('aggregiert je Kampagne im Zeitraum und sortiert nach Spend', () => {
     const list = listCampaigns(rows, range);
-    expect(list.map((c) => c.id)).toEqual(['m2', 'm1']); // 500 vor 300
-    const m1 = list.find((c) => c.id === 'm1')!;
+    expect(list.map((c) => c.id)).toEqual(['meta_ads|m2', 'meta_ads|m1']); // 500 vor 300
+    const m1 = list.find((c) => c.id === 'meta_ads|m1')!;
     expect(m1.spend).toBe(300);          // 100 + 200
     expect(m1.impressions).toBe(4000);
     expect(m1.clicks).toBe(60);
     expect(m1.firstDate).toBe('2026-01-01');
     expect(m1.lastDate).toBe('2026-01-03');
     expect(m1.stage).toBe('see');
-    const m2 = list.find((c) => c.id === 'm2')!;
+    const m2 = list.find((c) => c.id === 'meta_ads|m2')!;
     expect(m2.spend).toBe(500);          // Zeile vom 2026-02-01 ist außerhalb des Range
     expect(m2.stage).toBe('do');
   });
   it('Zeilen ohne Kampagnenfelder landen als unzugeordnet', () => {
     const anon = [{ date: '2026-01-05', platform: 'google_ads' as const, spend: 50, impressions: 500, clicks: 5, conversions: 1, convValue: 60 }];
     const [c] = listCampaigns(anon, range);
-    expect(c.id).toBe('__account__');
+    expect(c.id).toBe('google_ads|__account__');
     expect(c.stage).toBeNull();
   });
 });

@@ -36,7 +36,10 @@ export function listCampaigns(adSpend: AdSpend[], range: DateRange): CampaignSum
   const byId = new Map<string, CampaignSummary>();
   for (const r of adSpend) {
     if (!inRange(r.date, range)) continue;
-    const id = r.campaignId ?? '__account__';
+    // Ad-Plattform-Kampagnen-IDs sind nur INNERHALB eines Accounts eindeutig —
+    // die Identität ist daher Plattform + Kampagnen-ID zusammen.
+    const rawId = r.campaignId ?? '__account__';
+    const id = `${r.platform}|${rawId}`;
     const name = r.campaignName ?? UNASSIGNED;
     let s = byId.get(id);
     if (!s) {

@@ -35,13 +35,17 @@ export function CampaignSelector(
         if (!items.length) return null;
         return (
           <optgroup key={s} label={PHASE_META[s].title}>
-            {items.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {items.map((c) => (
+              <option key={c.id} value={c.id}>{`${c.name} · ${c.spend.toLocaleString('de-DE')} €`}</option>
+            ))}
           </optgroup>
         );
       })}
       {byStage(null).length > 0 && (
         <optgroup label="Unzugeordnet">
-          {byStage(null).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {byStage(null).map((c) => (
+            <option key={c.id} value={c.id}>{`${c.name} · ${c.spend.toLocaleString('de-DE')} €`}</option>
+          ))}
         </optgroup>
       )}
     </select>
