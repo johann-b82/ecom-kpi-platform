@@ -138,6 +138,9 @@ export async function importWooCommerceOrders(
         result.linesImported += re.lines.length;
         result.linesSkipped += re.skipped.length;
 
+        await c.query('UPDATE sales_orders SET total_net = $2 WHERE id = $1',
+          [existingOrderId, mapOrderTotal((raw.line_items as WooLineItem[]) ?? [])]);
+
         // Status + automatische Events abgleichen (Storno/Refund propagieren).
         const newStatus = mapOrderStatus(String(raw.status));
         const cur = await c.query<{ status: string }>('SELECT status FROM sales_orders WHERE id=$1', [existingOrderId]);
@@ -203,13 +206,14 @@ export async function importWooCommerceOrders(
       const number = `WC-${raw.number ?? raw.id}`;
       const placedAt = (raw.date_created as string) ?? null;
       const currency = (raw.currency as string) ?? 'EUR';
+      const rawLines = (raw.line_items as WooLineItem[]) ?? [];
       const oins = await c.query<{ id: string }>(
-        `INSERT INTO sales_orders (number, contact_id, channel, status, currency, placed_at)
-         VALUES ($1,$2,'shop',$3,$4,$5) RETURNING id`,
-        [number, contactId, status, currency, placedAt]);
+        `INSERT INTO sales_orders (number, contact_id, channel, status, currency, placed_at, total_net)
+         VALUES ($1,$2,'shop',$3,$4,$5,$6) RETURNING id`,
+        [number, contactId, status, currency, placedAt, mapOrderTotal(rawLines)]);
       const orderId = oins.rows[0].id;
 
-      const { lines, skipped } = mapOrderLines((raw.line_items as WooLineItem[]) ?? [], skuToVariant);
+      const { lines, skipped } = mapOrderLines(rawLines, skuToVariant);
       for (const l of lines) {
         await c.query(
           `INSERT INTO sales_order_lines (order_id, variant_id, quantity, unit_price) VALUES ($1,$2,$3,$4)`,

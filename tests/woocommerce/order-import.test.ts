@@ -160,4 +160,32 @@ describe('importWooCommerceOrders — Status/Event-Reconcile', () => {
     expect(r.ordersUpdated).toBe(0);
     expect(await statusOf()).toBe('retoure');
   });
+
+  it('setzt total_net beim Import und auch beim erneuten Import (idempotent)', async () => {
+    const raw = [{
+      id: 987654, number: '987654', status: 'completed', date_created: '2026-05-01T10:00:00',
+      billing: { first_name: 'Max', last_name: 'Muster', email: 'max@example.com' },
+      line_items: [
+        { sku: 'SKU-EXIST', quantity: 1, price: 30, total: '30.00' },
+        { quantity: 1, price: 70, total: '70.00' },   // ohne SKU -> Position faellt weg, Summe nicht
+      ],
+    }];
+    await importWooCommerceOrders(pool, raw as any, priceListId);
+    const a = await pool.query(`SELECT total_net FROM sales_orders WHERE number = 'WC-987654'`);
+    expect(Number(a.rows[0].total_net)).toBeCloseTo(100);
+
+    await importWooCommerceOrders(pool, raw as any, priceListId);   // erneut
+    const b = await pool.query(`SELECT total_net FROM sales_orders WHERE number = 'WC-987654'`);
+    expect(Number(b.rows[0].total_net)).toBeCloseTo(100);
+
+    await pool.query(
+      `DELETE FROM external_references WHERE entity_type='sales_order'
+         AND entity_id IN (SELECT id FROM sales_orders WHERE number='WC-987654')`);
+    await pool.query(`DELETE FROM sales_orders WHERE number='WC-987654'`);
+    await pool.query(`DELETE FROM contacts WHERE id IN (
+      SELECT entity_id FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='max@example.com')`);
+    await pool.query(`DELETE FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='max@example.com'`);
+  });
 });
