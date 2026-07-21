@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapProduct, type CatalogMapping } from '@/woocommerce/catalog-import';
+import { mapProduct, type CatalogMapping, isStockManaged } from '@/woocommerce/catalog-import';
 import type { MirrorProduct } from '@/woocommerce/mirror';
 
 function product(over: Partial<MirrorProduct>): MirrorProduct {
@@ -25,5 +25,29 @@ describe('mapProduct', () => {
 
   it('überspringt Produkte ohne SKU (keine Variante ohne UNIQUE-SKU möglich)', () => {
     expect(mapProduct(product({ sku: '' }))).toEqual({ skip: 'no-sku' });
+  });
+});
+
+describe('isStockManaged', () => {
+  it('virtual (Boolean true) → nicht bestandsgeführt', () => {
+    expect(isStockManaged({ virtual: true, manage_stock: 'parent' })).toBe(false);
+  });
+  it('virtual (String "true") → nicht bestandsgeführt', () => {
+    expect(isStockManaged({ virtual: 'true' })).toBe(false);
+  });
+  it('manage_stock false (Boolean) → nicht bestandsgeführt', () => {
+    expect(isStockManaged({ virtual: false, manage_stock: false })).toBe(false);
+  });
+  it('manage_stock "false" (String) → nicht bestandsgeführt', () => {
+    expect(isStockManaged({ manage_stock: 'false' })).toBe(false);
+  });
+  it('manage_stock "parent" bei virtual=false → bestandsgeführt', () => {
+    expect(isStockManaged({ virtual: false, manage_stock: 'parent' })).toBe(true);
+  });
+  it('manage_stock true → bestandsgeführt', () => {
+    expect(isStockManaged({ virtual: false, manage_stock: true })).toBe(true);
+  });
+  it('fehlende Felder → bestandsgeführt (Default)', () => {
+    expect(isStockManaged({})).toBe(true);
   });
 });

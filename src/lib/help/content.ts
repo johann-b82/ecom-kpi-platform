@@ -71,6 +71,20 @@ export const HELP_PAGES: DocPage[] = [
           ] },
         ],
       },
+      {
+        heading: 'Analyse / Kundenkennzahlen',
+        blocks: [
+          { type: 'p', text: 'Unter Kontakte › Analyse (/kontakte/analyse) zeigt die Top-Kunden-Übersicht ein Ranking aller Kunden mit mindestens einer Bestellung nach Umsatz, Ø Warenkorb und Wiederkäufer-Quote.' },
+          { type: 'list', items: [
+            'Sortierung „Letzte Bestellung" bringt schlummernde Kunden (lange keine Bestellung mehr) nach oben.',
+            'Segment-Filter (Geschäft/Privat) und Zeitraum (Standardzeiträume oder benutzerdefinierter von-bis-Bereich) schränken die Liste ein.',
+            'Klick auf einen Kunden öffnet dessen Kontakt-Detailseite.',
+          ] },
+          { type: 'p', text: 'Auf der Kontakt-Detailseite zeigt der Abschnitt Geschäftskennzahlen je Kunde Umsatz gesamt, Anzahl Bestellungen, Ø Warenkorb, CLV, erste und letzte Bestellung sowie ein Wiederkäufer-Badge (ab 2 Bestellungen) — darunter die vollständige Bestellhistorie.' },
+          { type: 'note', text: 'Range-Semantik: In der Top-Kunden-Übersicht sind Umsatz, Anzahl Bestellungen und Ø Warenkorb auf den gewählten Zeitraum bezogen — Letzte Bestellung und CLV sind dagegen immer Lifetime-Werte (zeitraumunabhängig). Auf der Kontakt-Detailseite sind sämtliche Kennzahlen Lifetime-Werte.' },
+          { type: 'note', text: 'Deckungsbeitrag/Marge je Kunde folgt, sobald Einkaufspreise durchgängig erfasst sind — heute zeigt die Kundenanalyse nur Umsatzkennzahlen.' },
+        ],
+      },
     ],
   },
   {
@@ -144,6 +158,20 @@ export const HELP_PAGES: DocPage[] = [
           { type: 'note', text: 'Werbung wird ehrlich als eigene Spalte gezeigt, nicht in der Marge versteckt. Web-Ads (Google/Meta/TikTok) zählen automatisch auf den Shop, Amazon-Ads auf den Marktplatz; zusätzliche Werbekosten lassen sich manuell je Kanal buchen.' },
         ],
       },
+      {
+        heading: 'STDC-Dashboard & Kampagnen-Ansicht',
+        blocks: [
+          { type: 'p', text: 'Unter Verkauf → Dashboard liegen die Marketing-KPIs nach dem STDC-Modell (See/Think/Do/Care). Über den Umschalter „Global ↔ Kampagne" oben lässt sich von der Gesamtsicht auf eine einzelne Kampagne wechseln.' },
+          { type: 'p', text: 'Jede Kampagne wird genau einer Ziel-Stage zugeordnet — abgeleitet aus ihrem Namen. Die Kampagnen-Detailsicht zeigt nur ad-native Kennzahlen (Spend, Impressions, CPM, Klicks, CTR, ROAS, CAC, Conversion-Wert). Umsatz-, Conversion-Rate- und CLV-Kennzahlen sind nicht kampagnen-attribuiert und bleiben der Global-Ansicht vorbehalten.' },
+          { type: 'table', head: ['Kampagnenname enthält', 'Stage'], rows: [
+            ['Prospecting, Awareness, Video', 'SEE (Awareness)'],
+            ['Consideration, Traffic', 'THINK (Consideration)'],
+            ['Retargeting, Conversion, Sales', 'DO (Conversion)'],
+            ['Newsletter, Reactivation, Loyalty', 'CARE (Loyalty)'],
+          ] },
+          { type: 'note', text: 'Die Regeln werden von oben nach unten geprüft, die erste passende gewinnt — ein Name wie „Video_Retargeting" landet dadurch unter SEE, nicht DO. Greift keine Regel, erscheint die Kampagne unter „Unzugeordnet". Benenne Kampagnen nach dieser Konvention, damit sie automatisch der richtigen Stage zugeordnet werden. Der Zeitraum-Umschalter setzt die Ansicht auf Global zurück.' },
+        ],
+      },
     ],
   },
   {
@@ -162,10 +190,10 @@ export const HELP_PAGES: DocPage[] = [
         heading: 'Wichtige Funktionen',
         blocks: [
           { type: 'list', items: [
-            'Bestandsübersicht: eine Zeile je Artikel mit verfügbar, reserviert und Meldebestand — unter dem Meldebestand wird der Artikel markiert.',
+            'Bestandsübersicht: eine Zeile je Artikel mit verfügbar, reserviert und Meldebestand — unter dem Meldebestand wird der Artikel markiert. Nicht bestandsgeführte Artikel (virtuelle Produkte wie Geschenkgutscheine, aus WooCommerce als virtual bzw. manage_stock=false) werden nie als „unter Meldebestand" markiert.',
             'Varianten-Detail: Bestand je Lager sowie Bestandskorrektur mit Pflicht-Grund (Inventurdifferenz, Bruch/Schwund, Korrektur Fehlbuchung) und Korrektur-Historie.',
             'Wareneingang: Bestellungen von Entwurf über Bestellt bis Teilweise/Abgeschlossen; gebuchte Mengen erhöhen den Bestand im Standardlager.',
-            'Meldebestand: alle Artikel mit Reichweite unter 90 Tagen (Bestand kleiner als der Absatz der letzten 90 Tage) — „Nachbestellung entwerfen" legt eine Bestellung im Status Entwurf beim (vorbelegten) Lieferanten an; die Vorschlagsmenge deckt den 90-Tage-Bedarf.',
+            'Meldebestand: alle bestandsgeführten Artikel mit Reichweite unter 90 Tagen (Bestand kleiner als der Absatz der letzten 90 Tage) — „Nachbestellung entwerfen" legt eine Bestellung im Status Entwurf beim (vorbelegten) Lieferanten an; die Vorschlagsmenge deckt den 90-Tage-Bedarf. Virtuelle Produkte ohne echten Bestand (z. B. Geschenkgutscheine) sind ausgenommen und zählen auch nicht zur Kennzahl „Artikel mit Reichweite unter 90 Tagen".',
           ] },
         ],
       },
@@ -278,7 +306,7 @@ export const HELP_PAGES: DocPage[] = [
         blocks: [
           { type: 'table', head: ['Tabelle', 'Zweck', 'Wichtige Felder'], rows: [
             ['products', 'Produkt-Stammdaten', 'name, lifecycle_status, category, brand, default_supplier_id'],
-            ['product_variants', 'Varianten je Produkt', 'product_id, sku, gtin, purchase_price, reorder_point, status'],
+            ['product_variants', 'Varianten je Produkt', 'product_id, sku, gtin, purchase_price, reorder_point, is_stock_managed, status'],
             ['prices', 'Preise je Variante/Preisliste', 'variant_id, price_list_id, min_qty, amount, valid_from'],
             ['product_bundles', 'Bundle-Zusammensetzung', 'bundle_variant_id, component_variant_id, quantity'],
             ['product_documents', 'Dokumente je Produkt', 'product_id, type, file_url, expires_at'],
@@ -325,6 +353,19 @@ export const HELP_PAGES: DocPage[] = [
           { type: 'table', head: ['Tabelle', 'Zurechnung', 'Quelle'], rows: [
             ['order_costs', 'je Beleg', 'berechnet (EK) / API / manuell'],
             ['channel_costs', 'je Kanal + Zeitraum', 'API / manuell'],
+          ] },
+        ],
+      },
+      {
+        heading: 'Marketing (ad_spend)',
+        blocks: [
+          { type: 'p', text: 'ad_spend hält die täglichen Ad-Kennzahlen je Plattform und Kampagne (Meta/Google/TikTok). Seit der Kampagnenebene ist die Tabelle kampagnen-granular.' },
+          { type: 'table', head: ['Feld', 'Zweck'], rows: [
+            ['date, platform', 'Tag + Ad-Plattform'],
+            ['campaign_id', 'Kampagnen-ID (Teil des Primärschlüssels; „__account__" für nicht zugeordnete Zeilen)'],
+            ['campaign_name', 'Kampagnenname — Basis der Stage-Ableitung (siehe Modul-Hilfe Verkauf)'],
+            ['spend, impressions, clicks, conversions, conv_value', 'Kennzahlen; Summe je (date, platform) entspricht dem Plattform-Tageswert'],
+            ['is_demo', 'markiert Demo-Daten (über Einstellungen ein/ausschaltbar)'],
           ] },
         ],
       },

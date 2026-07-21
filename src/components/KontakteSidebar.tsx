@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 
 const ITEMS = [
   { slug: '', label: 'Liste' },
+  { slug: 'analyse', label: 'Analyse' },
 ];
 
 export function KontakteSidebar() {

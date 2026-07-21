@@ -1,25 +1,13 @@
-// Backfill B2C-Segment für bereits importierte WooCommerce-Kontakte:
-// Billing ohne Firmenname → 'privat'. Der Firmenname liegt im gespiegelten
-// Rohdaten-Payload (external_references.raw_payload = billing). Manuelle/übrige
-// Kontakte behalten den Default 'geschaeft'. Idempotent.
+// Backfill B2C-Segment für importierte WooCommerce-Kontakte aus dem gespiegelten
+// Billing (external_references.raw_payload): echter Firmenname → 'geschaeft',
+// sonst 'privat'. Platzhalter-Firmennamen (z. B. „-- Anrede wählen --") werden via
+// realCompany verworfen → korrekt 'privat'. Idempotent. Manuelle Kontakte unberührt.
 import { pool } from '../src/lib/db';
+import { cleanContactSegments } from '../src/kontakte/name-cleanup';
 
 async function main() {
-  const priv = await pool.query(
-    `UPDATE contacts c SET segment = 'privat'
-       FROM external_references er
-      WHERE er.entity_type = 'contact' AND er.source_system = 'woocommerce'
-        AND er.entity_id = c.id
-        AND NULLIF(TRIM(er.raw_payload->>'company'), '') IS NULL
-        AND c.segment <> 'privat'`);
-  const geschaeft = await pool.query(
-    `UPDATE contacts c SET segment = 'geschaeft'
-       FROM external_references er
-      WHERE er.entity_type = 'contact' AND er.source_system = 'woocommerce'
-        AND er.entity_id = c.id
-        AND NULLIF(TRIM(er.raw_payload->>'company'), '') IS NOT NULL
-        AND c.segment <> 'geschaeft'`);
-  console.log(`Segment gesetzt: privat=${priv.rowCount}, geschaeft=${geschaeft.rowCount}.`);
+  const changed = await cleanContactSegments(pool);
+  console.log(`Segment neu gesetzt: ${changed}.`);
   await pool.end();
 }
 main().catch((e) => { console.error(e); process.exit(1); });

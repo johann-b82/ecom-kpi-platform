@@ -12,7 +12,7 @@ export default async function KontaktePage(
   const search = searchParams.q?.trim() || '';
   const role = searchParams.role === 'kunde' || searchParams.role === 'lieferant' ? searchParams.role : undefined;
   const segment = (['geschaeft', 'privat', 'alle'].includes(searchParams.segment ?? '')
-    ? searchParams.segment : 'geschaeft') as ContactSegment | 'alle';
+    ? searchParams.segment : 'alle') as ContactSegment | 'alle';
   const page = Math.max(1, Number(searchParams.page) || 1);
 
   const { rows, total } = await listContactsPaged({

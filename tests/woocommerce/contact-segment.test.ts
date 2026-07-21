@@ -12,4 +12,8 @@ describe('billingSegment', () => {
     expect(billingSegment({ company: '   ' })).toBe('privat');
     expect(billingSegment({})).toBe('privat');
   });
+  it('behandelt Platzhalter-Firmennamen als Privatkunde (nicht Geschäft)', () => {
+    expect(billingSegment({ company: '-- Anrede wählen --', first_name: 'Max', last_name: 'Muster' })).toBe('privat');
+    expect(billingSegment({ company: 'Bitte auswählen' })).toBe('privat');
+  });
 });

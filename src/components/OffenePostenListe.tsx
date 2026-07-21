@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Filters } from '@/components/Filters';
 import { KpiTrendRow, type KpiTrendItem } from '@/components/KpiTrendRow';
 import { DataTable, type Column } from '@/components/DataTable';
+import { formatDeDate } from '@/lib/dates';
 import type { OpenItemRow, OpenItemDirection } from '@/finanzen/types';
 import { DIRECTION_LABEL, OI_STATUS_LABEL } from '@/finanzen/labels';
 import { eur } from '@/finanzen/format';
@@ -35,7 +36,7 @@ export function OffenePostenListe({ items, debitorOpen, kreditorOpen, overdue, r
     { key: 'amount', header: 'Betrag', className: 'text-right', sort: (i) => i.amount,
       filter: { kind: 'number', value: (i) => i.amount }, cell: (i) => eur(i.amount) },
     { key: 'due', header: 'Fällig', sort: (i) => i.dueDate,
-      cell: (i) => <span className={i.overdue ? 'text-danger' : 'text-neutral-500'}>{i.dueDate}</span> },
+      cell: (i) => <span className={i.overdue ? 'text-danger' : 'text-neutral-500'}>{formatDeDate(i.dueDate)}</span> },
     { key: 'status', header: 'Status', sort: statusValue,
       filter: { kind: 'select', value: statusValue, options: [
         { value: 'ueberfaellig', label: 'Überfällig' },

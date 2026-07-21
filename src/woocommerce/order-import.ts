@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
 import { nextContactNumber } from '@/kontakte/number';
+import { cleanContactName, realCompany } from '@/kontakte/name';
 
 // ── Pure mappers (unit-tested) ─────────────────────────────────────────
 
@@ -31,9 +32,11 @@ export function billingContactKey(b: Billing): string {
 
 export type ContactSegment = 'geschaeft' | 'privat';
 
-// B2C-Segmentierung: Billing mit Firmenname → Geschäftskunde, sonst Privatkunde.
+// B2C-Segmentierung: Billing mit ECHTEM Firmenname → Geschäftskunde, sonst Privat.
+// realCompany verwirft Platzhalter (z. B. „-- Anrede wählen --"), damit solche
+// Kontakte nicht fälschlich als Geschäftskunde gezählt werden.
 export function billingSegment(b: Billing): ContactSegment {
-  return b.company && b.company.trim() ? 'geschaeft' : 'privat';
+  return realCompany(b) ? 'geschaeft' : 'privat';
 }
 
 export interface ContactFields {
@@ -42,8 +45,7 @@ export interface ContactFields {
 }
 
 export function mapBillingToContact(b: Billing): ContactFields {
-  const full = `${b.first_name ?? ''} ${b.last_name ?? ''}`.trim();
-  const name = (b.company && b.company.trim()) || full || b.email || 'Unbekannt';
+  const name = cleanContactName(b);
   const street = `${b.address_1 ?? ''} ${b.address_2 ?? ''}`.trim() || null;
   return {
     name,

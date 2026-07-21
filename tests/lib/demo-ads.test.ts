@@ -2,8 +2,16 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { pool } from '@/lib/db';
 import { enableDemoAds, disableDemoAds } from '@/lib/demo-ads';
 import { getDemoAdsEnabled } from '@/lib/settings';
+import { DEMO_CAMPAIGNS } from '@/connectors/seed/generator';
 
 const END = '2020-06-01'; // weit in der Vergangenheit — kollidiert nicht mit dem geseedeten Aktuell-180-Tage-Fenster
+const DAYS = 180;         // enableDemoAds schreibt 180 Tage
+// Seit der Kampagnenebene gibt es eine Zeile je Kampagne UND Tag, nicht mehr
+// eine je Plattform und Tag. Aus DEMO_CAMPAIGNS abgeleitet, damit der Test
+// nicht bricht, sobald Demo-Kampagnen dazukommen.
+const rowsFor = (p: keyof typeof DEMO_CAMPAIGNS) => DEMO_CAMPAIGNS[p].length * DAYS;
+const TOTAL = (Object.keys(DEMO_CAMPAIGNS) as (keyof typeof DEMO_CAMPAIGNS)[])
+  .reduce((s, p) => s + rowsFor(p), 0);
 
 afterAll(async () => {
   await pool.query(`DELETE FROM ad_spend WHERE is_demo = true`);
@@ -19,16 +27,16 @@ describe('demo ads', () => {
     const r = await pool.query<{ platform: string; n: number }>(
       `SELECT platform, COUNT(*)::int AS n FROM ad_spend WHERE is_demo = true GROUP BY platform`);
     const by = new Map(r.rows.map((x) => [x.platform, x.n]));
-    expect(by.get('google_ads')).toBe(180);
-    expect(by.get('meta_ads')).toBe(180);
-    expect(by.get('tiktok_ads')).toBe(180);
+    expect(by.get('google_ads')).toBe(rowsFor('google_ads'));
+    expect(by.get('meta_ads')).toBe(rowsFor('meta_ads'));
+    expect(by.get('tiktok_ads')).toBe(rowsFor('tiktok_ads'));
     expect(await getDemoAdsEnabled()).toBe(true);
   });
 
   it('enableDemoAds ist idempotent (kein PK-Konflikt beim erneuten Einschalten)', async () => {
     await enableDemoAds(END);
     const r = await pool.query<{ n: number }>(`SELECT COUNT(*)::int AS n FROM ad_spend WHERE is_demo = true`);
-    expect(r.rows[0].n).toBe(540);
+    expect(r.rows[0].n).toBe(TOTAL);
   });
 
   it('disableDemoAds entfernt NUR Demo-Zeilen und lässt echte Daten stehen', async () => {

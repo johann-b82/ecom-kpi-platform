@@ -20,6 +20,16 @@ export function primaryWooCategory(raw: Record<string, unknown>): string | null 
   return name || null;
 }
 
+/** Bestandsgeführt gdw. WooCommerce eine echte physische Menge trackt.
+ *  Nicht bestandsgeführt bei virtual=true oder manage_stock=false; die Werte
+ *  manage_stock='parent'/true und fehlende Felder gelten als bestandsgeführt.
+ *  Behandelt sowohl JSON-Boolean- als auch String-Form (Woo-API mischt beides). */
+export function isStockManaged(raw: Record<string, unknown>): boolean {
+  if (raw.virtual === true || raw.virtual === 'true') return false;
+  if (raw.manage_stock === false || raw.manage_stock === 'false') return false;
+  return true;
+}
+
 export function mapProduct(woo: MirrorProduct): CatalogMapping | { skip: 'no-sku' } {
   if (!woo.sku) return { skip: 'no-sku' };
   const n = Number(woo.price);
@@ -90,6 +100,9 @@ export async function importWooCommerceVariations(
          ON CONFLICT (source_system, external_id, entity_type)
          DO UPDATE SET entity_id=excluded.entity_id, last_synced_at=now(), raw_payload=excluded.raw_payload`,
         [variantId, externalId, JSON.stringify(raw)]);
+      await c.query(
+        `UPDATE product_variants SET is_stock_managed = is_stock_managed AND $2 WHERE id = $1`,
+        [variantId, isStockManaged(raw)]);
       if (price !== null) {
         await c.query(
           `INSERT INTO prices (variant_id, price_list_id, min_qty, amount) VALUES ($1,$2,1,$3)
@@ -167,6 +180,10 @@ export async function importWooCommerceProducts(
          ON CONFLICT (source_system, external_id, entity_type)
          DO UPDATE SET entity_id=excluded.entity_id, last_synced_at=now(), raw_payload=excluded.raw_payload`,
         [variantId, externalId, payload]);
+
+      await c.query(
+        `UPDATE product_variants SET is_stock_managed = is_stock_managed AND $2 WHERE id = $1`,
+        [variantId, isStockManaged(raw)]);
 
       if (m.price !== null) {
         await c.query(

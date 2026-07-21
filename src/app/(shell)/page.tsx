@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserAccess, accessibleApps } from '@/lib/groups';
 import { Launchpad } from '@/components/Launchpad';
 import { StartOverview, type OverviewSignals } from '@/components/StartOverview';
-import { salesTotals } from '@/verkauf/repository';
+import { revenueNetTotal } from '@/verkauf/repository';
 import { revenueGrowth, monthToDateRanges } from '@/verkauf/growth';
 import { listReorderSuggestions } from '@/verfuegbarkeit/repository';
 import { cashflowIn } from '@/finanzen/repository';
@@ -18,8 +18,8 @@ export default async function LaunchpadPage() {
   const today = new Date().toISOString().slice(0, 10);
   const { current, previous } = monthToDateRanges(today);
   if (access.apps.verkauf) {
-    tasks.push(Promise.all([salesTotals(current), salesTotals(previous)]).then(([cur, prev]) => {
-      signals.revenueGrowthPct = revenueGrowth(cur.revenueNet, prev.revenueNet);
+    tasks.push(Promise.all([revenueNetTotal(current), revenueNetTotal(previous)]).then(([cur, prev]) => {
+      signals.revenueGrowthPct = revenueGrowth(cur, prev);
     }));
   }
   if (access.apps.verfuegbarkeit) tasks.push(listReorderSuggestions().then((r) => { signals.reichweite90 = r.length; }));

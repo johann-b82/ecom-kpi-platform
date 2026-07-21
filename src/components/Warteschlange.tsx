@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import type { UnassignedPayment, OpenItemOption, PaymentMethod } from '@/finanzen/types';
 import { METHOD_LABEL } from '@/finanzen/labels';
 import { eur } from '@/finanzen/format';
+import { formatDeDate } from '@/lib/dates';
 import { assignPaymentAction, recordUnassignedPaymentAction } from '@/app/(shell)/finanzen/actions';
 
 const METHODS: PaymentMethod[] = ['ueberweisung', 'lastschrift', 'kreditkarte', 'paypal', 'sonstige'];
@@ -60,7 +61,7 @@ export function Warteschlange({ payments, options }: { payments: UnassignedPayme
           <tbody>
             {payments.map((p) => (
               <tr key={p.id} className="border-t border-neutral-200 dark:border-neutral-800">
-                <td className="py-2 text-neutral-500">{p.paidAt.slice(0, 10)}</td>
+                <td className="py-2 text-neutral-500">{formatDeDate(p.paidAt)}</td>
                 <td className="text-right">{eur(p.amount)}</td>
                 <td>{METHOD_LABEL[p.method]}</td>
                 <td className="text-neutral-500">{p.reference ?? ''}</td>

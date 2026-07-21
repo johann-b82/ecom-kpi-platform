@@ -11,20 +11,20 @@ import {
 
 export async function listStock(): Promise<StockRow[]> {
   const r = await pool.query(
-    `SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point,
+    `SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point, v.is_stock_managed,
             COALESCE(SUM(s.quantity_on_hand),0)::int  AS on_hand,
             COALESCE(SUM(s.quantity_reserved),0)::int AS reserved
        FROM product_variants v
        JOIN products p ON p.id = v.product_id
        LEFT JOIN stock_levels s ON s.variant_id = v.id
-      GROUP BY v.id, v.sku, p.name, v.reorder_point
+      GROUP BY v.id, v.sku, p.name, v.reorder_point, v.is_stock_managed
       ORDER BY v.sku`);
   return r.rows.map((x) => {
     const available = x.on_hand - x.reserved;
     return {
       variantId: x.variant_id, sku: x.sku, productName: x.product_name,
       onHand: x.on_hand, reserved: x.reserved, available,
-      reorderPoint: x.reorder_point, belowReorder: x.reorder_point > 0 && available < x.reorder_point,
+      reorderPoint: x.reorder_point, belowReorder: x.is_stock_managed && x.reorder_point > 0 && available < x.reorder_point,
     };
   });
 }
@@ -44,7 +44,7 @@ export async function listStockPaged(
   const orderBy = `${STOCK_SORT_SQL[s.col]} ${s.dir === 'desc' ? 'DESC' : 'ASC'}, t.sku ASC`;
   const params: any[] = [search ? `%${search}%` : null, filter === 'below'];
   const inner = `
-    SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point,
+    SELECT v.id AS variant_id, v.sku, p.name AS product_name, v.reorder_point, v.is_stock_managed,
            COALESCE(SUM(s.quantity_on_hand),0)::int AS on_hand,
            COALESCE(SUM(s.quantity_reserved),0)::int AS reserved,
            (COALESCE(SUM(s.quantity_on_hand),0) - COALESCE(SUM(s.quantity_reserved),0))::int AS available
@@ -52,16 +52,16 @@ export async function listStockPaged(
       JOIN products p ON p.id = v.product_id
       LEFT JOIN stock_levels s ON s.variant_id = v.id
      WHERE ($1::text IS NULL OR v.sku ILIKE $1 OR p.name ILIKE $1)
-     GROUP BY v.id, v.sku, p.name, v.reorder_point`;
+     GROUP BY v.id, v.sku, p.name, v.reorder_point, v.is_stock_managed`;
   const filtered = `SELECT t.* FROM (${inner}) t
-     WHERE ($2::boolean = false OR (t.reorder_point > 0 AND t.available < t.reorder_point))`;
+     WHERE ($2::boolean = false OR (t.is_stock_managed AND t.reorder_point > 0 AND t.available < t.reorder_point))`;
   const countRes = await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM (${filtered}) f`, params);
   const r = await pool.query(
     `SELECT * FROM (${filtered}) t ORDER BY ${orderBy} LIMIT $3 OFFSET $4`, [...params, limit, offset]);
   const rows: StockRow[] = r.rows.map((x: any) => ({
     variantId: x.variant_id, sku: x.sku, productName: x.product_name,
     onHand: x.on_hand, reserved: x.reserved, available: x.available,
-    reorderPoint: x.reorder_point, belowReorder: x.reorder_point > 0 && x.available < x.reorder_point,
+    reorderPoint: x.reorder_point, belowReorder: x.is_stock_managed && x.reorder_point > 0 && x.available < x.reorder_point,
   }));
   return { rows, total: countRes.rows[0].n };
 }
@@ -167,7 +167,7 @@ export async function listReorderSuggestions(): Promise<ReorderSuggestion[]> {
        JOIN sold sd ON sd.variant_id = v.id
        LEFT JOIN stock st ON st.variant_id = v.id
        LEFT JOIN contacts sup ON sup.id = p.default_supplier_id
-      WHERE sd.units > 0 AND COALESCE(st.on_hand, 0) < sd.units
+      WHERE v.is_stock_managed AND sd.units > 0 AND COALESCE(st.on_hand, 0) < sd.units
       ORDER BY (COALESCE(st.on_hand,0)::float / NULLIF(sd.units,0)) ASC, v.sku`);
   return r.rows.map((x) => {
     const onHand = Number(x.on_hand);

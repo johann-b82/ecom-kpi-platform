@@ -299,6 +299,8 @@ CREATE TABLE IF NOT EXISTS product_variants (
   status            TEXT NOT NULL DEFAULT 'aktiv' CHECK (status IN ('aktiv','inaktiv'))
 );
 
+ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS is_stock_managed BOOLEAN NOT NULL DEFAULT true;
+
 CREATE TABLE IF NOT EXISTS prices (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id     UUID REFERENCES tenants(id),
@@ -492,3 +494,11 @@ CREATE INDEX IF NOT EXISTS channel_costs_channel_period_idx ON channel_costs (ch
 
 -- Demo-Ads-Toggle (Phase 3): trennt Demo-ad_spend von echten Connector-Daten.
 ALTER TABLE ad_spend ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
+
+-- Kampagnenebene (Phase 3): ad_spend wird kampagnen-granular. Bestehende und
+-- nicht zugeordnete Zeilen tragen '__account__' → PK bleibt eindeutig, Summen
+-- (Global-KPIs) bleiben unverändert.
+ALTER TABLE ad_spend ADD COLUMN IF NOT EXISTS campaign_id   TEXT NOT NULL DEFAULT '__account__';
+ALTER TABLE ad_spend ADD COLUMN IF NOT EXISTS campaign_name TEXT;
+ALTER TABLE ad_spend DROP CONSTRAINT IF EXISTS ad_spend_pkey;
+ALTER TABLE ad_spend ADD PRIMARY KEY (date, platform, campaign_id);

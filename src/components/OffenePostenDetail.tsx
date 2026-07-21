@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { OpenItemDetail, PaymentMethod } from '@/finanzen/types';
 import { DIRECTION_LABEL, OI_STATUS_LABEL, METHOD_LABEL } from '@/finanzen/labels';
 import { eur } from '@/finanzen/format';
+import { formatDeDate } from '@/lib/dates';
 import { recordPaymentAction } from '@/app/(shell)/finanzen/actions';
 
 const METHODS: PaymentMethod[] = ['ueberweisung', 'lastschrift', 'kreditkarte', 'paypal', 'sonstige'];
@@ -53,7 +54,7 @@ export function OffenePostenDetail({ item }: { item: OpenItemDetail }) {
           <p className="anno text-neutral-500">Bezahlt</p><p className="mt-1 text-lg font-semibold">{eur(item.paid)}</p>
         </div>
         <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-          <p className="anno text-neutral-500">Rest · fällig {item.dueDate}</p><p className="mt-1 text-lg font-semibold">{eur(item.remaining)}</p>
+          <p className="anno text-neutral-500">Rest · fällig {formatDeDate(item.dueDate)}</p><p className="mt-1 text-lg font-semibold">{eur(item.remaining)}</p>
         </div>
       </div>
 
@@ -95,7 +96,7 @@ export function OffenePostenDetail({ item }: { item: OpenItemDetail }) {
                 <tbody>
                   {item.payments.map((p) => (
                     <tr key={p.id} className="border-t border-neutral-200 dark:border-neutral-800">
-                      <td className="py-1 text-neutral-500">{p.paidAt.slice(0, 10)}</td>
+                      <td className="py-1 text-neutral-500">{formatDeDate(p.paidAt)}</td>
                       <td>{eur(p.amount)}</td>
                       <td>{METHOD_LABEL[p.method]}</td>
                       <td className="text-neutral-500">{p.reference ?? ''}</td>
