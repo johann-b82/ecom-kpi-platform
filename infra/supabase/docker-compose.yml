@@ -26,7 +26,9 @@ services:
       retries: 3
     ports:
       # Mapped to 54323 on the host to avoid clashing with the Next.js app on 3000
-      - 54323:3000
+      # Nur lokal gebunden: Caddy proxyt vom selben Host. Ohne 127.0.0.1 haengt
+      # der Dienst offen im Internet (keine Firewall vor den Docker-Ports).
+      - 127.0.0.1:54323:3000
     depends_on:
       db:
         condition: service_healthy
@@ -52,8 +54,10 @@ services:
     # https://unix.stackexchange.com/a/294837
     entrypoint: bash -c 'eval "echo \"$$(cat ~/temp.yml)\"" > ~/kong.yml && /docker-entrypoint.sh kong docker-start'
     ports:
-      - ${KONG_HTTP_PORT}:8000/tcp
-      - ${KONG_HTTPS_PORT}:8443/tcp
+      # Nur lokal gebunden: Caddy proxyt vom selben Host. Ohne 127.0.0.1 haengt
+      # der Dienst offen im Internet (keine Firewall vor den Docker-Ports).
+      - 127.0.0.1:${KONG_HTTP_PORT}:8000/tcp
+      - 127.0.0.1:${KONG_HTTPS_PORT}:8443/tcp
     depends_on:
       db:
         condition: service_healthy
@@ -180,7 +184,9 @@ services:
       - log_min_messages=fatal # prevents Realtime polling queries from appearing in logs
     restart: unless-stopped
     ports:
-      - 5432:5432
+      # Nur lokal gebunden: die Datenbank darf NIE oeffentlich erreichbar sein.
+      # Container untereinander nutzen das Docker-Netz, nicht diesen Port.
+      - 127.0.0.1:5432:5432
     environment:
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: ${POSTGRES_PORT}
