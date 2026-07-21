@@ -16,6 +16,42 @@ function rng(seed: number): () => number {
 
 const PLATFORMS: AdPlatform[] = ['google_ads', 'meta_ads', 'tiktok_ads'];
 
+// Verteilt eine Tagessumme deterministisch auf Kampagnen. Die letzte Kampagne
+// absorbiert den Rundungsrest, sodass die Summe EXAKT erhalten bleibt — die
+// globalen KPIs (die über alle ad_spend-Zeilen summieren) ändern sich dadurch nicht.
+export function splitTotal(total: number, weights: number[], round: boolean): number[] {
+  const sum = weights.reduce((a, b) => a + b, 0);
+  const out: number[] = [];
+  let acc = 0;
+  for (let i = 0; i < weights.length; i++) {
+    if (i === weights.length - 1) { out.push(total - acc); }
+    else {
+      const raw = (total * weights[i]) / sum;
+      const v = round ? Math.round(raw) : raw;
+      out.push(v); acc += v;
+    }
+  }
+  return out;
+}
+
+// Demo-Kampagnen je Plattform — Namen folgen der Stage-Konvention (siehe src/kpi/campaigns.ts).
+const DEMO_CAMPAIGNS: Record<AdPlatform, { id: string; name: string; weight: number }[]> = {
+  google_ads: [
+    { id: 'g-prospecting', name: 'Prospecting_Search', weight: 0.4 },
+    { id: 'g-traffic',     name: 'Traffic_Discovery',  weight: 0.3 },
+    { id: 'g-retargeting', name: 'Retargeting_Q3',     weight: 0.3 },
+  ],
+  meta_ads: [
+    { id: 'm-prospecting', name: 'Prospecting_Video',       weight: 0.5 },
+    { id: 'm-retargeting', name: 'Retargeting_DPA',         weight: 0.3 },
+    { id: 'm-newsletter',  name: 'Newsletter_Reactivation', weight: 0.2 },
+  ],
+  tiktok_ads: [
+    { id: 't-awareness',  name: 'Awareness_Spark',    weight: 0.7 },
+    { id: 't-conversion', name: 'Conversion_Catalog', weight: 0.3 },
+  ],
+};
+
 export function generateSeedData(range: DateRange): CanonicalDataset {
   const r = rng(20260617);
   const totalDays = daysBetween(range.start, range.end) + 1;
@@ -47,7 +83,18 @@ export function generateSeedData(range: DateRange): CanonicalDataset {
       const spend = Math.round((150 + r() * 120) * trend);
       const clicks = Math.round(impressions * (0.01 + r() * 0.01));
       const conversions = Math.round(clicks * (0.03 + r() * 0.02));
-      adSpend.push({ date, platform, spend, impressions, clicks, conversions, convValue: conversions * (60 + r() * 40) });
+      const convValue = conversions * (60 + r() * 40);
+      const camps = DEMO_CAMPAIGNS[platform];
+      const w = camps.map((c) => c.weight);
+      const sp = splitTotal(spend, w, true);
+      const im = splitTotal(impressions, w, true);
+      const cl = splitTotal(clicks, w, true);
+      const cv = splitTotal(conversions, w, true);
+      const vv = splitTotal(convValue, w, false);
+      camps.forEach((c, k) => {
+        adSpend.push({ date, platform, spend: sp[k], impressions: im[k], clicks: cl[k],
+          conversions: cv[k], convValue: vv[k], campaignId: c.id, campaignName: c.name });
+      });
     }
 
     subscribers.push({
