@@ -353,6 +353,7 @@ CREATE TABLE IF NOT EXISTS sales_order_lines (
   quantity   INT NOT NULL,
   unit_price NUMERIC(12,2) NOT NULL
 );
+CREATE INDEX IF NOT EXISTS sales_order_lines_order_idx ON sales_order_lines (order_id);
 
 CREATE TABLE IF NOT EXISTS sales_order_events (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
