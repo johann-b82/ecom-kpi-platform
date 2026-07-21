@@ -30,8 +30,8 @@ async function main() {
   }
   for (const a of data.adSpend) {
     await pool.query(
-      'INSERT INTO ad_spend(date, platform, spend, impressions, clicks, conversions, conv_value) VALUES($1,$2,$3,$4,$5,$6,$7)',
-      [a.date, a.platform, a.spend, a.impressions, a.clicks, a.conversions, a.convValue],
+      'INSERT INTO ad_spend(date, platform, spend, impressions, clicks, conversions, conv_value, campaign_id, campaign_name) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+      [a.date, a.platform, a.spend, a.impressions, a.clicks, a.conversions, a.convValue, a.campaignId, a.campaignName],
     );
   }
   for (const s of data.subscribers) {
