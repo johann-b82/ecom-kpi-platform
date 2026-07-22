@@ -15,7 +15,13 @@ describe('mapOrderStatus', () => {
     expect(mapOrderStatus('pending')).toBe('angebot');
     expect(mapOrderStatus('cancelled')).toBe('storniert');
     expect(mapOrderStatus('failed')).toBe('storniert');
-    expect(mapOrderStatus('refunded')).toBe('retoure');
+    expect(mapOrderStatus('refunded')).toBe('bezahlt');
+  });
+
+  it('refunded ist ein bezahlter Verkauf (die Gutschrift ist ein eigener Beleg)', () => {
+    expect(mapOrderStatus('refunded')).toBe('bezahlt');
+    expect(mapOrderStatus('cancelled')).toBe('storniert');   // unveraendert
+    expect(mapOrderStatus('completed')).toBe('bezahlt');     // unveraendert
   });
 
   it('fällt auf angebot zurück bei unbekanntem Status', () => {
@@ -106,6 +112,10 @@ describe('mapRefundNet', () => {
   it('leere Eingabe ergibt 0', () => {
     expect(mapRefundNet({} as any)).toBe(0);
   });
+
+  it('bleibt auch bei anomalem tax > amount negativ (Vertrag: immer <= 0)', () => {
+    expect(mapRefundNet({ amount: '5', total_tax: '-9' } as any)).toBeLessThanOrEqual(0);
+  });
 });
 
 describe('importWooCommerceOrders — Status/Event-Reconcile', () => {
@@ -163,14 +173,14 @@ describe('importWooCommerceOrders — Status/Event-Reconcile', () => {
     expect(lines.rows[0].n).toBe(1);
   });
 
-  it('re-import als completed → bezahlt mit bezahlt-Event; dann refunded → retoure, bezahlt-Event weg', async () => {
+  it('re-import als completed → bezahlt mit bezahlt-Event; dann refunded → bleibt bezahlt', async () => {
     await importWooCommerceOrders(pool, [rawOrder('completed')], priceListId);
     expect(await statusOf()).toBe('bezahlt');
     expect(await eventStages()).toEqual(['bestellt', 'bezahlt']);
 
     await importWooCommerceOrders(pool, [rawOrder('refunded')], priceListId);
-    expect(await statusOf()).toBe('retoure');
-    expect(await eventStages()).toEqual(['bestellt', 'retoure']);
+    expect(await statusOf()).toBe('bezahlt');
+    expect(await eventStages()).toEqual(['bestellt', 'bezahlt']);
   });
 
   it('re-import mit gleichem Status → ordersUpdated=0 (idempotent)', async () => {

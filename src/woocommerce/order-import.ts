@@ -13,7 +13,7 @@ const STATUS_MAP: Record<string, string> = {
   cancelled: 'storniert',
   failed: 'storniert',
   trash: 'storniert',
-  refunded: 'retoure',
+  refunded: 'bezahlt',   // Verkauf bleibt Verkauf; die Erstattung wird ein eigener Gutschriftsbeleg
 };
 
 export function mapOrderStatus(wooStatus: string): string {
@@ -100,7 +100,7 @@ export function mapRefundNet(refund: WooRefund): number {
   }
   const gross = Math.abs(Number(refund.amount) || 0);
   const tax = Math.abs(Number(refund.total_tax) || 0);
-  const result = -(gross - tax);
+  const result = -Math.abs(gross - tax);
   return result === 0 ? 0 : result;
 }
 
