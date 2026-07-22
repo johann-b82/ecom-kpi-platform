@@ -470,7 +470,7 @@ export async function salesTotals(range: DateRange, channel?: OrderChannel): Pro
 export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = 'shop'): Promise<SalesFacts> {
   const totals = await pool.query(
     `SELECT COALESCE(SUM(${ORDER_REVENUE_SQL}), 0)::float8 AS revenue,
-            COUNT(DISTINCT o.id)::int AS purchases
+            (COUNT(DISTINCT o.id) FILTER (WHERE o.status <> 'retoure'))::int AS purchases
        FROM sales_orders o
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
         AND ${REVENUE_STATUS_SQL}
@@ -486,7 +486,7 @@ export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = '
       ),
       life AS (
         SELECT o.contact_id,
-               COUNT(DISTINCT o.id) AS orders_count,
+               COUNT(DISTINCT o.id) FILTER (WHERE o.status <> 'retoure') AS orders_count,
                COALESCE(SUM(${ORDER_REVENUE_SQL}), 0) AS revenue
           FROM sales_orders o
           JOIN active a ON a.contact_id = o.contact_id
@@ -513,7 +513,7 @@ export async function ecomSalesFacts(range: DateRange, channel: OrderChannel = '
 
 export async function channelSummary(range: DateRange): Promise<ChannelSummary[]> {
   const rev = await pool.query(
-    `SELECT o.channel, COUNT(DISTINCT o.id)::int AS orders,
+    `SELECT o.channel, (COUNT(DISTINCT o.id) FILTER (WHERE o.status <> 'retoure'))::int AS orders,
             COALESCE(SUM(${ORDER_REVENUE_SQL}), 0)::float8 AS revenue
        FROM sales_orders o
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2

@@ -515,6 +515,37 @@ describe('ORDER_REVENUE_SQL: gespeicherte Belegsumme vs. Positionen', () => {
     const after = await ecomSalesFacts(range, 'shop');
     expect(after.revenue - before.revenue).toBeCloseTo(100);   // 100, nicht 300
   });
+
+  async function createCreditFor(originalOrderId: string, amount: number): Promise<string> {
+    const ins = await pool.query<{ id: string }>(
+      `INSERT INTO sales_orders (number, contact_id, channel, status, price_list_id, related_order_id, total_net)
+       VALUES ('GUT-' || gen_random_uuid()::text, $1, 'shop', 'retoure', $2, $3, $4)
+       RETURNING id`,
+      [MUELLER, PL_HANDEL, originalOrderId, amount]);
+    return ins.rows[0].id;
+  }
+
+  it('ecomSalesFacts: Gutschrift zählt NICHT als purchase, mindert revenue aber netto auf 0', async () => {
+    const before = await ecomSalesFacts(range, 'shop');
+    const id = await createOrderWithLines([{ qty: 1, price: 100 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const creditId = await createCreditFor(id, -100);
+    const after = await ecomSalesFacts(range, 'shop');
+    expect(after.purchases - before.purchases).toBe(1);            // nicht 2
+    expect(after.revenue - before.revenue).toBeCloseTo(0);         // +100 Verkauf, -100 Gutschrift
+    await pool.query('DELETE FROM sales_orders WHERE id = $1', [creditId]);
+  });
+
+  it('channelSummary: Gutschrift zählt NICHT als Bestellung, mindert revenue aber netto auf 0', async () => {
+    const before = (await channelSummary(range)).find((c) => c.channel === 'shop')!;
+    const id = await createOrderWithLines([{ qty: 1, price: 100 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const creditId = await createCreditFor(id, -100);
+    const after = (await channelSummary(range)).find((c) => c.channel === 'shop')!;
+    expect(after.orders - before.orders).toBe(1);                  // nicht 2
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(0);   // +100 Verkauf, -100 Gutschrift
+    await pool.query('DELETE FROM sales_orders WHERE id = $1', [creditId]);
+  });
 });
 
 describe('countOpenQuotes', () => {
