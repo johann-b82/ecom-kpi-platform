@@ -81,6 +81,29 @@ export function mapOrderTotal(items: WooLineItem[]): number {
   return items.reduce((s, it) => s + (Number(it.total) || 0), 0);
 }
 
+export interface WooRefund {
+  id?: number | string;
+  date_created?: string;
+  amount?: string | number;
+  total_tax?: string | number;
+  line_items?: { total?: string | number }[];
+}
+
+// Netto-Betrag einer Erstattung, IMMER negativ. WooCommerce liefert `amount`
+// positiv, die Positions-`total` negativ — deshalb wird das Vorzeichen hier
+// explizit gesetzt statt der Quelle vertraut.
+export function mapRefundNet(refund: WooRefund): number {
+  const items = refund.line_items ?? [];
+  if (items.length > 0) {
+    const sum = items.reduce((s, li) => s + Math.abs(Number(li.total) || 0), 0);
+    return sum === 0 ? 0 : -sum;
+  }
+  const gross = Math.abs(Number(refund.amount) || 0);
+  const tax = Math.abs(Number(refund.total_tax) || 0);
+  const result = -(gross - tax);
+  return result === 0 ? 0 : result;
+}
+
 // ── Impure importer: inert historical records, idempotent ──────────────
 // Inserts sales_orders + lines + minimal events at the mapped final status.
 // NO stock reservation/deduction and NO open_items — historical orders are

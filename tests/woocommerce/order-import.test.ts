@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import {
-  mapOrderStatus, billingContactKey, mapBillingToContact, mapOrderLines, mapOrderTotal,
+  mapOrderStatus, billingContactKey, mapBillingToContact, mapOrderLines, mapOrderTotal, mapRefundNet,
 } from '@/woocommerce/order-import';
 import { pool } from '@/lib/db';
 import { importWooCommerceOrders } from '@/woocommerce/order-import';
@@ -87,6 +87,24 @@ describe('mapOrderTotal', () => {
   it('leere Liste ergibt 0, fehlendes total zaehlt als 0', () => {
     expect(mapOrderTotal([])).toBe(0);
     expect(mapOrderTotal([{ sku: 'X', quantity: 1, price: 1 }] as any)).toBe(0);
+  });
+});
+
+describe('mapRefundNet', () => {
+  it('nimmt die Netto-Summe der Erstattungspositionen', () => {
+    const r = { amount: '45.85', total_tax: '-7.32',
+      line_items: [{ total: '-30.00' }, { total: '-8.53' }] };
+    expect(mapRefundNet(r as any)).toBeCloseTo(-38.53);
+  });
+  it('faellt ohne Positionen auf |amount| - |total_tax| zurueck', () => {
+    expect(mapRefundNet({ amount: '45.85', total_tax: '-7.32' } as any)).toBeCloseTo(-38.53);
+  });
+  it('liefert immer ein negatives Ergebnis, egal wie das Vorzeichen kommt', () => {
+    expect(mapRefundNet({ amount: '10', total_tax: '0', line_items: [{ total: '10.00' }] } as any)).toBeCloseTo(-10);
+    expect(mapRefundNet({ amount: '10', total_tax: '0', line_items: [{ total: '-10.00' }] } as any)).toBeCloseTo(-10);
+  });
+  it('leere Eingabe ergibt 0', () => {
+    expect(mapRefundNet({} as any)).toBe(0);
   });
 });
 

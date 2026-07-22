@@ -139,7 +139,7 @@ export class WooCommerceMirror {
   // Orders incl. billing + line_items for the ERP import; optional modifiedAfter
   // for incremental syncs (WooCommerce bumps date_modified on any status change).
   async fetchOrdersRaw(page = 1, perPage = 100, modifiedAfter?: Date): Promise<MirrorPage<Record<string, unknown>>> {
-    const fields = 'id,number,status,date_created,date_paid,total,currency,customer_id,billing,line_items';
+    const fields = 'id,number,status,date_created,date_paid,total,currency,customer_id,billing,line_items,refunds';
     const mod = modifiedAfter
       ? `&modified_after=${encodeURIComponent(modifiedAfter.toISOString())}&dates_are_gmt=true`
       : '';
@@ -149,6 +149,15 @@ export class WooCommerceMirror {
     const items = (await res.json()) as Record<string, unknown>[];
     const { total, totalPages } = WooCommerceMirror.totals(res);
     return { items, total, totalPages, page };
+  }
+
+  // Alle Erstattungen eines Belegs inkl. Detail (date_created, amount,
+  // total_tax, line_items) in EINEM Aufruf. Nur fuer Belege aufrufen, deren
+  // `refunds`-Feld nicht leer ist.
+  async fetchOrderRefunds(orderId: string | number): Promise<Record<string, unknown>[]> {
+    const res = await this.get(`${this.base}/orders/${orderId}/refunds?per_page=100`);
+    if (!res.ok) throw new Error(`WooCommerce refunds fetch failed: ${res.status} ${await res.text()}`);
+    return (await res.json()) as Record<string, unknown>[];
   }
 
   // Full, unmodified product payload (no _fields narrowing) — used by the catalog
