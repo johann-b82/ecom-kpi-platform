@@ -216,4 +216,123 @@ describe('importWooCommerceOrders — Status/Event-Reconcile', () => {
     await pool.query(`DELETE FROM external_references WHERE source_system='woocommerce'
         AND entity_type='contact' AND external_id='max@example.com'`);
   });
+
+  it('legt je Erstattung eine negative Gutschrift an, verknuepft und idempotent', async () => {
+    const raw = [{
+      id: 771001, number: '771001', status: 'refunded', date_created: '2026-06-22T10:00:00',
+      date_paid: '2026-06-22T10:05:00', currency: 'EUR',
+      billing: { first_name: 'Rita', last_name: 'Retoure', email: 'rita@example.com' },
+      line_items: [{ sku: 'SKU-EXIST', quantity: 1, price: 100, total: '100.00' }],
+      refunds: [{ id: 990001, total: '-100.00' }],
+    }];
+    const fetchRefunds = async () => ([{
+      id: 990001, date_created: '2026-07-14T15:42:30', amount: '119.00', total_tax: '-19.00',
+      line_items: [{ total: '-100.00' }],
+    }] as any);
+
+    await importWooCommerceOrders(pool, raw as any, priceListId, fetchRefunds);
+
+    // Ursprungsbeleg ist ein Verkauf
+    const o = await pool.query(`SELECT id, status, total_net FROM sales_orders WHERE number='WC-771001'`);
+    expect(o.rows[0].status).toBe('bezahlt');
+    expect(Number(o.rows[0].total_net)).toBeCloseTo(100);
+
+    // Gutschrift: negativ, verknuepft, mit Erstattungsdatum
+    const g = await pool.query(
+      `SELECT status, total_net, related_order_id, placed_at::date::text AS d
+         FROM sales_orders WHERE number='WC-771001-R990001'`);
+    expect(g.rows.length).toBe(1);
+    expect(g.rows[0].status).toBe('retoure');
+    expect(Number(g.rows[0].total_net)).toBeCloseTo(-100);
+    expect(g.rows[0].related_order_id).toBe(o.rows[0].id);
+    expect(g.rows[0].d).toBe('2026-07-14');
+
+    // Idempotenz: zweiter Import legt KEINE zweite Gutschrift an
+    await importWooCommerceOrders(pool, raw as any, priceListId, fetchRefunds);
+    const again = await pool.query(`SELECT count(*)::int AS n FROM sales_orders WHERE number LIKE 'WC-771001-R%'`);
+    expect(again.rows[0].n).toBe(1);
+
+    await pool.query(
+      `DELETE FROM external_references WHERE entity_type='sales_order'
+         AND entity_id IN (SELECT id FROM sales_orders WHERE number LIKE 'WC-771001%')`);
+    await pool.query(`DELETE FROM sales_orders WHERE number LIKE 'WC-771001%'`);
+    await pool.query(`DELETE FROM contacts WHERE id IN (
+      SELECT entity_id FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='rita@example.com')`);
+    await pool.query(`DELETE FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='rita@example.com'`);
+  });
+
+  it('Verkauf und Gutschrift ergeben im Umsatz netto 0', async () => {
+    const { salesTotals } = await import('@/verkauf/repository');
+    const RANGE = { start: '2026-06-01', end: '2026-07-31' };
+    const before = (await salesTotals(RANGE)).revenueNet;
+    const raw = [{
+      id: 771002, number: '771002', status: 'refunded', date_created: '2026-06-23T10:00:00',
+      date_paid: '2026-06-23T10:05:00', currency: 'EUR',
+      billing: { first_name: 'Nino', last_name: 'Netto', email: 'nino@example.com' },
+      line_items: [{ sku: 'SKU-EXIST', quantity: 1, price: 50, total: '50.00' }],
+      refunds: [{ id: 990002, total: '-50.00' }],
+    }];
+    const fetchRefunds = async () => ([{
+      id: 990002, date_created: '2026-07-01T09:00:00', amount: '50.00', total_tax: '0',
+      line_items: [{ total: '-50.00' }],
+    }] as any);
+    await importWooCommerceOrders(pool, raw as any, priceListId, fetchRefunds);
+    const after = (await salesTotals(RANGE)).revenueNet;
+    expect(after - before).toBeCloseTo(0);   // +50 Verkauf, -50 Gutschrift
+
+    await pool.query(
+      `DELETE FROM external_references WHERE entity_type='sales_order'
+         AND entity_id IN (SELECT id FROM sales_orders WHERE number LIKE 'WC-771002%')`);
+    await pool.query(`DELETE FROM sales_orders WHERE number LIKE 'WC-771002%'`);
+    await pool.query(`DELETE FROM contacts WHERE id IN (
+      SELECT entity_id FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='nino@example.com')`);
+    await pool.query(`DELETE FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='nino@example.com'`);
+  });
+
+  it('Bestandspfad (bereits importiert) legt beim erneuten Import mit Erstattung ebenfalls eine Gutschrift an', async () => {
+    const rawNoRefund = {
+      id: 771003, number: '771003', status: 'completed', date_created: '2026-06-24T10:00:00',
+      date_paid: '2026-06-24T10:05:00', currency: 'EUR',
+      billing: { first_name: 'Bea', last_name: 'Bestand', email: 'bea@example.com' },
+      line_items: [{ sku: 'SKU-EXIST', quantity: 1, price: 40, total: '40.00' }],
+    };
+    // 1. Neuanlage, OHNE fetchRefunds — Ursprungsbeleg entsteht ganz normal.
+    const r1 = await importWooCommerceOrders(pool, [rawNoRefund] as any, priceListId);
+    expect(r1.ordersCreated).toBe(1);
+    expect(r1.creditNotesCreated).toBe(0);
+
+    // 2. Erneuter Import desselben Belegs, jetzt refunded + fetchRefunds gesetzt
+    //    → nimmt den BESTANDSPFAD (external_references existiert bereits).
+    const rawRefunded = { ...rawNoRefund, status: 'refunded', refunds: [{ id: 990003, total: '-40.00' }] };
+    const fetchRefunds = async () => ([{
+      id: 990003, date_created: '2026-07-15T08:00:00', amount: '40.00', total_tax: '0',
+      line_items: [{ total: '-40.00' }],
+    }] as any);
+    const r2 = await importWooCommerceOrders(pool, [rawRefunded] as any, priceListId, fetchRefunds);
+    expect(r2.ordersCreated).toBe(0);   // Bestandspfad, keine Neuanlage
+    expect(r2.creditNotesCreated).toBe(1);
+
+    const o = await pool.query(`SELECT id, status FROM sales_orders WHERE number='WC-771003'`);
+    expect(o.rows[0].status).toBe('bezahlt');
+    const g = await pool.query(
+      `SELECT status, total_net, related_order_id FROM sales_orders WHERE number='WC-771003-R990003'`);
+    expect(g.rows.length).toBe(1);
+    expect(g.rows[0].status).toBe('retoure');
+    expect(Number(g.rows[0].total_net)).toBeCloseTo(-40);
+    expect(g.rows[0].related_order_id).toBe(o.rows[0].id);
+
+    await pool.query(
+      `DELETE FROM external_references WHERE entity_type='sales_order'
+         AND entity_id IN (SELECT id FROM sales_orders WHERE number LIKE 'WC-771003%')`);
+    await pool.query(`DELETE FROM sales_orders WHERE number LIKE 'WC-771003%'`);
+    await pool.query(`DELETE FROM contacts WHERE id IN (
+      SELECT entity_id FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='bea@example.com')`);
+    await pool.query(`DELETE FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='bea@example.com'`);
+  });
 });

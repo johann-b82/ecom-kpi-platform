@@ -28,7 +28,8 @@ async function main() {
   }
 
   console.log(`Importiere ${all.length} Bestellungen (inerte Belege, Preisliste "${pl.rows[0].name}")…`);
-  const r = await importWooCommerceOrders(pool, all, priceListId);
+  const r = await importWooCommerceOrders(pool, all, priceListId,
+    (id) => mirror.fetchOrderRefunds(id) as Promise<any>);
   console.log('Ergebnis:', JSON.stringify(r, null, 2));
   await pool.end();
 }
