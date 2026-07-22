@@ -415,6 +415,32 @@ describe('B4 aggregates', () => {
     await pool.query('DELETE FROM sales_orders WHERE related_order_id = $1', [o.id]);
   });
 
+  it('Gutschrift zählt NICHT als Bestellung — nur der Verkauf zählt in orders', async () => {
+    const before = await salesTotals(range);
+
+    const vid = await variantId('BK-CLASSIC');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: vid, quantity: 1, unitPrice: 100 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'versendet');
+    await transitionOrderStatus(o.id, 'rechnung_gestellt');
+    await transitionOrderStatus(o.id, 'bezahlt');
+
+    await createReturn(o.id);
+    // credit NICHT in orderIds pushen: die FK related_order_id → o.id verlangt,
+    // dass die Gutschrift VOR dem Ursprung gelöscht wird. Das erledigt die
+    // gezielte DELETE-Zeile am Testende; o.id bleibt für afterAll in orderIds.
+    const after = await salesTotals(range);
+
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(0);   // +100 Verkauf, -100 Gutschrift
+    expect(after.orders - before.orders).toBe(1);                   // nur der Verkauf zählt, nicht die Gutschrift
+
+    // Gutschrift zuerst entfernen (FK related_order_id), Ursprung räumt afterAll ab.
+    await pool.query('DELETE FROM sales_orders WHERE related_order_id = $1', [o.id]);
+  });
+
   it('listOrderRows(channel) filtert auf den Kanal', async () => {
     const shopRows = await listOrderRows('shop');
     expect(shopRows.every((r) => r.channel === 'shop')).toBe(true);

@@ -349,7 +349,7 @@ export async function salesDailySeries(range: DateRange, channel?: OrderChannel)
   const r = await pool.query(
     `SELECT COALESCE(o.placed_at, o.created_at)::date::text AS day,
             COALESCE(SUM(${ORDER_REVENUE_SQL}) FILTER (WHERE ${REVENUE_STATUS_SQL}), 0)::float8 AS revenue,
-            (COUNT(DISTINCT o.id) FILTER (WHERE ${REVENUE_STATUS_SQL}))::int AS orders,
+            (COUNT(DISTINCT o.id) FILTER (WHERE ${ORDER_COUNT_STATUS_SQL}))::int AS orders,
             COALESCE(SUM(${ORDER_REVENUE_SQL}) FILTER (WHERE o.status = 'storniert'), 0)::float8 AS cancelled
        FROM sales_orders o
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
@@ -410,6 +410,10 @@ export async function listOrderRowsPaged(
 // da der aktuelle Status gelesen wird — verarbeitete Stornos sind automatisch abgezogen.
 const REVENUE_STATUS_SQL = "o.status <> 'storniert'";
 
+// Belegzahl zaehlt nur Verkaeufe: Gutschriften (retoure) sind Korrekturbelege,
+// keine Bestellungen. Der UMSATZ zaehlt sie weiterhin mit — dort netten sie.
+const ORDER_COUNT_STATUS_SQL = `${REVENUE_STATUS_SQL} AND o.status <> 'retoure'`;
+
 // Umsatz je Beleg: die gespeicherte Netto-Summe aus dem Quellsystem hat Vorrang
 // (sie enthaelt auch Positionen geloeschter Produkte ohne SKU); fehlt sie, wird
 // aus den Positionen gerechnet. ACHTUNG: Abfragen, die das benutzen, duerfen
@@ -435,7 +439,7 @@ export async function revenueNetTotal(range: DateRange, channel?: OrderChannel):
 export async function salesTotals(range: DateRange, channel?: OrderChannel): Promise<SalesTotals> {
   const rev = await pool.query(
     `SELECT COALESCE(SUM(${ORDER_REVENUE_SQL}) FILTER (WHERE ${REVENUE_STATUS_SQL}), 0)::float8 AS revenue,
-            (COUNT(DISTINCT o.id) FILTER (WHERE ${REVENUE_STATUS_SQL}))::int AS orders,
+            (COUNT(DISTINCT o.id) FILTER (WHERE ${ORDER_COUNT_STATUS_SQL}))::int AS orders,
             COALESCE(SUM(${ORDER_REVENUE_SQL}) FILTER (WHERE o.status = 'storniert'), 0)::float8 AS cancelled
        FROM sales_orders o
       WHERE COALESCE(o.placed_at, o.created_at)::date BETWEEN $1 AND $2
