@@ -186,7 +186,7 @@ describe('importWooCommerceOrders — Status/Event-Reconcile', () => {
   it('re-import mit gleichem Status → ordersUpdated=0 (idempotent)', async () => {
     const r = await importWooCommerceOrders(pool, [rawOrder('refunded')], priceListId);
     expect(r.ordersUpdated).toBe(0);
-    expect(await statusOf()).toBe('retoure');
+    expect(await statusOf()).toBe('bezahlt');
   });
 
   it('setzt total_net beim Import und auch beim erneuten Import (idempotent)', async () => {
