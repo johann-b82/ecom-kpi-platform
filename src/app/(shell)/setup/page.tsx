@@ -14,6 +14,8 @@ import { getUserAccess, listGroups } from '@/lib/groups';
 import { GroupsForm } from '@/components/GroupsForm';
 import { AdminOnlyTag } from '@/components/AdminOnlyTag';
 import { DemoAdsForm } from '@/components/DemoAdsForm';
+import { probeHubConnection } from '@/lib/hub';
+import { HubConnections } from '@/components/HubConnections';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -30,6 +32,9 @@ export default async function SetupPage() {
   const oauth = await listOAuthStatus();
   const [syncInterval, syncState] = await Promise.all([getSyncInterval(), listSyncState()]);
   const demoAds = await getDemoAdsEnabled();
+  const hubStates = await Promise.all(
+    (['amazon_ads', 'amazon_sp'] as const).map(async (provider) => ({ provider, state: await probeHubConnection(provider) })),
+  );
   const fields: FieldView[] = [];
   for (const connector of CONNECTORS) {
     for (const f of CONNECTOR_FIELDS[connector]) {
@@ -54,6 +59,9 @@ export default async function SetupPage() {
             Zugangsdaten werden AES-256-verschlüsselt in der DB gespeichert. Secrets werden in der Oberfläche maskiert und nie zurückgegeben — leer lassen heißt „unverändert".
           </p>
           <CredentialsForm fields={fields} oauth={oauth} />
+          <div className="mt-6">
+            <HubConnections states={hubStates} />
+          </div>
         </div>
         <SyncForm interval={syncInterval} state={syncState} />
         <DemoAdsForm enabled={demoAds} />
