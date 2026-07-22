@@ -5,7 +5,7 @@ import { getWatermarks, setWatermarks, shouldFullResync } from '../src/connector
 import { pool } from '../src/lib/db';
 import { loadConnectorConfig } from '../src/lib/credentials';
 import { WooCommerceMirror } from '../src/woocommerce/mirror';
-import { importWooCommerceOrders } from '../src/woocommerce/order-import';
+import { importWooCommerceOrders, type WooRefund } from '../src/woocommerce/order-import';
 import { getErpWatermarks, setErpWatermarks, shouldErpFullResync } from '../src/woocommerce/erp-watermark';
 
 const DELTA_OVERLAP_MS = 60_000; // clock-skew insurance on the modified_after boundary
@@ -65,7 +65,8 @@ async function main() {
       if (page >= p.totalPages || p.items.length === 0) break;
       page += 1;
     }
-    const r = await importWooCommerceOrders(pool, orders, pl.rows[0].id);
+    const r = await importWooCommerceOrders(pool, orders, pl.rows[0].id,
+      (id) => mirror.fetchOrderRefunds(id) as Promise<WooRefund[]>);
     await setErpWatermarks(erpStarted, { full: erpFull });
     console.log(`ERP-Import fertig: ${JSON.stringify(r)}`);
   }

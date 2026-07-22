@@ -1,5 +1,5 @@
 import { WooCommerceMirror } from '../src/woocommerce/mirror';
-import { importWooCommerceOrders } from '../src/woocommerce/order-import';
+import { importWooCommerceOrders, type WooRefund } from '../src/woocommerce/order-import';
 import { loadConnectorConfig } from '../src/lib/credentials';
 import { pool } from '../src/lib/db';
 
@@ -28,7 +28,8 @@ async function main() {
   }
 
   console.log(`Importiere ${all.length} Bestellungen (inerte Belege, Preisliste "${pl.rows[0].name}")…`);
-  const r = await importWooCommerceOrders(pool, all, priceListId);
+  const r = await importWooCommerceOrders(pool, all, priceListId,
+    (id) => mirror.fetchOrderRefunds(id) as Promise<WooRefund[]>);
   console.log('Ergebnis:', JSON.stringify(r, null, 2));
   await pool.end();
 }

@@ -415,6 +415,32 @@ describe('B4 aggregates', () => {
     await pool.query('DELETE FROM sales_orders WHERE related_order_id = $1', [o.id]);
   });
 
+  it('Gutschrift zählt NICHT als Bestellung — nur der Verkauf zählt in orders', async () => {
+    const before = await salesTotals(range);
+
+    const vid = await variantId('BK-CLASSIC');
+    const o = await createOrder({
+      contactId: MUELLER, channel: 'shop', priceListId: PL_HANDEL,
+      lines: [{ variantId: vid, quantity: 1, unitPrice: 100 }],
+    });
+    orderIds.push(o.id);
+    await transitionOrderStatus(o.id, 'versendet');
+    await transitionOrderStatus(o.id, 'rechnung_gestellt');
+    await transitionOrderStatus(o.id, 'bezahlt');
+
+    await createReturn(o.id);
+    // credit NICHT in orderIds pushen: die FK related_order_id → o.id verlangt,
+    // dass die Gutschrift VOR dem Ursprung gelöscht wird. Das erledigt die
+    // gezielte DELETE-Zeile am Testende; o.id bleibt für afterAll in orderIds.
+    const after = await salesTotals(range);
+
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(0);   // +100 Verkauf, -100 Gutschrift
+    expect(after.orders - before.orders).toBe(1);                   // nur der Verkauf zählt, nicht die Gutschrift
+
+    // Gutschrift zuerst entfernen (FK related_order_id), Ursprung räumt afterAll ab.
+    await pool.query('DELETE FROM sales_orders WHERE related_order_id = $1', [o.id]);
+  });
+
   it('listOrderRows(channel) filtert auf den Kanal', async () => {
     const shopRows = await listOrderRows('shop');
     expect(shopRows.every((r) => r.channel === 'shop')).toBe(true);
@@ -488,6 +514,37 @@ describe('ORDER_REVENUE_SQL: gespeicherte Belegsumme vs. Positionen', () => {
     await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
     const after = await ecomSalesFacts(range, 'shop');
     expect(after.revenue - before.revenue).toBeCloseTo(100);   // 100, nicht 300
+  });
+
+  async function createCreditFor(originalOrderId: string, amount: number): Promise<string> {
+    const ins = await pool.query<{ id: string }>(
+      `INSERT INTO sales_orders (number, contact_id, channel, status, price_list_id, related_order_id, total_net)
+       VALUES ('GUT-' || gen_random_uuid()::text, $1, 'shop', 'retoure', $2, $3, $4)
+       RETURNING id`,
+      [MUELLER, PL_HANDEL, originalOrderId, amount]);
+    return ins.rows[0].id;
+  }
+
+  it('ecomSalesFacts: Gutschrift zählt NICHT als purchase, mindert revenue aber netto auf 0', async () => {
+    const before = await ecomSalesFacts(range, 'shop');
+    const id = await createOrderWithLines([{ qty: 1, price: 100 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const creditId = await createCreditFor(id, -100);
+    const after = await ecomSalesFacts(range, 'shop');
+    expect(after.purchases - before.purchases).toBe(1);            // nicht 2
+    expect(after.revenue - before.revenue).toBeCloseTo(0);         // +100 Verkauf, -100 Gutschrift
+    await pool.query('DELETE FROM sales_orders WHERE id = $1', [creditId]);
+  });
+
+  it('channelSummary: Gutschrift zählt NICHT als Bestellung, mindert revenue aber netto auf 0', async () => {
+    const before = (await channelSummary(range)).find((c) => c.channel === 'shop')!;
+    const id = await createOrderWithLines([{ qty: 1, price: 100 }]);
+    await pool.query(`UPDATE sales_orders SET total_net = 100 WHERE id = $1`, [id]);
+    const creditId = await createCreditFor(id, -100);
+    const after = (await channelSummary(range)).find((c) => c.channel === 'shop')!;
+    expect(after.orders - before.orders).toBe(1);                  // nicht 2
+    expect(after.revenueNet - before.revenueNet).toBeCloseTo(0);   // +100 Verkauf, -100 Gutschrift
+    await pool.query('DELETE FROM sales_orders WHERE id = $1', [creditId]);
   });
 });
 
