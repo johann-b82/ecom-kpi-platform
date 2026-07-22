@@ -17,6 +17,7 @@
     "sync:meta": "tsx scripts/sync-meta.ts",
     "sync:tiktok": "tsx scripts/sync-tiktok.ts",
     "sync:google": "tsx scripts/sync-google.ts",
+    "sync:amazon_ads": "tsx scripts/sync-amazon-ads.ts",
     "import:woocommerce-catalog": "tsx scripts/import-woocommerce-catalog.ts",
     "import:woocommerce-orders": "tsx scripts/import-woocommerce-orders.ts",
     "import:woocommerce-variations": "tsx scripts/import-woocommerce-variations.ts",

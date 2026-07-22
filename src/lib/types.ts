@@ -2,7 +2,7 @@ export interface DateRange { start: string; end: string; } // ISO 'YYYY-MM-DD', 
 
 export type Source =
   | 'shopware' | 'ga4' | 'google_ads' | 'meta_ads' | 'tiktok_ads' | 'klaviyo' | 'mailchimp' | 'seed';
-export type AdPlatform = 'google_ads' | 'meta_ads' | 'tiktok_ads';
+export type AdPlatform = 'google_ads' | 'meta_ads' | 'tiktok_ads' | 'amazon_ads';
 
 export interface DailyMetric {
   date: string; source: Source; channel: string; metricKey: string; value: number;

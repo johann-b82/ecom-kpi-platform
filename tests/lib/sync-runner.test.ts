@@ -37,11 +37,11 @@ describe('dueConnectors', () => {
 });
 
 import { SYNC_CONNECTORS } from '@/lib/sync/runner';
-import { CONNECTORS, CONNECTOR_LABELS } from '@/lib/connector-fields';
+import { CONNECTORS, CONNECTOR_LABELS, SYNC_EXCLUDED } from '@/lib/connector-fields';
 
 describe('SYNC_CONNECTORS is derived from the connector registry', () => {
-  it('covers exactly CONNECTORS with labels from CONNECTOR_LABELS', () => {
-    expect(SYNC_CONNECTORS.map((c) => c.key)).toEqual(CONNECTORS);
+  it('covers exactly CONNECTORS minus SYNC_EXCLUDED with labels from CONNECTOR_LABELS', () => {
+    expect(SYNC_CONNECTORS.map((c) => c.key)).toEqual(CONNECTORS.filter((c) => !SYNC_EXCLUDED.includes(c)));
     for (const { key, label } of SYNC_CONNECTORS) {
       expect(label).toBe(CONNECTOR_LABELS[key]);
     }

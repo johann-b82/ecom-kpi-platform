@@ -1,6 +1,6 @@
 // Canonical connector registry: the single source of truth for every connector's
 // credential fields, label, and UI group. The sync runner derives its list from here.
-export type Connector = 'shopware' | 'woocommerce' | 'ga4' | 'klaviyo' | 'mailchimp' | 'meta' | 'tiktok' | 'google';
+export type Connector = 'shopware' | 'woocommerce' | 'ga4' | 'klaviyo' | 'mailchimp' | 'meta' | 'tiktok' | 'google' | 'hub' | 'amazon_ads';
 
 export interface FieldDef {
   field: string;
@@ -59,6 +59,12 @@ export const CONNECTOR_FIELDS: Record<Connector, FieldDef[]> = {
     { field: 'GOOGLE_ADS_CUSTOMER_ID', label: 'Customer ID', secret: false, optional: false },
     { field: 'GOOGLE_ADS_LOGIN_CUSTOMER_ID', label: 'Login Customer ID', secret: false, optional: true },
   ],
+  hub: [
+    { field: 'HUB_URL', label: 'Hub-URL', secret: false, optional: false },
+    { field: 'HUB_API_KEY', label: 'API-Key', secret: true, optional: false },
+  ],
+  // Credentials liegen im Hub (social-platform-sync), nicht lokal.
+  amazon_ads: [],
 };
 
 export const CONNECTORS = Object.keys(CONNECTOR_FIELDS) as Connector[];
@@ -73,12 +79,21 @@ export const CONNECTOR_LABELS: Record<Connector, string> = {
   meta: 'Meta Ads',
   tiktok: 'TikTok Ads',
   google: 'Google Ads',
+  hub: 'Verbindungs-Hub',
+  amazon_ads: 'Amazon Ads',
 };
 
 // Connectors grouped into named sections by data-source category.
 export const CONNECTOR_GROUPS: { title: string; connectors: Connector[] }[] = [
   { title: 'Shop', connectors: ['shopware', 'woocommerce'] },
   { title: 'Web-Analytics', connectors: ['ga4'] },
-  { title: 'Werbung', connectors: ['meta', 'tiktok', 'google'] },
+  { title: 'Werbung', connectors: ['meta', 'tiktok', 'google', 'amazon_ads'] },
   { title: 'E-Mail & CRM', connectors: ['klaviyo', 'mailchimp'] },
+  { title: 'Hub', connectors: ['hub'] },
 ];
+
+// Registry entries that are configuration-only and must never appear in the sync scheduler.
+export const SYNC_EXCLUDED: Connector[] = ['hub'];
+
+// Connectors whose "configured" state comes from another vault entry (credentials live elsewhere).
+export const CREDENTIAL_SOURCE: Partial<Record<Connector, Connector>> = { amazon_ads: 'hub' };
