@@ -52,6 +52,8 @@ export const DEMO_CAMPAIGNS: Record<AdPlatform, { id: string; name: string; weig
     { id: 't-awareness',  name: 'Awareness_Spark',    weight: 0.7 },
     { id: 't-conversion', name: 'Conversion_Catalog', weight: 0.3 },
   ],
+  // Amazon Ads liefert echte Daten über den Hub — keine Demo-Kampagnen (nicht in PLATFORMS).
+  amazon_ads: [],
 };
 
 export function generateSeedData(range: DateRange): CanonicalDataset {
