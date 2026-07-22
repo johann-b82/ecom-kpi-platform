@@ -404,6 +404,17 @@ export const HELP_PAGES: DocPage[] = [
           { type: 'note', text: 'Kein echter API-Aufruf. Ausschalten entfernt nur die Demo-Zeilen; echte Connector-Daten bleiben unberührt.' },
         ],
       },
+      {
+        heading: 'Amazon über den Verbindungs-Hub',
+        blocks: [
+          { type: 'p', text: 'Amazon Ads und Amazon Seller Central werden nicht mit eigenen Zugangsdaten verbunden, sondern über den zentralen Verbindungs-Hub. Unter Verbindungen werden dafür nur Hub-URL und API-Key hinterlegt (Gruppe „Hub").' },
+          { type: 'list', items: [
+            '„Verbinden" öffnet die Zustimmungsseite des Hubs; dort wird das Werbekonto ausgewählt.',
+            'Die Synchronisation holt die Zugangsdaten bei jedem Lauf frisch vom Hub — es werden keine Amazon-Token in dieser Instanz gespeichert.',
+            'Status „neu verbinden": die Verbindung im Hub ist abgelaufen und muss über „Verbinden" erneuert werden.',
+          ] },
+        ],
+      },
     ],
   },
   {
