@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { pool } from '@/lib/db';
 import { getSyncInterval, SYNC_INTERVAL_MS } from '@/lib/settings';
-import { CONNECTORS, CONNECTOR_LABELS, type Connector } from '@/lib/connector-fields';
+import { CONNECTORS, CONNECTOR_LABELS, SYNC_EXCLUDED, CREDENTIAL_SOURCE, type Connector } from '@/lib/connector-fields';
 
 const run = promisify(execFile);
 
@@ -10,7 +10,7 @@ const run = promisify(execFile);
  *  scripts. Derived from the connector registry (connector-fields.ts) so the two
  *  never drift. */
 export const SYNC_CONNECTORS: { key: Connector; label: string }[] =
-  CONNECTORS.map((key) => ({ key, label: CONNECTOR_LABELS[key] }));
+  CONNECTORS.filter((key) => !SYNC_EXCLUDED.includes(key)).map((key) => ({ key, label: CONNECTOR_LABELS[key] }));
 
 export interface SyncStateRow {
   connector: string;
@@ -41,7 +41,7 @@ export async function listSyncState(): Promise<SyncStateRow[]> {
       return {
         connector: c.key,
         label: c.label,
-        configured: configured.has(c.key),
+        configured: configured.has(CREDENTIAL_SOURCE[c.key] ?? c.key),
         lastRunAt: row?.last_run_at ?? null,
         status: row?.status ?? null,
         detail: row?.detail ?? null,
@@ -104,7 +104,7 @@ export async function runConnector(key: string): Promise<{ ok: boolean; detail: 
 /** Runs every configured connector now (used by the "Jetzt synchronisieren" button). */
 export async function runAll(): Promise<void> {
   const configured = await configuredConnectors();
-  const keys = SYNC_CONNECTORS.filter((c) => configured.has(c.key)).map((c) => c.key);
+  const keys = SYNC_CONNECTORS.filter((c) => configured.has(CREDENTIAL_SOURCE[c.key] ?? c.key)).map((c) => c.key);
   await Promise.all(keys.map((k) => runConnector(k)));
 }
 
