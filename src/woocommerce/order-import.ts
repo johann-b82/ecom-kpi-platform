@@ -271,35 +271,44 @@ export async function importWooCommerceOrders(
       // Pfad-lokalen Variablen, damit kein Duplikat noetig ist.
       const rawRefunds = (raw.refunds as { id?: number | string }[] | undefined) ?? [];
       if (fetchRefunds && rawRefunds.length > 0) {
-        const orow = await c.query<{ number: string; contact_id: string; currency: string; placed_at: string }>(
-          `SELECT number, contact_id, currency, placed_at FROM sales_orders WHERE id=$1`, [orderId]);
+        const orow = await c.query<{ number: string; contact_id: string; currency: string; placed_at: string; status: string }>(
+          `SELECT number, contact_id, currency, placed_at, status FROM sales_orders WHERE id=$1`, [orderId]);
         const origin = orow.rows[0];
-        const details = await fetchRefunds(wooId);
-        for (const rf of details) {
-          const refundId = String(rf.id ?? '');
-          if (!refundId) continue;
-          const refKey = `refund:${refundId}`;
-          const dup = await c.query(
-            `SELECT 1 FROM external_references
-              WHERE source_system='woocommerce' AND entity_type='sales_order' AND external_id=$1`, [refKey]);
-          if (dup.rows.length > 0) { result.creditNotesSkipped++; continue; }   // schon importiert
-          const net = mapRefundNet(rf);
-          const cnNumber = `${origin.number}-R${refundId}`;
-          const cnIns = await c.query<{ id: string }>(
-            `INSERT INTO sales_orders (number, contact_id, channel, status, currency, placed_at, total_net, related_order_id)
-             VALUES ($1,$2,'shop','retoure',$3,$4,$5,$6) RETURNING id`,
-            [cnNumber, origin.contact_id, origin.currency, rf.date_created ?? origin.placed_at, net, orderId]);
-          const cnId = cnIns.rows[0].id;
-          await c.query(
-            `INSERT INTO sales_order_events (order_id, stage, source_app, automated, occurred_at)
-             VALUES ($1,'retoure','verkauf',true, COALESCE($2::timestamptz, now()))`,
-            [cnId, rf.date_created ?? null]);
-          await c.query(
-            `INSERT INTO external_references (entity_type, entity_id, source_system, external_id, last_synced_at, raw_payload)
-             VALUES ('sales_order', $1, 'woocommerce', $2, now(), $3::jsonb)
-             ON CONFLICT (source_system, external_id, entity_type) DO NOTHING`,
-            [cnId, refKey, JSON.stringify(rf)]);
-          result.creditNotesCreated++;
+        if (origin.status === 'storniert') {
+          // Ein stornierter Ursprung traegt bereits 0 zum Umsatz bei (siehe
+          // REVENUE_STATUS_SQL) — eine Gutschrift daneben waere eine einseitige
+          // Korrektur ins Negative. Keine Gutschrift anlegen; auf demselben
+          // Zaehler wie "schon importiert" mitzaehlen, da in beiden Faellen kein
+          // neuer Gutschriftsbeleg entsteht.
+          result.creditNotesSkipped += rawRefunds.length;
+        } else {
+          const details = await fetchRefunds(wooId);
+          for (const rf of details) {
+            const refundId = String(rf.id ?? '');
+            if (!refundId) continue;
+            const refKey = `refund:${refundId}`;
+            const dup = await c.query(
+              `SELECT 1 FROM external_references
+                WHERE source_system='woocommerce' AND entity_type='sales_order' AND external_id=$1`, [refKey]);
+            if (dup.rows.length > 0) { result.creditNotesSkipped++; continue; }   // schon importiert
+            const net = mapRefundNet(rf);
+            const cnNumber = `${origin.number}-R${refundId}`;
+            const cnIns = await c.query<{ id: string }>(
+              `INSERT INTO sales_orders (number, contact_id, channel, status, currency, placed_at, total_net, related_order_id)
+               VALUES ($1,$2,'shop','retoure',$3,$4,$5,$6) RETURNING id`,
+              [cnNumber, origin.contact_id, origin.currency, rf.date_created ?? origin.placed_at, net, orderId]);
+            const cnId = cnIns.rows[0].id;
+            await c.query(
+              `INSERT INTO sales_order_events (order_id, stage, source_app, automated, occurred_at)
+               VALUES ($1,'retoure','verkauf',true, COALESCE($2::timestamptz, now()))`,
+              [cnId, rf.date_created ?? null]);
+            await c.query(
+              `INSERT INTO external_references (entity_type, entity_id, source_system, external_id, last_synced_at, raw_payload)
+               VALUES ('sales_order', $1, 'woocommerce', $2, now(), $3::jsonb)
+               ON CONFLICT (source_system, external_id, entity_type) DO NOTHING`,
+              [cnId, refKey, JSON.stringify(rf)]);
+            result.creditNotesCreated++;
+          }
         }
       }
 

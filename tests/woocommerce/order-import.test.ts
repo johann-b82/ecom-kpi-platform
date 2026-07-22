@@ -335,4 +335,41 @@ describe('importWooCommerceOrders — Status/Event-Reconcile', () => {
     await pool.query(`DELETE FROM external_references WHERE source_system='woocommerce'
         AND entity_type='contact' AND external_id='bea@example.com'`);
   });
+
+  it('storniert mit Erstattung → KEINE Gutschrift, salesTotals unveraendert', async () => {
+    const { salesTotals } = await import('@/verkauf/repository');
+    const RANGE = { start: '2026-06-01', end: '2026-07-31' };
+    const raw = [{
+      id: 771004, number: '771004', status: 'cancelled', date_created: '2026-06-25T10:00:00',
+      currency: 'EUR',
+      billing: { first_name: 'Stella', last_name: 'Storno', email: 'stella@example.com' },
+      line_items: [{ sku: 'SKU-EXIST', quantity: 1, price: 60, total: '60.00' }],
+      refunds: [{ id: 990004, total: '-60.00' }],
+    }];
+    const fetchRefunds = async () => ([{
+      id: 990004, date_created: '2026-07-16T08:00:00', amount: '60.00', total_tax: '0',
+      line_items: [{ total: '-60.00' }],
+    }] as any);
+
+    const before = (await salesTotals(RANGE)).revenueNet;
+    const r = await importWooCommerceOrders(pool, raw as any, priceListId, fetchRefunds);
+    const after = (await salesTotals(RANGE)).revenueNet;
+
+    expect(r.creditNotesCreated).toBe(0);
+    expect(r.creditNotesSkipped).toBe(1);
+    expect(after - before).toBeCloseTo(0);   // storniert traegt 0 bei, keine Gutschrift dazu
+
+    const g = await pool.query(`SELECT count(*)::int AS n FROM sales_orders WHERE number LIKE 'WC-771004-R%'`);
+    expect(g.rows[0].n).toBe(0);
+
+    await pool.query(
+      `DELETE FROM external_references WHERE entity_type='sales_order'
+         AND entity_id IN (SELECT id FROM sales_orders WHERE number LIKE 'WC-771004%')`);
+    await pool.query(`DELETE FROM sales_orders WHERE number LIKE 'WC-771004%'`);
+    await pool.query(`DELETE FROM contacts WHERE id IN (
+      SELECT entity_id FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='stella@example.com')`);
+    await pool.query(`DELETE FROM external_references WHERE source_system='woocommerce'
+        AND entity_type='contact' AND external_id='stella@example.com'`);
+  });
 });
