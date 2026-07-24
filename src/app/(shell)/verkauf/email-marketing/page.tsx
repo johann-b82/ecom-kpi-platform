@@ -18,7 +18,9 @@ export default async function EmailMarketingPage({ searchParams }:
   const data = await loadDataset(supabase);
   const { totals, series } = aggregateSubscribers(data.subscribers, range);
 
-  const nettoStr = `${totals.netto >= 0 ? '+' : '−'}${num(Math.abs(totals.netto))}`;
+  const nettoStr = totals.netto === 0
+    ? num(0)
+    : `${totals.netto > 0 ? '+' : '−'}${num(Math.abs(totals.netto))}`;
   const items: KpiTrendItem[] = [
     { key: 'signups', label: 'Anmeldungen', value: num(totals.signups) },
     { key: 'unsubscribes', label: 'Abmeldungen', value: num(totals.unsubscribes) },
