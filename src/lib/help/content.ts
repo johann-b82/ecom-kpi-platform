@@ -151,6 +151,17 @@ export const HELP_PAGES: DocPage[] = [
         ],
       },
       {
+        heading: 'Email-Marketing',
+        blocks: [
+          { type: 'p', text: 'Unter Verkauf → Email-Marketing werden die Newsletter-Kennzahlen aus den angebundenen E-Mail/CRM-Systemen (Mailchimp, Klaviyo) für den gewählten Zeitraum dargestellt: Anmeldungen, Abmeldungen und Netto (Anmeldungen − Abmeldungen).' },
+          { type: 'list', items: [
+            'Drei KPI-Kacheln zeigen die Summen über den Zeitraum.',
+            'Der kombinierte Verlauf zeigt Anmeldungen und Abmeldungen als Balken sowie das Netto-Wachstum als Linie; die Zeitachse bündelt je nach Zeitraum täglich, wöchentlich oder monatlich.',
+            'Die Zahlen stammen aus den bereits synchronisierten Abonnenten-Daten (keine zusätzliche Abfrage); Öffnungs-/Klickraten je Kampagne sind hier bewusst nicht enthalten.',
+          ] },
+        ],
+      },
+      {
         heading: 'Kosten & Deckungsbeitrag',
         blocks: [
           { type: 'p', text: 'Jeder Beleg trägt seine zurechenbaren Kosten. Der Wareneinsatz (EK × Menge) wird beim Anlegen des Belegs eingefroren — spätere EK-Änderungen lassen die alte Marge unberührt.' },
